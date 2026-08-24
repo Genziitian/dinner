@@ -1,0 +1,15 @@
+# Environment Configuration
+.env
+
+# SQLite Database storage (local data)
+storage/db/*.sqlite
+!storage/db/.gitkeep
+
+# macOS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs and cache
+*.log
+.tempmediaStorage/

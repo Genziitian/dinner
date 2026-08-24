@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /manager/
+Disallow: /admin/
+Disallow: /cashier/
+Disallow: /api/
