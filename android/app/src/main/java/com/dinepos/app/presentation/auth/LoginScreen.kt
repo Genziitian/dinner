@@ -80,6 +80,7 @@ fun LoginScreen(
         ) {
             Card(
                 modifier = Modifier
+                    .widthIn(max = 440.dp)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
                 shape = RoundedCornerShape(24.dp),
@@ -230,6 +231,44 @@ fun LoginScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Quick Login Shortcuts
+                    Text(
+                        text = "Quick Demo Accounts:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.onUsernameChange("manager1")
+                                viewModel.onPasswordChange("pass1234")
+                                viewModel.login()
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("👔 Manager", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.onUsernameChange("cashier1")
+                                viewModel.onPasswordChange("pass1234")
+                                viewModel.login()
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("🛒 Cashier", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                         }
                     }
 

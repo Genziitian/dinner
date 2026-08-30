@@ -47,7 +47,8 @@ class ApiController {
                     $secretHash = $parts[2];
                     $user = User::findById($userId);
                     if ($user && $user['username'] === $username && $user['status'] === 'active') {
-                        $expected = substr(hash('sha256', $user['password_hash'] . env('APP_SECRET')), 0, 16);
+                        $secret = (string)env('APP_SECRET', 'dinepos-default-app-secret-change-in-prod');
+                        $expected = substr(hash('sha256', $user['password_hash'] . $secret), 0, 16);
                         if (hash_equals($expected, $secretHash)) {
                             return [
                                 'id' => (int)$user['id'],
@@ -71,7 +72,8 @@ class ApiController {
      * Generate Auth Token for User
      */
     private function generateToken(array $user): string {
-        $secretHash = substr(hash('sha256', $user['password_hash'] . env('APP_SECRET')), 0, 16);
+        $secret = (string)env('APP_SECRET', 'dinepos-default-app-secret-change-in-prod');
+        $secretHash = substr(hash('sha256', $user['password_hash'] . $secret), 0, 16);
         return base64_encode($user['id'] . ':' . $user['username'] . ':' . $secretHash);
     }
 
@@ -478,7 +480,7 @@ class ApiController {
             AuditLog::log(AuditLog::ACTION_ITEM_CREATE, 'item', $itemId, $restaurantId, $user['id'], ['name' => $name]);
 
             $item = Item::findById($itemId, $restaurantId);
-            $this->jsonSuccess(['item' => $item], 'Item created successfully.', 201);
+            $this->jsonSuccess($item, 'Item created successfully.', 201);
         } catch (Throwable $e) {
             $this->jsonError('Failed to create item: ' . $e->getMessage(), 400);
         }
@@ -502,7 +504,7 @@ class ApiController {
         Item::toggleActive($itemId, $restaurantId);
         $updated = Item::findById($itemId, $restaurantId);
 
-        $this->jsonSuccess(['item' => $updated], 'Item status updated.');
+        $this->jsonSuccess($updated, 'Item status updated.');
     }
 
     /**

@@ -54,139 +54,240 @@ fun ReportsScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // Period Filters
-            val periods = listOf(
-                "today" to "Today",
-                "yesterday" to "Yesterday",
-                "7days" to "Last 7 Days",
-                "this_month" to "This Month",
-                "last_month" to "Last Month",
-                "6months" to "6 Months",
-                "year" to "Yearly"
-            )
+            val isTablet = maxWidth >= 600.dp
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(periods) { (key, label) ->
-                    val isSelected = uiState.selectedPeriod == key
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (isSelected) BrandDark else BrandSurface,
-                        border = BorderStroke(1.dp, if (isSelected) BrandDark else BrandBorder),
-                        modifier = Modifier.clickable { viewModel.onPeriodChange(key) }
-                    ) {
-                        Text(
-                            text = label,
-                            color = if (isSelected) Color.White else TextSecondary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-                        )
-                    }
-                }
-            }
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Period Filters
+                val periods = listOf(
+                    "today" to "Today",
+                    "yesterday" to "Yesterday",
+                    "7days" to "Last 7 Days",
+                    "this_month" to "This Month",
+                    "last_month" to "Last Month",
+                    "6months" to "6 Months",
+                    "year" to "Yearly"
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = BrandOrange)
-                }
-            } else if (report != null) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Main Period Metric Card
-                    Card(
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = BrandDark),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(22.dp)) {
+                    items(periods) { (key, label) ->
+                        val isSelected = uiState.selectedPeriod == key
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isSelected) BrandDark else BrandSurface,
+                            border = BorderStroke(1.dp, if (isSelected) BrandDark else BrandBorder),
+                            modifier = Modifier.clickable { viewModel.onPeriodChange(key) }
+                        ) {
                             Text(
-                                text = "TOTAL SALES (${report.currentPeriod.uppercase()})",
-                                color = TextMuted,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = CurrencyFormatter.formatInr(report.stats.totalSales),
-                                color = Color.White,
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Black
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "${report.stats.totalOrders} orders completed",
-                                color = BrandAmber,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
+                                text = label,
+                                color = if (isSelected) Color.White else TextSecondary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                             )
                         }
                     }
+                }
 
-                    // Payment Breakdown
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (uiState.isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BrandOrange)
+                    }
+                } else if (report != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = BrandSurface),
-                            border = BorderStroke(1.5.dp, BrandEmerald),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Column(modifier = Modifier.padding(14.dp)) {
-                                Text(text = "💵 Cash Sales", fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 13.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = CurrencyFormatter.formatInr(report.stats.cashSales),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = BrandEmerald,
-                                    fontSize = 18.sp
-                                )
+                        // Metric Cards
+                        if (isTablet) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = BrandDark),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(modifier = Modifier.padding(18.dp)) {
+                                        Text(
+                                            text = "TOTAL SALES (${report.currentPeriod.uppercase()})",
+                                            color = TextMuted,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = CurrencyFormatter.formatInr(report.stats.totalSales),
+                                            color = Color.White,
+                                            fontSize = 24.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = "${report.stats.totalOrders} orders completed",
+                                            color = BrandAmber,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
+
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = BrandEmeraldLight),
+                                    border = BorderStroke(1.5.dp, BrandEmerald.copy(alpha = 0.4f)),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(modifier = Modifier.padding(18.dp)) {
+                                        Text(text = "💵 CASH SALES", fontWeight = FontWeight.Bold, color = BrandEmerald, fontSize = 11.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = CurrencyFormatter.formatInr(report.stats.cashSales),
+                                            fontWeight = FontWeight.Black,
+                                            color = BrandEmerald,
+                                            fontSize = 24.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        val cashPercent = if (report.stats.totalSales > 0) ((report.stats.cashSales / report.stats.totalSales) * 100).toInt() else 0
+                                        Text(text = "$cashPercent% of period sales", color = TextSecondary, fontSize = 12.sp)
+                                    }
+                                }
+
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = BrandOrangeLight),
+                                    border = BorderStroke(1.5.dp, BrandOrange.copy(alpha = 0.4f)),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(modifier = Modifier.padding(18.dp)) {
+                                        Text(text = "📱 UPI / ONLINE SALES", fontWeight = FontWeight.Bold, color = BrandOrange, fontSize = 11.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = CurrencyFormatter.formatInr(report.stats.onlineSales),
+                                            fontWeight = FontWeight.Black,
+                                            color = BrandOrangeDark,
+                                            fontSize = 24.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        val upiPercent = if (report.stats.totalSales > 0) ((report.stats.onlineSales / report.stats.totalSales) * 100).toInt() else 0
+                                        Text(text = "$upiPercent% of period sales", color = TextSecondary, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        } else {
+                            // Main Period Metric Card
+                            Card(
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = BrandDark),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(22.dp)) {
+                                    Text(
+                                        text = "TOTAL SALES (${report.currentPeriod.uppercase()})",
+                                        color = TextMuted,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = CurrencyFormatter.formatInr(report.stats.totalSales),
+                                        color = Color.White,
+                                        fontSize = 32.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "${report.stats.totalOrders} orders completed",
+                                        color = BrandAmber,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+
+                            // Payment Breakdown Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = BrandSurface),
+                                    border = BorderStroke(1.5.dp, BrandEmerald),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(modifier = Modifier.padding(14.dp)) {
+                                        Text(text = "💵 Cash Sales", fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 13.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = CurrencyFormatter.formatInr(report.stats.cashSales),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = BrandEmerald,
+                                            fontSize = 18.sp
+                                        )
+                                    }
+                                }
+
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = BrandSurface),
+                                    border = BorderStroke(1.5.dp, BrandOrange),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(modifier = Modifier.padding(14.dp)) {
+                                        Text(text = "📱 UPI / Online", fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 13.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = CurrencyFormatter.formatInr(report.stats.onlineSales),
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = BrandOrangeDark,
+                                            fontSize = 18.sp
+                                        )
+                                    }
+                                }
                             }
                         }
 
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = BrandSurface),
-                            border = BorderStroke(1.5.dp, BrandOrange),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Column(modifier = Modifier.padding(14.dp)) {
-                                Text(text = "📱 UPI / Online", fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 13.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = CurrencyFormatter.formatInr(report.stats.onlineSales),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = BrandOrangeDark,
-                                    fontSize = 18.sp
-                                )
+                        // Comparison Insights
+                        Text(text = "SALES COMPARISON BENCHMARKS", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextSecondary)
+
+                        if (isTablet) {
+                            // 2-Column Comparison Layout for Tablets
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    ComparisonRow(label = "Today", stats = report.todayStats)
+                                    ComparisonRow(label = "Yesterday", stats = report.yesterdayStats)
+                                    ComparisonRow(label = "Yearly Total", stats = report.yearStats)
+                                }
+                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    ComparisonRow(label = "This Month", stats = report.thisMonthStats)
+                                    ComparisonRow(label = "Last Month", stats = report.lastMonthStats)
+                                }
                             }
+                        } else {
+                            ComparisonRow(label = "Today", stats = report.todayStats)
+                            ComparisonRow(label = "Yesterday", stats = report.yesterdayStats)
+                            ComparisonRow(label = "This Month", stats = report.thisMonthStats)
+                            ComparisonRow(label = "Last Month", stats = report.lastMonthStats)
+                            ComparisonRow(label = "Yearly Total", stats = report.yearStats)
                         }
                     }
-
-                    // Comparison Insights
-                    Text(text = "SALES COMPARISON BENCHMARKS", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextSecondary)
-
-                    ComparisonRow(label = "Today", stats = report.todayStats)
-                    ComparisonRow(label = "Yesterday", stats = report.yesterdayStats)
-                    ComparisonRow(label = "This Month", stats = report.thisMonthStats)
-                    ComparisonRow(label = "Last Month", stats = report.lastMonthStats)
-                    ComparisonRow(label = "Yearly Total", stats = report.yearStats)
                 }
             }
         }

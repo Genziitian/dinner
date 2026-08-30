@@ -220,6 +220,12 @@ fun QrScannerScreen(
                             placeholder = { Text("Enter receipt token or order #", fontSize = 12.sp, color = TextMuted) },
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                            ),
+                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                onSearch = { resolveCode(manualInput) }
+                            ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White,

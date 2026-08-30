@@ -3,8 +3,9 @@ package com.dinepos.app.presentation.items
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -79,7 +80,9 @@ fun ManageItemsScreen(
                     Text("No items found. Tap '+' to create your first item.", color = TextSecondary)
                 }
             } else {
-                LazyColumn(
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 340.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -130,8 +133,8 @@ fun ManageItemsScreen(
     if (uiState.showAddDialog) {
         ItemFormDialog(
             onDismiss = { viewModel.setShowAddDialog(false) },
-            onSave = { name, itemType, baseUnit, price ->
-                viewModel.createItem(name, itemType, baseUnit, price)
+            onSave = { name, itemType, baseUnit, variants ->
+                viewModel.createItem(name, itemType, baseUnit, variants)
             }
         )
     }

@@ -75,20 +75,12 @@ class ItemsViewModel(
         _uiState.value = _uiState.value.copy(showAddDialog = show)
     }
 
-    fun createItem(name: String, itemType: String, baseUnit: String, singlePrice: Double) {
+    fun createItem(name: String, itemType: String, baseUnit: String, variants: List<Map<String, Any>>) {
         viewModelScope.launch {
-            val variants = listOf(
-                mapOf(
-                    "variant_name" to if (itemType == "portion") "Full" else "Standard",
-                    "quantity_value" to 1.0,
-                    "quantity_unit" to baseUnit,
-                    "price" to singlePrice
-                )
-            )
             when (val result = menuRepository.createItem(name, itemType, baseUnit, true, variants)) {
                 is Resource.Success -> {
                     _uiState.value = _uiState.value.copy(showAddDialog = false)
-                    _toastEvent.emit("Item created successfully.")
+                    _toastEvent.emit("Item '$name' created with ${variants.size} portion(s)!")
                     loadItems()
                 }
                 is Resource.Error -> {

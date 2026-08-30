@@ -52,20 +52,25 @@ fun SummaryScreen(
             )
         }
     ) { paddingValues ->
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(16.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
+            val isTablet = maxWidth >= 600.dp
+
             if (uiState.isLoading) {
                 CircularProgressIndicator(color = BrandOrange, modifier = Modifier.align(Alignment.Center))
             } else if (stats != null) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .widthIn(max = 680.dp)
+                        .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Total Sales Hero Card
                     Card(
@@ -97,57 +102,104 @@ fun SummaryScreen(
                         }
                     }
 
-                    // Cash Collection Card
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = BrandSurface),
-                        border = BorderStroke(1.5.dp, BrandEmerald),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    if (isTablet) {
+                        // Side-by-Side Breakdown on Tablets
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column {
-                                Text(text = "💵 Cash Sales", fontWeight = FontWeight.Bold, color = BrandDark)
-                                Text(text = "In-drawer collected", fontSize = 12.sp, color = TextSecondary)
+                            // Cash Collection Card
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = BrandSurface),
+                                border = BorderStroke(1.5.dp, BrandEmerald),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text(text = "💵 Cash Sales", fontWeight = FontWeight.Bold, color = BrandDark)
+                                    Text(text = "In-drawer collected", fontSize = 12.sp, color = TextSecondary)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = CurrencyFormatter.formatInr(stats.cashSales),
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = BrandEmerald
+                                    )
+                                }
                             }
-                            Text(
-                                text = CurrencyFormatter.formatInr(stats.cashSales),
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = BrandEmerald
-                            )
-                        }
-                    }
 
-                    // Online / UPI Card
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = BrandSurface),
-                        border = BorderStroke(1.5.dp, BrandOrange),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(18.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(text = "📱 Online / UPI", fontWeight = FontWeight.Bold, color = BrandDark)
-                                Text(text = "Direct digital transfers", fontSize = 12.sp, color = TextSecondary)
+                            // Online / UPI Card
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = BrandSurface),
+                                border = BorderStroke(1.5.dp, BrandOrange),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text(text = "📱 Online / UPI", fontWeight = FontWeight.Bold, color = BrandDark)
+                                    Text(text = "Direct digital transfers", fontSize = 12.sp, color = TextSecondary)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = CurrencyFormatter.formatInr(stats.onlineSales),
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = BrandOrangeDark
+                                    )
+                                }
                             }
-                            Text(
-                                text = CurrencyFormatter.formatInr(stats.onlineSales),
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = BrandOrangeDark
-                            )
+                        }
+                    } else {
+                        // Stacked Breakdown on Phones
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = BrandSurface),
+                            border = BorderStroke(1.5.dp, BrandEmerald),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(18.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(text = "💵 Cash Sales", fontWeight = FontWeight.Bold, color = BrandDark)
+                                    Text(text = "In-drawer collected", fontSize = 12.sp, color = TextSecondary)
+                                }
+                                Text(
+                                    text = CurrencyFormatter.formatInr(stats.cashSales),
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = BrandEmerald
+                                )
+                            }
+                        }
+
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = BrandSurface),
+                            border = BorderStroke(1.5.dp, BrandOrange),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(18.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(text = "📱 Online / UPI", fontWeight = FontWeight.Bold, color = BrandDark)
+                                    Text(text = "Direct digital transfers", fontSize = 12.sp, color = TextSecondary)
+                                }
+                                Text(
+                                    text = CurrencyFormatter.formatInr(stats.onlineSales),
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = BrandOrangeDark
+                                )
+                            }
                         }
                     }
 

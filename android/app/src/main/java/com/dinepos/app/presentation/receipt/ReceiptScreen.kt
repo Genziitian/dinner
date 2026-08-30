@@ -102,6 +102,7 @@ fun ReceiptScreen(
             } else {
                 Card(
                     modifier = Modifier
+                        .widthIn(max = 480.dp)
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
                     shape = RoundedCornerShape(20.dp),

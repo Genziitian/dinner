@@ -73,12 +73,14 @@ fun ManagerDashboardScreen(
             )
         }
     ) { paddingValues ->
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+            val isTablet = maxWidth >= 600.dp
+
             if (uiState.isLoading) {
                 CircularProgressIndicator(color = BrandOrange, modifier = Modifier.align(Alignment.Center))
             } else {
@@ -88,38 +90,106 @@ fun ManagerDashboardScreen(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Hero Card: Revenue
-                    Card(
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = BrandDark),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(22.dp)) {
-                            Text(text = "TODAY'S REVENUE", color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = CurrencyFormatter.formatInr(stats?.totalSales ?: 0.0),
-                                color = Color.White,
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.Black
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                    // Metrics Row
+                    if (isTablet) {
+                        // 3 Balanced Metric Cards Row for Tablets
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = BrandDark),
+                                modifier = Modifier.weight(1f)
                             ) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text(text = "TOTAL SALES TODAY", color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = CurrencyFormatter.formatInr(stats?.totalSales ?: 0.0),
+                                        color = Color.White,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(text = "${stats?.totalOrders ?: 0} orders completed", color = TextMuted, fontSize = 12.sp)
+                                }
+                            }
+
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = BrandEmeraldLight),
+                                border = BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.3f)),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text(text = "CASH COLLECTION", color = BrandEmerald, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = CurrencyFormatter.formatInr(stats?.cashSales ?: 0.0),
+                                        color = BrandEmerald,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(text = "Physical cash receipts", color = TextSecondary, fontSize = 12.sp)
+                                }
+                            }
+
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = BrandOrangeLight),
+                                border = BorderStroke(1.dp, BrandOrange.copy(alpha = 0.3f)),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text(text = "ONLINE / UPI SALES", color = BrandOrange, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = CurrencyFormatter.formatInr(stats?.onlineSales ?: 0.0),
+                                        color = BrandOrange,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(text = "QR code & digital payments", color = TextSecondary, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    } else {
+                        // Phone Hero Card: Stacked Revenue
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = BrandDark),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(22.dp)) {
+                                Text(text = "TODAY'S REVENUE", color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = "Cash: ${CurrencyFormatter.formatInr(stats?.cashSales ?: 0.0)}",
-                                    color = BrandEmerald,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp
+                                    text = CurrencyFormatter.formatInr(stats?.totalSales ?: 0.0),
+                                    color = Color.White,
+                                    fontSize = 32.sp,
+                                    fontWeight = FontWeight.Black
                                 )
-                                Text(
-                                    text = "UPI: ${CurrencyFormatter.formatInr(stats?.onlineSales ?: 0.0)}",
-                                    color = BrandAmber,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp
-                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Cash: ${CurrencyFormatter.formatInr(stats?.cashSales ?: 0.0)}",
+                                        color = BrandEmerald,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
+                                    Text(
+                                        text = "UPI: ${CurrencyFormatter.formatInr(stats?.onlineSales ?: 0.0)}",
+                                        color = BrandAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
+                                }
                             }
                         }
                     }
@@ -127,48 +197,90 @@ fun ManagerDashboardScreen(
                     // Quick Management Actions Grid
                     Text(text = "QUICK ACTIONS", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextSecondary)
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        ActionCard(
-                            title = "New Order",
-                            subtitle = "POS Billing Screen",
-                            icon = Icons.Default.AddShoppingCart,
-                            color = BrandOrange,
-                            onClick = onNavigateToBilling,
-                            modifier = Modifier.weight(1f)
-                        )
-                        ActionCard(
-                            title = "Orders",
-                            subtitle = "View History",
-                            icon = Icons.Default.ReceiptLong,
-                            color = BrandDark,
-                            onClick = onNavigateToOrders,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    if (isTablet) {
+                        // 4 Cards in 1 Row on Tablet
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            ActionCard(
+                                title = "New Order",
+                                subtitle = "POS Billing Screen",
+                                icon = Icons.Default.AddShoppingCart,
+                                color = BrandOrange,
+                                onClick = onNavigateToBilling,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ActionCard(
+                                title = "Orders",
+                                subtitle = "View History",
+                                icon = Icons.Default.ReceiptLong,
+                                color = BrandDark,
+                                onClick = onNavigateToOrders,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ActionCard(
+                                title = "Menu Items",
+                                subtitle = "Rates & Portions",
+                                icon = Icons.Default.RestaurantMenu,
+                                color = BrandEmerald,
+                                onClick = onNavigateToItems,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ActionCard(
+                                title = "Reports",
+                                subtitle = "Sales & Analytics",
+                                icon = Icons.Default.BarChart,
+                                color = Color(0xFF0284C7),
+                                onClick = onNavigateToReports,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    } else {
+                        // 2 Rows of 2 on Phone
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            ActionCard(
+                                title = "New Order",
+                                subtitle = "POS Billing Screen",
+                                icon = Icons.Default.AddShoppingCart,
+                                color = BrandOrange,
+                                onClick = onNavigateToBilling,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ActionCard(
+                                title = "Orders",
+                                subtitle = "View History",
+                                icon = Icons.Default.ReceiptLong,
+                                color = BrandDark,
+                                onClick = onNavigateToOrders,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        ActionCard(
-                            title = "Menu Items",
-                            subtitle = "Rates & Portions",
-                            icon = Icons.Default.RestaurantMenu,
-                            color = BrandEmerald,
-                            onClick = onNavigateToItems,
-                            modifier = Modifier.weight(1f)
-                        )
-                        ActionCard(
-                            title = "Reports",
-                            subtitle = "Sales & Analytics",
-                            icon = Icons.Default.BarChart,
-                            color = Color(0xFF0284C7),
-                            onClick = onNavigateToReports,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            ActionCard(
+                                title = "Menu Items",
+                                subtitle = "Rates & Portions",
+                                icon = Icons.Default.RestaurantMenu,
+                                color = BrandEmerald,
+                                onClick = onNavigateToItems,
+                                modifier = Modifier.weight(1f)
+                            )
+                            ActionCard(
+                                title = "Reports",
+                                subtitle = "Sales & Analytics",
+                                icon = Icons.Default.BarChart,
+                                color = Color(0xFF0284C7),
+                                onClick = onNavigateToReports,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
 
                     // Recent Orders Feed
@@ -195,7 +307,7 @@ fun ManagerDashboardScreen(
                             }
                         }
                     } else {
-                        uiState.recentOrders.take(5).forEach { order ->
+                        uiState.recentOrders.take(6).forEach { order ->
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -232,6 +344,7 @@ fun ManagerDashboardScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ActionCard(
     title: String,
@@ -242,9 +355,8 @@ private fun ActionCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .height(105.dp)
-            .clickable { onClick() },
+        onClick = onClick,
+        modifier = modifier.height(105.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = BrandSurface),
         border = BorderStroke(1.dp, BrandBorder),
@@ -263,8 +375,17 @@ private fun ActionCard(
                 modifier = Modifier.size(28.dp)
             )
             Column {
-                Text(text = title, fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 15.sp)
-                Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = BrandDark
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = TextSecondary
+                )
             }
         }
     }

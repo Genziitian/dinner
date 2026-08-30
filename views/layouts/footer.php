@@ -53,11 +53,11 @@ $isManagerMoreActive = str_contains($currentUri, 'manager/reports') ||
             <span>Menu</span>
         </a>
 
-        <!-- Manager Quick More Menu (Reports, Exports, Staff, Audit, Settings) -->
-        <button type="button" class="nav-item <?= $isManagerMoreActive ? 'active' : '' ?>" data-bs-toggle="modal" data-bs-target="#managerMoreModal">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-            <span>More</span>
-        </button>
+        <!-- Manager Profile & Settings Link -->
+        <a href="<?= url('manager/settings') ?>" class="nav-item <?= str_contains($currentUri, 'manager/settings') ? 'active' : '' ?>">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span>Profile</span>
+        </a>
     <?php elseif ($currentUser['role'] === User::ROLE_SUPERADMIN): ?>
         <a href="<?= url('admin/dashboard') ?>" class="nav-item <?= str_contains($currentUri, 'admin/dashboard') ? 'active' : '' ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
@@ -78,66 +78,6 @@ $isManagerMoreActive = str_contains($currentUri, 'manager/reports') ||
     <?php endif; ?>
 </div>
 
-<?php if ($currentUser['role'] === User::ROLE_MANAGER): ?>
-<!-- Manager Mobile & Tablet Navigation Menu Modal -->
-<div class="modal fade" id="managerMoreModal" tabindex="-1" aria-labelledby="managerMoreModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow border-0" style="border-radius: 1.25rem;">
-            <div class="modal-header border-0 pb-1">
-                <h5 class="modal-title fw-bold" id="managerMoreModalLabel" style="color: #0f172a;">Manager Navigation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-3">
-                <div class="row g-2">
-                    <div class="col-6">
-                        <a href="<?= url('manager/reports') ?>" class="d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none border rounded-3 bg-light text-dark h-100 text-center">
-                            <span style="font-size: 1.6rem; margin-bottom: 0.25rem;">📊</span>
-                            <span class="fw-bold" style="font-size: 0.88rem;">Reports</span>
-                            <small class="text-muted" style="font-size: 0.72rem;">Financial Analytics</small>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="<?= url('manager/exports') ?>" class="d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none border rounded-3 bg-light text-dark h-100 text-center">
-                            <span style="font-size: 1.6rem; margin-bottom: 0.25rem;">📥</span>
-                            <span class="fw-bold" style="font-size: 0.88rem;">Exports</span>
-                            <small class="text-muted" style="font-size: 0.72rem;">CSV Download</small>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="<?= url('manager/users') ?>" class="d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none border rounded-3 bg-light text-dark h-100 text-center">
-                            <span style="font-size: 1.6rem; margin-bottom: 0.25rem;">👥</span>
-                            <span class="fw-bold" style="font-size: 0.88rem;">Staff</span>
-                            <small class="text-muted" style="font-size: 0.72rem;">User Accounts</small>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="<?= url('manager/audit') ?>" class="d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none border rounded-3 bg-light text-dark h-100 text-center">
-                            <span style="font-size: 1.6rem; margin-bottom: 0.25rem;">🔍</span>
-                            <span class="fw-bold" style="font-size: 0.88rem;">Audit Trail</span>
-                            <small class="text-muted" style="font-size: 0.72rem;">Activity Logs</small>
-                        </a>
-                    </div>
-                    <div class="col-12">
-                        <a href="<?= url('manager/settings') ?>" class="d-flex align-items-center gap-3 p-3 text-decoration-none border rounded-3 bg-light text-dark mb-2">
-                            <span style="font-size: 1.4rem;">⚙️</span>
-                            <div class="text-start">
-                                <div class="fw-bold" style="font-size: 0.9rem;">Restaurant Settings</div>
-                                <small class="text-muted" style="font-size: 0.75rem;">Name, phone, address & timezone</small>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-12">
-                        <a href="<?= url('logout') ?>" class="d-flex align-items-center justify-content-center gap-2 p-2.5 text-decoration-none text-danger border border-danger-subtle rounded-3 bg-white fw-bold" style="font-size: 0.9rem;">
-                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                            <span>Logout (<?= e($currentUser['username']) ?>)</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 <?php endif; ?>
 
 <!-- Core JavaScript -->
