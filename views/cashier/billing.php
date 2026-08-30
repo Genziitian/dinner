@@ -7,8 +7,8 @@ declare(strict_types=1);
 ?>
 
 <div class="row g-3">
-    <!-- Left Column: Menu Items Catalog -->
-    <div class="col-12 col-lg-8">
+    <!-- Left Column: Menu Items Catalog (Responsive split on Tablet & Desktop) -->
+    <div class="col-12 col-md-7 col-lg-8">
         <!-- Top Action Bar -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
@@ -88,9 +88,9 @@ declare(strict_types=1);
         </div>
     </div>
 
-    <!-- Right Column: Current Order / Cart Panel -->
-    <div class="col-12 col-lg-4" id="cartSection">
-        <div class="cart-panel sticky-top" style="top: 80px;">
+    <!-- Right Column: Current Order / Cart Panel (Side-by-side on Tablets & Desktop) -->
+    <div class="col-12 col-md-5 col-lg-4" id="cartSection">
+        <div class="cart-panel sticky-top" style="top: 75px;">
             <div class="cart-header">
                 <div>
                     <h5 class="fw-bold m-0" style="color: #0f172a;">Current Order</h5>
@@ -142,8 +142,6 @@ declare(strict_types=1);
         </div>
     </div>
 </div>
-
-
 
 <!-- Reusable Variant / Quantity Selection Modal -->
 <div class="modal fade" id="variantModal" tabindex="-1" aria-hidden="true">

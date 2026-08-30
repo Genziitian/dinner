@@ -20,7 +20,7 @@ declare(strict_types=1);
         <div class="card shadow-sm mb-3 border-0 metric-card-primary" style="border-radius: 1.25rem;">
             <div class="card-body p-4 text-center">
                 <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.78rem; letter-spacing: 1px;">TOTAL SALES TODAY</div>
-                <div class="display-5 fw-bold text-white my-2"><?= format_currency($stats['total_sales']) ?></div>
+                <div class="metric-value text-white my-2"><?= format_currency($stats['total_sales']) ?></div>
                 <div class="badge bg-warning text-dark px-3 py-2 fw-bold fs-6 rounded-pill">
                     <?= (int)$stats['total_orders'] ?> Orders Completed
                 </div>

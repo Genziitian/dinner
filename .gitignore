@@ -13,3 +13,12 @@ storage/db/*.sqlite
 # Logs and cache
 *.log
 .tempmediaStorage/
+
+# Android build artifacts (300MB+)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/keystore/
+*.apk
+*.aab

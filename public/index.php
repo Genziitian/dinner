@@ -28,6 +28,16 @@ require_once ROOT_PATH . '/controllers/OrderController.php';
 require_once ROOT_PATH . '/controllers/ExportController.php';
 require_once ROOT_PATH . '/controllers/ReceiptController.php';
 require_once ROOT_PATH . '/controllers/AdminController.php';
+require_once ROOT_PATH . '/controllers/ApiController.php';
+
+// Handle CORS Preflight for Mobile App
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-API-Token');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    http_response_code(200);
+    exit;
+}
 
 // Parse Request URI and Method
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
@@ -39,6 +49,40 @@ if ($path === '//') $path = '/';
 
 // Router Dispatcher
 try {
+    // 0. REST API v1 Routes (Mobile Client)
+    if (str_starts_with($path, '/api/v1/')) {
+        $api = new ApiController();
+        if ($path === '/api/v1/auth/login' && $method === 'POST') {
+            $api->login();
+        } elseif ($path === '/api/v1/auth/me' && $method === 'GET') {
+            $api->me();
+        } elseif ($path === '/api/v1/items' && $method === 'GET') {
+            $api->getItems();
+        } elseif ($path === '/api/v1/items' && $method === 'POST') {
+            $api->createItem();
+        } elseif (preg_match('#^/api/v1/items/(\d+)/toggle$#', $path, $m) && $method === 'POST') {
+            $api->toggleItem((int)$m[1]);
+        } elseif ($path === '/api/v1/orders' && $method === 'POST') {
+            $api->createOrder();
+        } elseif ($path === '/api/v1/orders' && $method === 'GET') {
+            $api->getOrders();
+        } elseif (preg_match('#^/api/v1/orders/(\d+)$#', $path, $m) && $method === 'GET') {
+            $api->getOrder((int)$m[1]);
+        } elseif ($path === '/api/v1/cashier/summary' && $method === 'GET') {
+            $api->getCashierSummary();
+        } elseif ($path === '/api/v1/manager/dashboard' && $method === 'GET') {
+            $api->getManagerDashboard();
+        } elseif ($path === '/api/v1/manager/reports' && $method === 'GET') {
+            $api->getReports();
+        } elseif (preg_match('#^/api/v1/receipt/([a-zA-Z0-9_-]+)$#', $path, $m) && $method === 'GET') {
+            $api->getReceipt($m[1]);
+        } else {
+            http_response_code(404);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'API route not found']);
+        }
+        exit;
+    }
     // 1. Root route
     if ($path === '/') {
         startSecureSession();

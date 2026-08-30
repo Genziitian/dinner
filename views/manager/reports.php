@@ -53,13 +53,13 @@ declare(strict_types=1);
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-4">
         <div class="card metric-card-primary h-100">
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.8px;">TOTAL REVENUE</div>
-                        <div class="fs-1 fw-bold text-white my-1"><?= format_currency($stats['total_sales']) ?></div>
+                        <div class="metric-value text-white my-1"><?= format_currency($stats['total_sales']) ?></div>
                     </div>
-                    <span style="font-size: 2rem;">💰</span>
+                    <span style="font-size: 1.8rem;">💰</span>
                 </div>
                 <small class="text-white-50"><?= (int)$stats['total_orders'] ?> orders in selected period</small>
             </div>
@@ -68,13 +68,13 @@ declare(strict_types=1);
 
     <div class="col-12 col-sm-6 col-md-4">
         <div class="card metric-card-cash h-100">
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="text-success text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.8px;">CASH SALES</div>
-                        <div class="fs-1 fw-bold text-success my-1"><?= format_currency($stats['cash_sales']) ?></div>
+                        <div class="metric-value text-success my-1"><?= format_currency($stats['cash_sales']) ?></div>
                     </div>
-                    <span style="font-size: 2rem;">💵</span>
+                    <span style="font-size: 1.8rem;">💵</span>
                 </div>
                 <small class="text-muted"><?= $stats['total_sales'] > 0 ? round(($stats['cash_sales'] / $stats['total_sales']) * 100, 1) : 0 ?>% of total revenue</small>
             </div>
@@ -83,13 +83,13 @@ declare(strict_types=1);
 
     <div class="col-12 col-sm-6 col-md-4">
         <div class="card metric-card-upi h-100">
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <div class="text-warning text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.8px;">ONLINE / UPI SALES</div>
-                        <div class="fs-1 fw-bold text-warning my-1"><?= format_currency($stats['online_sales']) ?></div>
+                        <div class="metric-value text-warning my-1"><?= format_currency($stats['online_sales']) ?></div>
                     </div>
-                    <span style="font-size: 2rem;">📱</span>
+                    <span style="font-size: 1.8rem;">📱</span>
                 </div>
                 <small class="text-muted"><?= $stats['total_sales'] > 0 ? round(($stats['online_sales'] / $stats['total_sales']) * 100, 1) : 0 ?>% of total revenue</small>
             </div>

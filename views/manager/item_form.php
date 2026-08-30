@@ -19,7 +19,7 @@ $isEdit = !empty($isEdit);
 </div>
 
 <div class="row justify-content-center">
-    <div class="col-12 col-lg-8">
+    <div class="col-12 col-md-10 col-lg-8">
         <div class="card shadow-sm border-0" style="border-radius: 1rem;">
             <div class="card-body p-4">
                 <form method="POST" action="<?= $isEdit ? url('manager/items/edit') : url('manager/items/create') ?>">

@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">DinePOS</string>
+    <string name="login_title">Sign in to DinePOS</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="menu_catalog">Menu Catalog</string>
+    <string name="current_order">Current Order</string>
+    <string name="save_order">Save &amp; Bill Order</string>
+    <string name="summary_title">Today\'s Summary</string>
+    <string name="reports_title">Financial Reports</string>
+    <string name="settings_title">Settings</string>
+</resources>

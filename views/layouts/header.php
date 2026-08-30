@@ -5,6 +5,7 @@
  */
 declare(strict_types=1);
 $currentUser = current_user();
+$currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +30,7 @@ $currentUser = current_user();
 <body>
 
 <?php if ($currentUser): ?>
-<!-- Global Desktop Navigation -->
+<!-- Global Navigation (Desktop & Landscape Tablets) -->
 <nav class="app-navbar">
     <div class="container-fluid d-flex justify-content-between align-items-center" style="max-width: 1400px;">
         <a href="<?= url('/') ?>" class="brand">
@@ -43,25 +44,25 @@ $currentUser = current_user();
             <span class="badge-role"><?= e($currentUser['role']) ?></span>
         </a>
 
-        <!-- Desktop Navigation Links -->
+        <!-- Desktop & Landscape Tablet Navigation Links -->
         <div class="app-nav-links desktop-only">
             <?php if ($currentUser['role'] === User::ROLE_CASHIER): ?>
-                <a href="<?= url('cashier/order') ?>">New Order</a>
-                <a href="<?= url('cashier/summary') ?>">Today's Summary</a>
+                <a href="<?= url('cashier/order') ?>" class="<?= str_contains($currentUri, 'cashier/order') ? 'active' : '' ?>">New Order</a>
+                <a href="<?= url('cashier/summary') ?>" class="<?= str_contains($currentUri, 'cashier/summary') ? 'active' : '' ?>">Today's Summary</a>
             <?php elseif ($currentUser['role'] === User::ROLE_MANAGER): ?>
-                <a href="<?= url('manager/dashboard') ?>">Dashboard</a>
-                <a href="<?= url('cashier/order') ?>">New Order</a>
-                <a href="<?= url('manager/orders') ?>">Orders</a>
-                <a href="<?= url('manager/items') ?>">Items</a>
-                <a href="<?= url('manager/reports') ?>">Reports</a>
-                <a href="<?= url('manager/exports') ?>">Exports</a>
-                <a href="<?= url('manager/users') ?>">Staff</a>
-                <a href="<?= url('manager/audit') ?>">Audit</a>
-                <a href="<?= url('manager/settings') ?>">Settings</a>
+                <a href="<?= url('manager/dashboard') ?>" class="<?= str_contains($currentUri, 'manager/dashboard') ? 'active' : '' ?>">Dashboard</a>
+                <a href="<?= url('cashier/order') ?>" class="<?= str_contains($currentUri, 'cashier/order') ? 'active' : '' ?>">New Order</a>
+                <a href="<?= url('manager/orders') ?>" class="<?= str_contains($currentUri, 'manager/orders') ? 'active' : '' ?>">Orders</a>
+                <a href="<?= url('manager/items') ?>" class="<?= str_contains($currentUri, 'manager/items') ? 'active' : '' ?>">Items</a>
+                <a href="<?= url('manager/reports') ?>" class="<?= str_contains($currentUri, 'manager/reports') ? 'active' : '' ?>">Reports</a>
+                <a href="<?= url('manager/exports') ?>" class="<?= str_contains($currentUri, 'manager/exports') ? 'active' : '' ?>">Exports</a>
+                <a href="<?= url('manager/users') ?>" class="<?= str_contains($currentUri, 'manager/users') ? 'active' : '' ?>">Staff</a>
+                <a href="<?= url('manager/audit') ?>" class="<?= str_contains($currentUri, 'manager/audit') ? 'active' : '' ?>">Audit</a>
+                <a href="<?= url('manager/settings') ?>" class="<?= str_contains($currentUri, 'manager/settings') ? 'active' : '' ?>">Settings</a>
             <?php elseif ($currentUser['role'] === User::ROLE_SUPERADMIN): ?>
-                <a href="<?= url('admin/dashboard') ?>">Dashboard</a>
-                <a href="<?= url('admin/restaurants') ?>">Restaurants</a>
-                <a href="<?= url('admin/users') ?>">Users</a>
+                <a href="<?= url('admin/dashboard') ?>" class="<?= str_contains($currentUri, 'admin/dashboard') ? 'active' : '' ?>">Dashboard</a>
+                <a href="<?= url('admin/restaurants') ?>" class="<?= str_contains($currentUri, 'admin/restaurants') ? 'active' : '' ?>">Restaurants</a>
+                <a href="<?= url('admin/users') ?>" class="<?= str_contains($currentUri, 'admin/users') ? 'active' : '' ?>">Users</a>
             <?php endif; ?>
             
             <a href="<?= url('logout') ?>" class="text-danger">Logout (<?= e($currentUser['username']) ?>)</a>

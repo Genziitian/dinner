@@ -21,7 +21,7 @@ declare(strict_types=1);
     <div class="col-12 col-md-6">
         <div class="card shadow-sm border-0 bg-primary text-white p-4" style="border-radius: 1rem;">
             <div class="text-white-50 small text-uppercase fw-semibold">TOTAL RESTAURANTS</div>
-            <div class="display-5 fw-bold my-2"><?= (int)$totalRestaurants ?></div>
+            <div class="metric-value text-white my-2"><?= (int)$totalRestaurants ?></div>
             <a href="<?= url('admin/restaurants') ?>" class="text-white text-decoration-underline small fw-medium">Manage all restaurants →</a>
         </div>
     </div>
@@ -29,7 +29,7 @@ declare(strict_types=1);
     <div class="col-12 col-md-6">
         <div class="card shadow-sm border-0 p-4" style="border-radius: 1rem; background: #ffffff; border: 1px solid #e2e8f0 !important;">
             <div class="text-muted small text-uppercase fw-semibold">TOTAL ACTIVE USERS</div>
-            <div class="display-5 fw-bold text-dark my-2"><?= (int)$totalUsers ?></div>
+            <div class="metric-value text-dark my-2"><?= (int)$totalUsers ?></div>
             <a href="<?= url('admin/users') ?>" class="text-primary text-decoration-underline small fw-medium">Manage user accounts →</a>
         </div>
     </div>

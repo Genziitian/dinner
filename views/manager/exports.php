@@ -16,7 +16,7 @@ declare(strict_types=1);
 
 <div class="row g-4 justify-content-center">
     <!-- Option 1: Daily Export -->
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card shadow-sm border-0 h-100" style="border-radius: 1rem;">
             <div class="card-header bg-white py-3">
                 <h5 class="fw-bold m-0 text-dark">Daily Export</h5>
@@ -29,7 +29,7 @@ declare(strict_types=1);
                         <label class="form-label small fw-semibold">Select Date</label>
                         <input type="date" name="date" class="form-control" value="<?= e($todayDate) ?>" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold" style="min-height: 44px;">
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         Download Daily CSV
                     </button>
@@ -39,7 +39,7 @@ declare(strict_types=1);
     </div>
 
     <!-- Option 2: Monthly Export -->
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card shadow-sm border-0 h-100" style="border-radius: 1rem;">
             <div class="card-header bg-white py-3">
                 <h5 class="fw-bold m-0 text-dark">Monthly Export</h5>
@@ -52,7 +52,7 @@ declare(strict_types=1);
                         <label class="form-label small fw-semibold">Select Month</label>
                         <input type="month" name="month" class="form-control" value="<?= e($currentMonth) ?>" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold" style="min-height: 44px;">
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         Download Monthly CSV
                     </button>
@@ -62,7 +62,7 @@ declare(strict_types=1);
     </div>
 
     <!-- Option 3: Custom Date Range -->
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-lg-4">
         <div class="card shadow-sm border-0 h-100" style="border-radius: 1rem;">
             <div class="card-header bg-white py-3">
                 <h5 class="fw-bold m-0 text-dark">Custom Range Export</h5>
