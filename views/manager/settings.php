@@ -9,15 +9,21 @@ $currentUser = current_user();
 
 <!-- Mobile Settings & Profile View (< 768px) -->
 <div class="d-md-none mb-5">
-    <!-- Profile Card Header -->
-    <div class="card shadow-sm border-0 mb-3" style="border-radius: 1rem; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
-        <div class="card-body p-4 text-center text-white">
-            <div class="d-flex align-items-center justify-content-center mx-auto mb-3 rounded-circle bg-white text-dark fw-bold fs-3 shadow" style="width: 60px; height: 60px; border: 2px solid rgba(255,255,255,0.2);">
+    <!-- Profile Card Header (Horizontally aligned) -->
+    <div class="card shadow-sm border-0 mb-3" style="border-radius: 1.15rem; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); overflow: hidden;">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+            <!-- Left: Avatar Circle -->
+            <div class="d-flex align-items-center justify-content-center rounded-circle bg-white text-dark fw-bold shadow-sm" style="width: 54px; height: 54px; font-size: 1.4rem; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.3);">
                 <?= strtoupper(substr($currentUser['username'] ?? 'M', 0, 1)) ?>
             </div>
-            <h5 class="fw-bold m-0"><?= e($currentUser['username']) ?></h5>
-            <span class="badge mt-1" style="background: rgba(255, 255, 255, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.7rem;">MANAGER</span>
-            <div class="small text-white-50 mt-2">🏢 <?= e($restaurant['name']) ?></div>
+            <!-- Right: Details -->
+            <div class="text-start">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-bold text-white fs-5" style="letter-spacing: -0.3px;"><?= e($currentUser['username']) ?></span>
+                    <span class="badge" style="background: rgba(255, 255, 255, 0.18); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem; padding: 0.2rem 0.5rem; font-weight: 700; border-radius: 0.5rem;">MANAGER</span>
+                </div>
+                <div class="small text-white-50 mt-1" style="font-size: 0.78rem;">🏢 <?= e($restaurant['name']) ?></div>
+            </div>
         </div>
     </div>
 

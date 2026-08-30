@@ -89,7 +89,7 @@ declare(strict_types=1);
     </div>
 
     <!-- Right Column: Current Order / Cart Panel (Side-by-side on Tablets & Desktop) -->
-    <div class="col-12 col-md-5 col-lg-4" id="cartSection">
+    <div class="col-12 col-md-5 col-lg-4 d-none d-md-block" id="cartSection">
         <div class="cart-panel sticky-top" style="top: 75px;">
             <div class="cart-header">
                 <div>
@@ -138,6 +138,75 @@ declare(strict_types=1);
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Mobile Cart Banner (App style) -->
+<div id="mobileCartBanner" class="fixed-bottom d-md-none bg-dark text-white p-3 shadow-lg" style="bottom: calc(var(--bottom-nav-height) - 1px); z-index: 1025; border-radius: 1rem 1rem 0 0; display: none; border-top: 2px solid var(--brand-orange);">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <span style="font-size: 1.25rem;">🛒</span>
+            <div>
+                <span class="fw-bold" id="mobileCartCount" style="font-size: 0.95rem;">0 Items</span>
+                <span class="text-white-50 mx-1">|</span>
+                <span class="fw-bold text-warning" id="mobileCartTotal" style="font-size: 1.05rem;">₹0.00</span>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm px-3.5 py-2 fw-bold" style="border-radius: 0.6rem; font-size: 0.85rem;" onclick="DineBilling.openMobileCart()">
+            View Cart ➔
+        </button>
+    </div>
+</div>
+
+<!-- Mobile Bottom Cart Drawer Modal -->
+<div class="modal fade" id="mobileCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content shadow border-0" style="border-radius: 1.25rem;">
+            <div class="modal-header border-bottom py-3 px-3">
+                <h5 class="modal-title fw-bold" style="color: #0f172a;">🛒 Current Order (Cart)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-0 d-flex flex-column" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Optional Customer Details -->
+                <div class="p-3 bg-light border-bottom">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="text" id="customerNameMobile" class="form-control form-control-sm py-2" placeholder="Customer (Optional)" style="border-radius: 0.5rem;">
+                        </div>
+                        <div class="col-6">
+                            <input type="tel" id="customerPhoneMobile" class="form-control form-control-sm py-2" placeholder="Phone (Optional)" style="border-radius: 0.5rem;">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cart Items List (Mobile) -->
+                <div class="cart-items-list p-3" id="cartItemsListMobile">
+                    <!-- Dynamically populated by billing.js -->
+                </div>
+                
+                <!-- Checkout & Payment Method -->
+                <div class="p-3 border-top bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted fw-bold small" style="font-size: 0.8rem;">TOTAL AMOUNT:</span>
+                        <span class="fs-4 fw-bold" style="color: #0f172a;" id="cartTotalMobile">₹0.00</span>
+                    </div>
+                    
+                    <label class="form-label text-muted small fw-bold" style="letter-spacing: 0.5px; font-size: 0.75rem;">SELECT PAYMENT METHOD</label>
+                    <div class="payment-methods-grid" style="grid-template-columns: repeat(2, 1fr); gap: 0.5rem; display: grid;">
+                        <button type="button" class="payment-btn payment-btn-mobile active" data-payment="Cash" style="padding: 0.65rem 0.5rem; font-size: 0.9rem;" onclick="DineBilling.setMobilePayment('Cash', this)">💵 Cash</button>
+                        <button type="button" class="payment-btn payment-btn-mobile" data-payment="Online / UPI" style="padding: 0.65rem 0.5rem; font-size: 0.9rem;" onclick="DineBilling.setMobilePayment('Online / UPI', this)">📱 Online / UPI</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-top p-3 bg-light d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" style="border-radius: 0.6rem; font-size: 0.9rem; padding: 0.5rem 1rem;" onclick="DineBilling.clearMobileCart()">Clear</button>
+                <button type="button" class="btn btn-save-order flex-grow-1" id="saveOrderBtnMobile" style="border-radius: 0.6rem; font-size: 0.95rem; padding: 0.5rem;" onclick="DineBilling.saveMobileOrder()" disabled>
+                    <span>Save & Bill Order</span>
+                </button>
             </div>
         </div>
     </div>

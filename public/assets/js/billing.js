@@ -160,19 +160,32 @@
   }
 
   function renderCart() {
-    if (!cartItemsListEl) return;
+    const listDesktop = document.getElementById('cartItemsList');
+    const listMobile = document.getElementById('cartItemsListMobile');
+    const banner = document.getElementById('mobileCartBanner');
 
     if (cart.length === 0) {
-      cartItemsListEl.innerHTML = `
+      const emptyHtml = `
         <div class="text-center text-muted py-4">
           <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mb-2 opacity-50"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
           <div>Cart is empty</div>
           <small>Tap items to add to this order</small>
         </div>
       `;
+      if (listDesktop) listDesktop.innerHTML = emptyHtml;
+      if (listMobile) listMobile.innerHTML = emptyHtml;
+
       if (cartTotalEl) cartTotalEl.textContent = '₹0.00';
+      const cartTotalMobile = document.getElementById('cartTotalMobile');
+      if (cartTotalMobile) cartTotalMobile.textContent = '₹0.00';
+
       if (cartCountBadgeEl) cartCountBadgeEl.textContent = '0';
+
       if (saveOrderBtn) saveOrderBtn.disabled = true;
+      const saveOrderBtnMobile = document.getElementById('saveOrderBtnMobile');
+      if (saveOrderBtnMobile) saveOrderBtnMobile.disabled = true;
+
+      if (banner) banner.style.display = 'none';
       return;
     }
 
@@ -204,10 +217,27 @@
       `;
     });
 
-    cartItemsListEl.innerHTML = html;
-    if (cartTotalEl) cartTotalEl.textContent = `₹${subtotal.toFixed(2)}`;
+    if (listDesktop) listDesktop.innerHTML = html;
+    if (listMobile) listMobile.innerHTML = html;
+
+    const formattedTotal = `₹${subtotal.toFixed(2)}`;
+    if (cartTotalEl) cartTotalEl.textContent = formattedTotal;
+    const cartTotalMobile = document.getElementById('cartTotalMobile');
+    if (cartTotalMobile) cartTotalMobile.textContent = formattedTotal;
+
     if (cartCountBadgeEl) cartCountBadgeEl.textContent = String(cart.length);
+
     if (saveOrderBtn) saveOrderBtn.disabled = false;
+    const saveOrderBtnMobile = document.getElementById('saveOrderBtnMobile');
+    if (saveOrderBtnMobile) saveOrderBtnMobile.disabled = false;
+
+    if (banner) {
+      banner.style.display = 'block';
+      const mCount = document.getElementById('mobileCartCount');
+      const mTotal = document.getElementById('mobileCartTotal');
+      if (mCount) mCount.textContent = `${cart.length} Item${cart.length > 1 ? 's' : ''}`;
+      if (mTotal) mTotal.textContent = formattedTotal;
+    }
   }
 
   function initPaymentSelectors() {
@@ -216,6 +246,15 @@
         paymentBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedPayment = btn.getAttribute('data-payment') || 'Cash';
+        
+        // Sync mobile buttons
+        document.querySelectorAll('.payment-btn-mobile').forEach(b => {
+          if (b.getAttribute('data-payment') === selectedPayment) {
+            b.classList.add('active');
+          } else {
+            b.classList.remove('active');
+          }
+        });
       });
     });
   }
@@ -232,25 +271,31 @@
     }
 
     if (saveOrderBtn) {
-      saveOrderBtn.addEventListener('click', saveOrder);
+      saveOrderBtn.addEventListener('click', () => saveOrder(false));
     }
   }
 
-  async function saveOrder() {
+  async function saveOrder(isMobile = false) {
     if (cart.length === 0) {
       alert('Cart is empty. Please add items to save order.');
       return;
     }
 
-    saveOrderBtn.disabled = true;
-    saveOrderBtn.innerHTML = `
-      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-      Saving Order...
-    `;
+    const currentSaveBtn = isMobile ? document.getElementById('saveOrderBtnMobile') : saveOrderBtn;
+    const currentNameInput = isMobile ? document.getElementById('customerNameMobile') : customerNameInput;
+    const currentPhoneInput = isMobile ? document.getElementById('customerPhoneMobile') : customerPhoneInput;
+
+    if (currentSaveBtn) {
+      currentSaveBtn.disabled = true;
+      currentSaveBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Saving Order...
+      `;
+    }
 
     const payload = {
-      customer_name: customerNameInput ? customerNameInput.value.trim() : '',
-      customer_phone: customerPhoneInput ? customerPhoneInput.value.trim() : '',
+      customer_name: currentNameInput ? currentNameInput.value.trim() : '',
+      customer_phone: currentPhoneInput ? currentPhoneInput.value.trim() : '',
       payment_method: selectedPayment,
       items: cart.map(c => ({
         item_id: c.item_id,
@@ -273,19 +318,27 @@
       const data = await response.json();
 
       if (data.success && data.redirect_url) {
-        // Clear cart and navigate immediately to receipt
         cart = [];
+        const mobileModalEl = document.getElementById('mobileCartModal');
+        if (mobileModalEl) {
+          const bsModal = bootstrap.Modal.getInstance(mobileModalEl);
+          if (bsModal) bsModal.hide();
+        }
         window.location.href = data.redirect_url;
       } else {
         alert(data.message || 'Failed to save order. Please try again.');
-        saveOrderBtn.disabled = false;
-        saveOrderBtn.innerHTML = 'Save Order';
+        if (currentSaveBtn) {
+          currentSaveBtn.disabled = false;
+          currentSaveBtn.innerHTML = 'Save & Bill Order';
+        }
       }
     } catch (err) {
       console.error('Order save error:', err);
       alert('Connection error occurred while saving the order. Please check connection and try again.');
-      saveOrderBtn.disabled = false;
-      saveOrderBtn.innerHTML = 'Save Order';
+      if (currentSaveBtn) {
+        currentSaveBtn.disabled = false;
+        currentSaveBtn.innerHTML = 'Save & Bill Order';
+      }
     }
   }
 
@@ -362,6 +415,46 @@
       if (!cart[index]) return;
       cart.splice(index, 1);
       renderCart();
+    },
+
+    openMobileCart: function() {
+      const modalEl = document.getElementById('mobileCartModal');
+      if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    },
+
+    setMobilePayment: function(method, btn) {
+      document.querySelectorAll('.payment-btn-mobile').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPayment = method;
+      
+      // Sync desktop buttons
+      document.querySelectorAll('.payment-btn').forEach(b => {
+        if (b.getAttribute('data-payment') === method) {
+          b.classList.add('active');
+        } else {
+          b.classList.remove('active');
+        }
+      });
+    },
+
+    clearMobileCart: function() {
+      if (cart.length === 0) return;
+      if (confirm('Are you sure you want to clear the current unsaved cart?')) {
+        cart = [];
+        renderCart();
+        const modalEl = document.getElementById('mobileCartModal');
+        if (modalEl) {
+          const bsModal = bootstrap.Modal.getInstance(modalEl);
+          if (bsModal) bsModal.hide();
+        }
+      }
+    },
+
+    saveMobileOrder: function() {
+      saveOrder(true);
     }
   };
 })();
