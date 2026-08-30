@@ -43,8 +43,8 @@ try {
     }
 
     echo "✓ Clean database schema initialized successfully.\n\n";
-    echo "Next step: Visit your website URL to create your Master Super Admin account,\n";
-    echo "or run: php database/create_admin.php <username> <password>\n\n";
+    echo "To create your Super Admin user, run:\n";
+    echo "  php database/create_admin.php <username> <password>\n\n";
     echo "====================================================\n";
     echo " Migration Completed Successfully (Zero Fake Data)\n";
     echo "====================================================\n";

@@ -1,5 +1,4 @@
 -- DinePOS - Clean Database Initialization
 -- No fake data or demo accounts are seeded.
--- To create your initial Super Admin account:
--- 1. Visit your app URL in the browser (you will be prompted to create your Super Admin account).
--- 2. OR run from terminal: php database/create_admin.php <username> <password>
+-- To create a Super Admin account from CLI:
+-- php database/create_admin.php <username> <password>

@@ -134,19 +134,19 @@ Open your browser at `http://localhost:8000` (or your local development URL).
 
 ---
 
-## 🔐 Initial Super Admin Setup (Zero Demo Data)
+## 🔐 Creating Super Admin User (Zero Demo Data)
 
 DinePOS installs with a clean database and zero pre-populated demo records.
 
-### Creating Your Master Super Admin Account:
-1. **Web Interface**: On first visit to your domain or `/login`, the system automatically detects a fresh database and launches the **Initial Setup Wizard** (`/setup`). Enter your desired Super Admin username and password.
-2. **CLI / Terminal**: Alternatively, run:
-   ```bash
-   php database/create_admin.php <username> <password>
-   ```
+To create your Super Admin user via CLI:
+```bash
+php database/create_admin.php <username> <password>
+```
 
-Once the Master Super Admin is created:
-1. Sign in to the **Super Admin Console** (`/admin/dashboard`).
+Or insert directly into the `users` table with standard password hashing.
+
+Once the Super Admin is created:
+1. Sign in to the **Super Admin Console** at `/login`.
 2. Create your restaurant under **Restaurants** → **+ Create Restaurant**.
 3. Create your managers and cashiers under **Users** → **+ Create User**.
 4. Managers can then log in to configure dishes, rates, and manage restaurant staff.

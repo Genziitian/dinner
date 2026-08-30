@@ -23,71 +23,9 @@ class AuthController extends BaseController {
             return;
         }
 
-        // If no users exist in database, redirect to initial setup wizard
-        if (User::count() === 0) {
-            $this->redirect('/setup');
-            return;
-        }
-
         $this->renderStandalone('auth/login', [
             'title' => 'Login | DinePOS',
         ]);
-    }
-
-    /**
-     * Show first-time super admin setup wizard
-     */
-    public function showSetup(): void {
-        startSecureSession();
-        if (User::count() > 0) {
-            $this->redirect('/login');
-            return;
-        }
-
-        $this->renderStandalone('auth/setup', [
-            'title' => 'Initial Setup | DinePOS',
-        ]);
-    }
-
-    /**
-     * Handle first-time super admin setup submission
-     */
-    public function setup(): void {
-        startSecureSession();
-        if (User::count() > 0) {
-            $this->redirect('/login');
-            return;
-        }
-
-        $this->validateCsrf();
-
-        $username = strtolower(trim($_POST['username'] ?? ''));
-        $password = (string)($_POST['password'] ?? '');
-        $passwordConfirm = (string)($_POST['password_confirm'] ?? '');
-
-        if ($password !== $passwordConfirm) {
-            set_flash('danger', 'Passwords do not match.');
-            $this->redirect('/setup');
-            return;
-        }
-
-        try {
-            $userId = User::create([
-                'restaurant_id' => null,
-                'username' => $username,
-                'password' => $password,
-                'role' => User::ROLE_SUPERADMIN,
-                'status' => 'active',
-            ]);
-
-            AuditLog::log(AuditLog::ACTION_USER_CREATE, 'user', $userId, null, $userId, ['username' => $username, 'role' => 'superadmin', 'initial_setup' => true]);
-
-            set_flash('success', "Master Super Admin '{$username}' created! Please sign in.");
-            $this->redirect('/login');
-        } catch (Throwable $e) {
-            set_flash('danger', $e->getMessage());
-            $this->redirect('/setup');
-        }
     }
 
     /**
