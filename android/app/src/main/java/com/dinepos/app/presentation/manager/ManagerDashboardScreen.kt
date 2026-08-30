@@ -555,14 +555,14 @@ private fun RecentOrderCard(
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${order.timeFormatted} · ${order.customerName.ifBlank { "Walk-in Customer" }}",
+                    text = "${order.orderTime} · ${order.customerName?.ifBlank { "Walk-in Customer" } ?: "Walk-in Customer"}",
                     fontSize = 12.sp,
                     color = TextSecondary
                 )
             }
 
             Text(
-                text = CurrencyFormatter.formatInr(order.totalAmount),
+                text = CurrencyFormatter.formatInr(order.total),
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 16.sp,
                 color = BrandDark

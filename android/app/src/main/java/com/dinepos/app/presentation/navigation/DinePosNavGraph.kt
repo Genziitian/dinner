@@ -50,7 +50,10 @@ fun DinePosNavGraph(
                 },
                 onNavigateToScanner = {
                     navController.navigate(Screen.QrScanner.route)
-                }
+                },
+                onNavigateBack = if (navController.previousBackStackEntry != null) {
+                    { navController.popBackStack() }
+                } else null
             )
         }
 
