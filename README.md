@@ -164,3 +164,4 @@ Open your browser at `http://localhost:8000` (or your local development URL).
 - **Cryptographic Receipt Tokens**: Receipts are viewed via `/receipt/{token}`, matching against `hash('sha256', $token)` in the database.
 - **Brute Force Lockout**: 5 failed login attempts trigger a 15-minute lock on the IP and username.
 - **Session Hardening**: Sessions are regenerated upon login (`session_regenerate_id(true)`), cookies marked `HttpOnly` and `SameSite=Lax`.
+# dinner
