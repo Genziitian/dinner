@@ -102,7 +102,7 @@ class OrderController extends BaseController {
         // Generate public secure URL for QR code
         // Note: The raw token is present if passed in URL or reconstructed if order was looked up
         $rawToken = !empty($token) ? $token : null;
-        $publicUrl = $rawToken ? url('receipt/' . $rawToken) : null;
+        $publicUrl = $rawToken ? url_absolute('receipt/' . $rawToken) : null;
 
         $this->render('receipt/view', [
             'title' => "Receipt #{$order['order_number']} | DinePOS",

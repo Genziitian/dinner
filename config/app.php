@@ -172,6 +172,15 @@ function url(string $path = ''): string {
 }
 
 /**
+ * Generate absolute URL (using APP_URL from .env)
+ */
+function url_absolute(string $path = ''): string {
+    $baseUrl = rtrim((string)env('APP_URL', 'http://localhost'), '/');
+    $path = ltrim($path, '/');
+    return $path !== '' ? $baseUrl . '/' . $path : $baseUrl . '/';
+}
+
+/**
  * Generate asset URL
  */
 function asset(string $path): string {

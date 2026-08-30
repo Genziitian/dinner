@@ -55,6 +55,7 @@ fun ItemFormDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.widthIn(max = 540.dp),
         title = {
             Column {
                 Text("Add New Menu Item", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = BrandDark)
@@ -274,7 +275,7 @@ fun ItemFormDialog(
                             )
 
                             Text(
-                                text = "Auto-enabled portions:",
+                                text = "Auto-enabled portions for billing:",
                                 fontSize = 11.sp,
                                 color = TextSecondary,
                                 fontWeight = FontWeight.SemiBold
@@ -287,12 +288,34 @@ fun ItemFormDialog(
                                 FilterChip(
                                     selected = enable250g,
                                     onClick = { enable250g = !enable250g },
-                                    label = { Text("250g (1/4 kg)") }
+                                    label = { Text("250g (1/4 kg)", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = BrandOrange,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = BrandBackground,
+                                        labelColor = BrandDark
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = enable250g,
+                                        borderColor = if (enable250g) BrandOrange else BrandBorder
+                                    )
                                 )
                                 FilterChip(
                                     selected = enable500g,
                                     onClick = { enable500g = !enable500g },
-                                    label = { Text("500g (1/2 kg)") }
+                                    label = { Text("500g (1/2 kg)", fontWeight = FontWeight.SemiBold, fontSize = 12.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = BrandOrange,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = BrandBackground,
+                                        labelColor = BrandDark
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = enable500g,
+                                        borderColor = if (enable500g) BrandOrange else BrandBorder
+                                    )
                                 )
                             }
                         }

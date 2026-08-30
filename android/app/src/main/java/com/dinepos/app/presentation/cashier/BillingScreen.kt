@@ -33,11 +33,14 @@ import com.dinepos.app.core.utils.CurrencyFormatter
 import com.dinepos.app.domain.model.Order
 import com.dinepos.app.presentation.cashier.components.*
 
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BillingScreen(
     onOrderPlaced: (Order) -> Unit,
     onNavigateToScanner: () -> Unit = {},
+    onNavigateBack: (() -> Unit)? = null,
     viewModel: CashierViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -64,6 +67,17 @@ fun BillingScreen(
             containerColor = BrandBackground,
             topBar = {
                 TopAppBar(
+                    navigationIcon = {
+                        if (onNavigateBack != null) {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = BrandDark
+                                )
+                            }
+                        }
+                    },
                     title = {
                         Column {
                             Text(
