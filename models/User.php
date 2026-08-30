@@ -159,4 +159,14 @@ class User {
         self::resetFailedLogins((int)$user['id']);
         return false;
     }
+
+    public static function count(): int {
+        try {
+            $row = Database::fetchOne("SELECT COUNT(*) as total FROM users");
+            return (int)($row['total'] ?? 0);
+        } catch (Throwable $e) {
+            return 0;
+        }
+    }
 }
+

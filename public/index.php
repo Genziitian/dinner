@@ -56,7 +56,17 @@ try {
         exit;
     }
 
-    // 2. Authentication Routes
+    // 2. Authentication & Initial Setup Routes
+    if ($path === '/setup') {
+        $c = new AuthController();
+        if ($method === 'POST') {
+            $c->setup();
+        } else {
+            $c->showSetup();
+        }
+        exit;
+    }
+
     if ($path === '/login') {
         $c = new AuthController();
         if ($method === 'POST') {

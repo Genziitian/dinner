@@ -37,6 +37,8 @@ class TestRunner {
         echo " DinePOS Comprehensive Automated Verification Test Suite\n";
         echo "========================================================\n\n";
 
+        $this->setupFixtures();
+
         $this->testDatabaseAndSeeds();
         $this->testAuthenticationAndValidation();
         $this->testBruteForceProtection();
@@ -57,23 +59,54 @@ class TestRunner {
         }
     }
 
+    private function setupFixtures(): void {
+        $db = Database::getConnection();
+        $now = date('Y-m-d H:i:s');
+        $hash = password_hash('password123', PASSWORD_DEFAULT);
+
+        // Clean tables
+        $db->exec("DELETE FROM order_items; DELETE FROM orders; DELETE FROM daily_order_counters; DELETE FROM item_variants; DELETE FROM items; DELETE FROM users; DELETE FROM restaurants;");
+
+        // Fixtures
+        $db->prepare("INSERT INTO restaurants (id, name, phone, address, timezone, status, created_at, updated_at) VALUES (1, 'The Royal Fork', '+91 98765 43210', '102 Flavor Street', 'Asia/Kolkata', 'active', :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+        $db->prepare("INSERT INTO users (id, restaurant_id, username, password_hash, role, status, failed_login_attempts, locked_until, created_at, updated_at) VALUES (1, NULL, 'superadmin', :hash, 'superadmin', 'active', 0, NULL, :now1, :now2)")->execute([':hash' => $hash, ':now1' => $now, ':now2' => $now]);
+        $db->prepare("INSERT INTO users (id, restaurant_id, username, password_hash, role, status, failed_login_attempts, locked_until, created_at, updated_at) VALUES (2, 1, 'manager01', :hash, 'manager', 'active', 0, NULL, :now1, :now2)")->execute([':hash' => $hash, ':now1' => $now, ':now2' => $now]);
+        $db->prepare("INSERT INTO users (id, restaurant_id, username, password_hash, role, status, failed_login_attempts, locked_until, created_at, updated_at) VALUES (3, 1, 'cashier01', :hash, 'cashier', 'active', 0, NULL, :now1, :now2)")->execute([':hash' => $hash, ':now1' => $now, ':now2' => $now]);
+
+        // Items
+        $db->prepare("INSERT INTO items (id, restaurant_id, name, item_type, base_unit, active, created_at, updated_at) VALUES (1, 1, 'Chicken Curry', 'portion', 'portion', 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+        $db->prepare("INSERT INTO item_variants (id, item_id, variant_name, quantity_value, quantity_unit, price, active, created_at, updated_at) VALUES (1, 1, 'Full', 1.0, 'portion', 120.00, 1, :now1, :now2), (2, 1, 'Half', 0.5, 'portion', 60.00, 1, :now1, :now2), (3, 1, 'Quarter', 0.25, 'portion', 30.00, 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+
+        $db->prepare("INSERT INTO items (id, restaurant_id, name, item_type, base_unit, active, created_at, updated_at) VALUES (2, 1, 'Boiled Egg', 'piece', 'piece', 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+        $db->prepare("INSERT INTO item_variants (id, item_id, variant_name, quantity_value, quantity_unit, price, active, created_at, updated_at) VALUES (4, 2, 'Standard', 1.0, 'piece', 30.00, 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+
+        $db->prepare("INSERT INTO items (id, restaurant_id, name, item_type, base_unit, active, created_at, updated_at) VALUES (3, 1, 'Egg', 'piece', 'piece', 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+        $db->prepare("INSERT INTO item_variants (id, item_id, variant_name, quantity_value, quantity_unit, price, active, created_at, updated_at) VALUES (5, 3, 'Standard', 1.0, 'piece', 20.00, 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+
+        $db->prepare("INSERT INTO items (id, restaurant_id, name, item_type, base_unit, active, created_at, updated_at) VALUES (4, 1, 'Rice', 'weight', 'kg', 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+        $db->prepare("INSERT INTO item_variants (id, item_id, variant_name, quantity_value, quantity_unit, price, active, created_at, updated_at) VALUES (6, 4, '1 kg', 1.0, 'kg', 120.00, 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+
+        $db->prepare("INSERT INTO items (id, restaurant_id, name, item_type, base_unit, active, created_at, updated_at) VALUES (5, 1, 'Cold Drink', 'weight', 'l', 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+        $db->prepare("INSERT INTO item_variants (id, item_id, variant_name, quantity_value, quantity_unit, price, active, created_at, updated_at) VALUES (7, 5, '1 Liter', 1.0, 'l', 100.00, 1, :now1, :now2)")->execute([':now1' => $now, ':now2' => $now]);
+    }
+
     private function testDatabaseAndSeeds(): void {
-        echo "1. Testing Database & Seed Data Integrity...\n";
+        echo "1. Testing Database & Test Fixtures Integrity...\n";
 
         $restaurant = Restaurant::findById(1);
-        $this->assert($restaurant !== null && $restaurant['name'] === 'The Royal Fork', "Demo restaurant exists");
+        $this->assert($restaurant !== null && $restaurant['name'] === 'The Royal Fork', "Test restaurant loaded");
 
         $superadmin = User::findByUsername('superadmin');
-        $this->assert($superadmin !== null && $superadmin['role'] === 'superadmin', "Super Admin account seeded");
+        $this->assert($superadmin !== null && $superadmin['role'] === 'superadmin', "Super Admin fixture loaded");
 
         $manager = User::findByUsername('manager01');
-        $this->assert($manager !== null && $manager['role'] === 'manager' && (int)$manager['restaurant_id'] === 1, "Manager account seeded with Restaurant 1");
+        $this->assert($manager !== null && $manager['role'] === 'manager' && (int)$manager['restaurant_id'] === 1, "Manager fixture loaded with Restaurant 1");
 
         $cashier = User::findByUsername('cashier01');
-        $this->assert($cashier !== null && $cashier['role'] === 'cashier' && (int)$cashier['restaurant_id'] === 1, "Cashier account seeded with Restaurant 1");
+        $this->assert($cashier !== null && $cashier['role'] === 'cashier' && (int)$cashier['restaurant_id'] === 1, "Cashier fixture loaded with Restaurant 1");
 
         $items = Item::allByRestaurant(1);
-        $this->assert(count($items) >= 5, "Sample items seeded (count >= 5)");
+        $this->assert(count($items) >= 5, "Sample items loaded (count >= 5)");
     }
 
     private function testAuthenticationAndValidation(): void {

@@ -29,36 +29,45 @@ declare(strict_types=1);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($users as $u): ?>
+                    <?php if (empty($users)): ?>
                         <tr>
-                            <td>
-                                <div class="fw-bold text-dark"><?= e($u['username']) ?></div>
-                                <small class="text-muted">ID: #<?= (int)$u['id'] ?></small>
-                            </td>
-                            <td>
-                                <span class="badge bg-<?= 
-                                    $u['role'] === 'superadmin' ? 'dark' : 
-                                    ($u['role'] === 'manager' ? 'primary' : 'info')
-                                ?>">
-                                    <?= strtoupper(e($u['role'])) ?>
-                                </span>
-                            </td>
-                            <td>
-                                <?= !empty($u['restaurant_name']) ? e($u['restaurant_name']) : '<span class="text-muted">Global (All)</span>' ?>
-                            </td>
-                            <td>
-                                <span class="badge bg-<?= $u['status'] === 'active' ? 'success' : 'danger' ?>">
-                                    <?= ucfirst(e($u['status'])) ?>
-                                </span>
-                            </td>
-                            <td>
-                                <small class="text-muted"><?= format_date($u['created_at']) ?></small>
-                            </td>
-                            <td class="text-end">
-                                <a href="<?= url('admin/users/edit?id=' . $u['id']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <p class="mb-2">No users created yet.</p>
+                                <a href="<?= url('admin/users/create') ?>" class="btn btn-sm btn-primary">+ Create First User</a>
                             </td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php foreach ($users as $u): ?>
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark"><?= e($u['username']) ?></div>
+                                    <small class="text-muted">ID: #<?= (int)$u['id'] ?></small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-<?= 
+                                        $u['role'] === 'superadmin' ? 'dark' : 
+                                        ($u['role'] === 'manager' ? 'primary' : 'info')
+                                    ?>">
+                                        <?= strtoupper(e($u['role'])) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?= !empty($u['restaurant_name']) ? e($u['restaurant_name']) : '<span class="text-muted">Global (All)</span>' ?>
+                                </td>
+                                <td>
+                                    <span class="badge bg-<?= $u['status'] === 'active' ? 'success' : 'danger' ?>">
+                                        <?= ucfirst(e($u['status'])) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted"><?= format_date($u['created_at']) ?></small>
+                                </td>
+                                <td class="text-end">
+                                    <a href="<?= url('admin/users/edit?id=' . $u['id']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

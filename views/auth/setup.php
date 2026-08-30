@@ -1,6 +1,6 @@
 <?php
 /**
- * Modern Minimalist Login View Template
+ * Initial Master Super Admin Setup View Template
  * Restaurant Billing & Order Management System
  */
 declare(strict_types=1);
@@ -13,7 +13,7 @@ declare(strict_types=1);
     <meta name="theme-color" content="#0f172a">
     <link rel="manifest" href="<?= url('manifest.json') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
-    <title>Sign In · DinePOS</title>
+    <title>Initial Setup · DinePOS</title>
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
     <style>
@@ -28,15 +28,14 @@ declare(strict_types=1);
             margin: 0;
             padding: 1.25rem;
         }
-        .login-card {
+        .setup-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 1.25rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
             width: 100%;
-            max-width: 400px;
+            max-width: 440px;
             padding: 2.25rem;
-            transition: transform 0.2s ease;
         }
         .app-logo-badge {
             width: 52px;
@@ -96,23 +95,22 @@ declare(strict_types=1);
 </head>
 <body>
 
-<div class="login-card">
-    <!-- Brand Header -->
+<div class="setup-card">
     <div class="text-center mb-4">
         <div class="app-logo-badge">
             <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
         </div>
-        <h3 class="fw-bold m-0" style="letter-spacing: -0.5px;">DinePOS</h3>
-        <p class="text-muted" style="font-size: 0.875rem; margin-top: 0.25rem;">Restaurant Billing & Order Management</p>
+        <h3 class="fw-bold m-0" style="letter-spacing: -0.5px;">First-Time Setup</h3>
+        <p class="text-muted" style="font-size: 0.875rem; margin-top: 0.25rem;">Create your Master Super Admin Account</p>
     </div>
 
     <?php require ROOT_PATH . '/views/layouts/flash.php'; ?>
 
-    <form action="<?= url('login') ?>" method="POST" autocomplete="off">
+    <form action="<?= url('setup') ?>" method="POST" autocomplete="off">
         <?= csrf_field() ?>
 
         <div class="mb-3">
-            <label for="username" class="form-label" style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; display: block;">Username / User ID</label>
+            <label for="username" class="form-label" style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; display: block;">Super Admin Username</label>
             <input 
                 type="text" 
                 class="form-control-custom" 
@@ -120,15 +118,15 @@ declare(strict_types=1);
                 name="username" 
                 maxlength="10" 
                 pattern="[a-zA-Z0-9_]{3,10}"
-                placeholder="Enter username" 
+                placeholder="e.g. admin" 
                 required 
                 autofocus
             >
-            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">3 to 10 alphanumeric characters</div>
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">3 to 10 alphanumeric or underscore characters</div>
         </div>
 
-        <div class="mb-4">
-            <label for="password" class="form-label" style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; display: block;">Password</label>
+        <div class="mb-3">
+            <label for="password" class="form-label" style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; display: block;">Master Password</label>
             <input 
                 type="password" 
                 class="form-control-custom" 
@@ -136,14 +134,29 @@ declare(strict_types=1);
                 name="password" 
                 minlength="8" 
                 maxlength="72"
-                placeholder="Enter password" 
+                placeholder="Create strong password" 
+                required
+            >
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">Minimum 8 characters</div>
+        </div>
+
+        <div class="mb-4">
+            <label for="password_confirm" class="form-label" style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; display: block;">Confirm Password</label>
+            <input 
+                type="password" 
+                class="form-control-custom" 
+                id="password_confirm" 
+                name="password_confirm" 
+                minlength="8" 
+                maxlength="72"
+                placeholder="Re-type password" 
                 required
             >
         </div>
 
         <button type="submit" class="btn-submit">
-            <span>Sign In</span>
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            <span>Create Master Admin & Continue</span>
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
         </button>
     </form>
 </div>

@@ -54,25 +54,34 @@ declare(strict_types=1);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($restaurants as $r): ?>
+                    <?php if (empty($restaurants)): ?>
                         <tr>
-                            <td>#<?= (int)$r['id'] ?></td>
-                            <td>
-                                <div class="fw-bold text-dark"><?= e($r['name']) ?></div>
-                                <small class="text-muted"><?= e($r['address'] ?? '-') ?></small>
-                            </td>
-                            <td><?= e($r['phone'] ?? '-') ?></td>
-                            <td><code><?= e($r['timezone']) ?></code></td>
-                            <td>
-                                <span class="badge bg-<?= $r['status'] === 'active' ? 'success' : 'danger' ?>">
-                                    <?= ucfirst(e($r['status'])) ?>
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <a href="<?= url('admin/restaurants/edit?id=' . $r['id']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <p class="mb-2">No restaurants added yet.</p>
+                                <a href="<?= url('admin/restaurants/create') ?>" class="btn btn-sm btn-primary">+ Create First Restaurant</a>
                             </td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php foreach ($restaurants as $r): ?>
+                            <tr>
+                                <td>#<?= (int)$r['id'] ?></td>
+                                <td>
+                                    <div class="fw-bold text-dark"><?= e($r['name']) ?></div>
+                                    <small class="text-muted"><?= e($r['address'] ?? '-') ?></small>
+                                </td>
+                                <td><?= e($r['phone'] ?? '-') ?></td>
+                                <td><code><?= e($r['timezone']) ?></code></td>
+                                <td>
+                                    <span class="badge bg-<?= $r['status'] === 'active' ? 'success' : 'danger' ?>">
+                                        <?= ucfirst(e($r['status'])) ?>
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="<?= url('admin/restaurants/edit?id=' . $r['id']) ?>" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

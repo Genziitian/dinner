@@ -132,28 +132,25 @@ Open your browser at `http://localhost:8000` (or your local development URL).
 
 ---
 
-## 🔐 Default Demo Accounts
-
-| Role | Username | Password | Assigned Restaurant | Permissions |
-| :--- | :--- | :--- | :--- | :--- |
-| **Super Admin** | `superadmin` | `password123` | System-wide | Manage all restaurants, assign managers & cashiers |
-| **Manager** | `manager01` | `password123` | *The Royal Fork* | Full restaurant control, orders, items, reports, exports, audit |
-| **Cashier** | `cashier01` | `password123` | *The Royal Fork* | Point of Sale billing, unsaved cart, today's summary |
-
-*(Remember to change all default passwords in production deployment).*
-
 ---
 
-## 📱 Menu Items & Pricing Models Seeded
+## 🔐 Initial Super Admin Setup (Zero Demo Data)
 
-1. **Chicken Curry** (`Portion Based`):
-   - Full: ₹120.00
-   - Half: ₹60.00
-   - Quarter: ₹30.00
-2. **Boiled Egg** (`Per Piece`): ₹30.00 / piece
-3. **Fresh Egg** (`Per Piece`): ₹20.00 / piece
-4. **Basmati Rice** (`By Weight`): ₹120.00 / kg (supports 0.25 kg, 0.5 kg, 1 kg, custom decimals)
-5. **Cold Drink** (`By Volume`): ₹100.00 / L
+DinePOS installs with a clean database and zero pre-populated demo records.
+
+### Creating Your Master Super Admin Account:
+1. **Web Interface**: On first visit to your domain or `/login`, the system automatically detects a fresh database and launches the **Initial Setup Wizard** (`/setup`). Enter your desired Super Admin username and password.
+2. **CLI / Terminal**: Alternatively, run:
+   ```bash
+   php database/create_admin.php <username> <password>
+   ```
+
+Once the Master Super Admin is created:
+1. Sign in to the **Super Admin Console** (`/admin/dashboard`).
+2. Create your restaurant under **Restaurants** → **+ Create Restaurant**.
+3. Create your managers and cashiers under **Users** → **+ Create User**.
+4. Managers can then log in to configure dishes, rates, and manage restaurant staff.
+
 
 ---
 
