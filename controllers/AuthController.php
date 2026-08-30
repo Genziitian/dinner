@@ -49,8 +49,9 @@ class AuthController extends BaseController {
         // 2. Validate input formats
         if (!User::validateUsername($username) || !User::validatePassword($password)) {
             RateLimiter::recordAttempt($ip, $username);
+            $remaining = RateLimiter::getRemainingAttempts($ip, $username);
             AuditLog::log(AuditLog::ACTION_FAILED_LOGIN, 'user', null, null, null, ['username' => $username, 'reason' => 'invalid_format']);
-            set_flash('danger', 'Invalid username or password.');
+            set_flash('danger', "Invalid username or password. {$remaining} attempt(s) remaining.");
             $this->redirect('/login');
             return;
         }
@@ -59,8 +60,9 @@ class AuthController extends BaseController {
         $user = User::findByUsername($username);
         if (!$user) {
             RateLimiter::recordAttempt($ip, $username);
+            $remaining = RateLimiter::getRemainingAttempts($ip, $username);
             AuditLog::log(AuditLog::ACTION_FAILED_LOGIN, 'user', null, null, null, ['username' => $username, 'reason' => 'not_found']);
-            set_flash('danger', 'Invalid username or password.');
+            set_flash('danger', "Invalid username or password. {$remaining} attempt(s) remaining.");
             $this->redirect('/login');
             return;
         }
@@ -88,9 +90,10 @@ class AuthController extends BaseController {
         // 6. Verify password
         if (!password_verify($password, $user['password_hash'])) {
             RateLimiter::recordAttempt($ip, $username);
+            $remaining = RateLimiter::getRemainingAttempts($ip, $username);
             User::recordFailedLogin((int)$user['id']);
             AuditLog::log(AuditLog::ACTION_FAILED_LOGIN, 'user', (int)$user['id'], $user['restaurant_id'] ? (int)$user['restaurant_id'] : null, null, ['username' => $username, 'reason' => 'bad_password']);
-            set_flash('danger', 'Invalid username or password.');
+            set_flash('danger', "Invalid username or password. {$remaining} attempt(s) remaining.");
             $this->redirect('/login');
             return;
         }

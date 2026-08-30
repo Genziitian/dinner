@@ -49,6 +49,23 @@ class RateLimiter {
     }
 
     /**
+     * Get remaining allowed attempts before lockout
+     */
+    public static function getRemainingAttempts(string $ip, string $username): int {
+        $maxAttempts = (int)env('LOGIN_MAX_ATTEMPTS', 5);
+        $windowMinutes = (int)env('LOGIN_LOCKOUT_MINUTES', 15);
+        $cutoff = date('Y-m-d H:i:s', time() - ($windowMinutes * 60));
+
+        $count = (int)Database::fetchValue(
+            "SELECT COUNT(*) FROM login_attempts 
+             WHERE (ip_address = :ip OR username = :username) AND attempted_at >= :cutoff",
+            [':ip' => $ip, ':username' => $username, ':cutoff' => $cutoff]
+        );
+
+        return max(0, $maxAttempts - $count);
+    }
+
+    /**
      * Purge old attempts older than 24 hours
      */
     public static function purgeOldAttempts(): void {

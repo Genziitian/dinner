@@ -75,6 +75,7 @@ abstract class BaseController {
         if ($flashType !== null && $flashMsg !== null) {
             set_flash($flashType, $flashMsg);
         }
+        session_write_close();
         $target = str_starts_with($path, 'http') ? $path : url($path);
         header("Location: {$target}");
         exit;
