@@ -1,6 +1,6 @@
 {
-  "name": "DinePOS - Restaurant Billing & Orders",
-  "short_name": "DinePOS",
+  "name": "GI ORDER - Restaurant Billing & Orders",
+  "short_name": "GI ORDER",
   "description": "Fast, minimal and responsive restaurant order billing system.",
   "start_url": "/login",
   "display": "standalone",
