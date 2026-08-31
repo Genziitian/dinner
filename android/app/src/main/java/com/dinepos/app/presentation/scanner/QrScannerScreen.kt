@@ -1,6 +1,10 @@
 package com.dinepos.app.presentation.scanner
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -10,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -24,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.dinepos.app.DinePosApp
 import com.dinepos.app.core.theme.*
 import com.dinepos.app.core.utils.Resource
@@ -40,6 +46,36 @@ fun QrScannerScreen(
     var manualInput by remember { mutableStateOf("") }
     var isResolving by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Camera Permission State
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasCameraPermission = isGranted
+        if (!isGranted) {
+            Toast.makeText(
+                context,
+                "Camera permission is required to scan QR codes directly",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    // Auto-request camera permission on screen entry
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     // Laser Animation
     val infiniteTransition = rememberInfiniteTransition(label = "laser")
@@ -60,7 +96,6 @@ fun QrScannerScreen(
             return
         }
 
-        // Extract token from URL or raw input (e.g. http://10.0.2.2:8000/receipt/<token> or raw token)
         val token = when {
             trimmed.contains("/receipt/") -> trimmed.substringAfterLast("/receipt/").substringBefore("?").trim()
             trimmed.startsWith("ORDER-", ignoreCase = true) -> trimmed.substringAfter("ORDER-").trim()
@@ -128,7 +163,7 @@ fun QrScannerScreen(
             // Header Info
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Point camera at receipt or menu QR code",
+                    text = if (hasCameraPermission) "Point camera at receipt or menu QR code" else "Camera permission required for scanning",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
@@ -143,37 +178,82 @@ fun QrScannerScreen(
                 )
             }
 
-            // Viewfinder Box
-            Box(
-                modifier = Modifier
-                    .size(240.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color(0x22FFFFFF))
-                    .border(BorderStroke(2.5.dp, BrandOrange), RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.QrCodeScanner,
-                    contentDescription = null,
-                    tint = Color(0x33FFFFFF),
-                    modifier = Modifier.size(120.dp)
-                )
-
-                // Laser Beam
+            // Viewfinder Box / Permission Prompt
+            if (hasCameraPermission) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(3.dp)
-                        .offset(y = (laserOffsetY - 110).dp)
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(Color.Transparent, BrandOrange, Color.White, BrandOrange, Color.Transparent)
-                            )
-                        )
-                )
+                        .size(240.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color(0x22FFFFFF))
+                        .border(BorderStroke(2.5.dp, BrandOrange), RoundedCornerShape(24.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.QrCodeScanner,
+                        contentDescription = null,
+                        tint = Color(0x33FFFFFF),
+                        modifier = Modifier.size(120.dp)
+                    )
 
-                if (isResolving) {
-                    CircularProgressIndicator(color = Color.White)
+                    // Laser Beam
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .offset(y = (laserOffsetY - 110).dp)
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color.Transparent, BrandOrange, Color.White, BrandOrange, Color.Transparent)
+                                )
+                            )
+                    )
+
+                    if (isResolving) {
+                        CircularProgressIndicator(color = Color.White)
+                    }
+                }
+            } else {
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = BrandDarkSurface),
+                    border = BorderStroke(1.dp, Color(0x33FFFFFF)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = null,
+                            tint = BrandOrange,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Allow Camera Access",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "To scan physical receipt QR codes with your device camera, please grant camera permission.",
+                            color = TextMuted,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Grant Permission", fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
 

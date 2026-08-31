@@ -103,13 +103,21 @@
     if (!stream) {
       if (loadingNotice) loadingNotice.style.display = 'none';
       if (errorNotice) {
-        errorNotice.style.display = 'block';
+        errorNotice.style.display = 'flex';
+        errorNotice.style.flexDirection = 'column';
+        errorNotice.style.alignItems = 'center';
+        errorNotice.style.justifyContent = 'center';
         errorNotice.innerHTML = `
-          <div class="fw-bold mb-1" style="color: #ef4444;">📷 Camera Access Denied</div>
-          <div class="text-secondary small mb-2">Please allow camera permissions or snap a photo below:</div>
-          <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5" style="background: var(--brand-orange); border-radius: 10px;" onclick="DineQrScanner.triggerPhotoCapture()">
-            📸 Take Photo of QR
-          </button>
+          <div class="fw-bold mb-1" style="color: #ea580c; font-size: 1rem;">📷 Camera Permission Needed</div>
+          <div class="text-secondary small mb-3 text-center" style="max-width: 260px;">Allow camera access in your browser prompt or snap a receipt photo:</div>
+          <div class="d-flex flex-column gap-2 w-100" style="max-width: 220px;">
+            <button type="button" class="btn btn-sm text-white fw-bold py-2" style="background: var(--brand-orange); border-radius: 10px;" onclick="DineQrScanner.startScanner()">
+              📷 Allow Camera Access
+            </button>
+            <button type="button" class="btn btn-sm btn-light border fw-bold py-2" style="border-radius: 10px;" onclick="DineQrScanner.triggerPhotoCapture()">
+              📸 Take Photo of QR
+            </button>
+          </div>
         `;
       }
       return;
@@ -332,6 +340,10 @@
           statusEl.innerHTML = `<span class="text-danger small">Could not read image. Please enter Order # below.</span>`;
         }
       }
+    },
+
+    startScanner: function() {
+      startCameraScanner();
     },
 
     submitManual: function() {
