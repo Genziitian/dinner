@@ -175,6 +175,13 @@ declare(strict_types=1);
             <span>Sign In</span>
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </button>
+
+        <p class="text-center text-muted" style="font-size: 0.78rem; margin-top: 1.25rem; margin-bottom: 0; line-height: 1.5;">
+            By continuing, you agree to our 
+            <a href="<?= url('privacy-policy') ?>" target="_blank" rel="noopener noreferrer" style="color: #0f172a; font-weight: 600; text-decoration: underline;">Privacy Policy</a> 
+            and 
+            <a href="<?= url('terms-and-conditions') ?>" target="_blank" rel="noopener noreferrer" style="color: #0f172a; font-weight: 600; text-decoration: underline;">Terms and Conditions</a>.
+        </p>
     </form>
 </div>
 

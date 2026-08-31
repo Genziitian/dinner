@@ -27,7 +27,9 @@ class AuthRepositoryImpl(
                         username = data.user.username,
                         role = data.user.role,
                         restaurantId = data.user.restaurantId,
-                        restaurantName = data.restaurant?.name
+                        restaurantName = data.restaurant?.name,
+                        restaurantAddress = data.restaurant?.address,
+                        restaurantPhone = data.restaurant?.phone
                     )
                     val user = User(
                         id = data.user.id,

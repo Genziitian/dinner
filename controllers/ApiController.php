@@ -292,9 +292,6 @@ class ApiController {
      */
     public function getOrders(): void {
         $user = $this->authenticate();
-        if ($user['role'] === User::ROLE_CASHIER) {
-            $this->jsonError('Unauthorized. Only managers can browse order history.', 403);
-        }
 
         $restaurantId = (int)($user['restaurant_id'] ?? 0);
         $filter = $_GET['filter'] ?? 'today';

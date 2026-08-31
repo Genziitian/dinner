@@ -67,7 +67,12 @@ fun PieceDialog(
                         border = BorderStroke(1.5.dp, BrandBorder),
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Icon(Icons.Default.Remove, contentDescription = "Decrease", tint = BrandDark)
+                        Icon(
+                            imageVector = Icons.Default.Remove,
+                            contentDescription = "Decrease",
+                            tint = BrandDark,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
 
                     Text(
@@ -78,13 +83,18 @@ fun PieceDialog(
                         modifier = Modifier.padding(horizontal = 24.dp)
                     )
 
-                    Button(
+                    FilledIconButton(
                         onClick = { quantity++ },
                         shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = BrandOrange),
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Increase", tint = Color.White)
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Increase",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
 

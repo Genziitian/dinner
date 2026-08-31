@@ -51,7 +51,10 @@ fun ReceiptScreen(
     var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    val restaurantName = remember { sessionManager.getRestaurantName().ifBlank { "DinePOS Restaurant" } }
+    
+    val restaurantName = remember { sessionManager.getRestaurantName().ifBlank { "The Royal Fork" } }
+    val restaurantAddress = remember { sessionManager.getRestaurantAddress().ifBlank { "102 Flavor Street" } }
+    val restaurantPhone = remember { sessionManager.getRestaurantPhone().ifBlank { "+91 98765 43210" } }
 
     LaunchedEffect(orderId, token) {
         scope.launch {
@@ -109,7 +112,18 @@ fun ReceiptScreen(
                             val currentOrder = order ?: return@IconButton
                             val shareText = buildString {
                                 appendLine("🧾 $restaurantName")
+                                appendLine("📍 $restaurantAddress")
+                                appendLine("📞 $restaurantPhone")
+                                appendLine("-----------------------------")
                                 appendLine("Order #${currentOrder.orderNumber} · ${currentOrder.orderDate} ${currentOrder.orderTime}")
+                                val biller = currentOrder.createdByUsername?.ifBlank { null } ?: sessionManager.getUsername().ifBlank { "Cashier" }
+                                appendLine("Billed by: $biller")
+                                if (!currentOrder.customerName.isNullOrBlank()) {
+                                    appendLine("Customer: ${currentOrder.customerName}")
+                                }
+                                if (!currentOrder.customerPhone.isNullOrBlank()) {
+                                    appendLine("Phone: ${currentOrder.customerPhone}")
+                                }
                                 appendLine("-----------------------------")
                                 currentOrder.items.forEach { item ->
                                     appendLine("${item.itemName} (${item.variantName}) x ${CurrencyFormatter.formatQuantity(item.quantity, item.unit)} = ${CurrencyFormatter.formatInr(item.totalPrice)}")
@@ -170,9 +184,9 @@ fun ReceiptScreen(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Success",
                             tint = BrandEmerald,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(44.dp)
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "Order Placed Successfully",
                             style = MaterialTheme.typography.titleMedium,
@@ -180,15 +194,37 @@ fun ReceiptScreen(
                             color = BrandEmerald
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        // Restaurant Info
+                        // Restaurant Header: Name, Address, Phone
                         Text(
                             text = restaurantName,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Black,
-                            color = BrandDark
+                            color = BrandDark,
+                            textAlign = TextAlign.Center
                         )
+                        if (restaurantAddress.isNotBlank()) {
+                            Text(
+                                text = restaurantAddress,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        if (restaurantPhone.isNotBlank()) {
+                            Text(
+                                text = "Tel: $restaurantPhone",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                color = TextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Order Number & Date
                         Text(
                             text = "Order #${currentOrder.orderNumber}",
                             style = MaterialTheme.typography.titleLarge,
@@ -201,16 +237,71 @@ fun ReceiptScreen(
                             color = TextSecondary
                         )
 
-                        if (!currentOrder.customerName.isNullOrBlank()) {
-                            Text(
-                                text = "Customer: ${currentOrder.customerName}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = BrandDark
-                            )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Billed By & Customer Details (Side by Side in the same row)
+                        val billerName = currentOrder.createdByUsername?.ifBlank { null } ?: sessionManager.getUsername().ifBlank { "Cashier" }
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = BrandBackground,
+                            border = BorderStroke(1.dp, BrandBorder),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Left Side: Customer Info
+                                Column(
+                                    modifier = Modifier.weight(1f, fill = false),
+                                    horizontalAlignment = Alignment.Start
+                                ) {
+                                    val custName = if (!currentOrder.customerName.isNullOrBlank()) currentOrder.customerName else "Walk-in Customer"
+                                    Text(
+                                        text = "Customer",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextSecondary
+                                    )
+                                    Text(
+                                        text = custName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = BrandDark
+                                    )
+                                    if (!currentOrder.customerPhone.isNullOrBlank()) {
+                                        Text(
+                                            text = currentOrder.customerPhone,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextSecondary
+                                        )
+                                    }
+                                }
+
+                                // Right Side: Biller Info
+                                Column(
+                                    horizontalAlignment = Alignment.End
+                                ) {
+                                    Text(
+                                        text = "Billed by",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextSecondary
+                                    )
+                                    Text(
+                                        text = billerName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = BrandDark
+                                    )
+                                }
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
                         HorizontalDivider(color = BrandBorder, thickness = 1.dp)
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -294,7 +385,7 @@ fun ReceiptScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         // QR Code View
                         val qr = qrBitmap
@@ -303,18 +394,20 @@ fun ReceiptScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 border = BorderStroke(1.dp, BrandBorder),
                                 color = Color.White,
-                                modifier = Modifier.padding(8.dp)
+                                modifier = Modifier.padding(6.dp)
                             ) {
                                 Image(
                                     bitmap = qr.asImageBitmap(),
                                     contentDescription = "Receipt QR Code",
-                                    modifier = Modifier.size(160.dp).padding(8.dp)
+                                    modifier = Modifier.size(150.dp).padding(6.dp)
                                 )
                             }
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Scan for cryptographic digital receipt",
-                                fontSize = 11.sp,
-                                color = TextMuted,
+                                text = "Scan to view E-receipt",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextSecondary,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -331,7 +424,10 @@ fun ReceiptScreen(
                                     ReceiptPrintHelper.printOrDownloadPdf(
                                         context,
                                         currentOrder,
-                                        restaurantName
+                                        restaurantName,
+                                        restaurantAddress,
+                                        restaurantPhone,
+                                        billerName
                                     )
                                 },
                                 shape = RoundedCornerShape(12.dp),

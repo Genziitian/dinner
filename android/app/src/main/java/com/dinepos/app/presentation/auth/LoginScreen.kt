@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -23,11 +24,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,6 +44,8 @@ import com.dinepos.app.domain.model.User
 @Composable
 fun LoginScreen(
     onLoginSuccess: (User) -> Unit,
+    onNavigateToPrivacy: () -> Unit = {},
+    onNavigateToTerms: () -> Unit = {},
     viewModel: AuthViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -112,9 +120,9 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "DinePOS",
+                        text = "GI ORDER POS",
                         style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         color = BrandDark
                     )
 
@@ -234,7 +242,58 @@ fun LoginScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Legal Disclaimer & Agreement
+                    val termsAnnotatedString = buildAnnotatedString {
+                        append("By continuing you agree to ")
+                        pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
+                        withStyle(
+                            style = SpanStyle(
+                                color = BrandDark,
+                                fontWeight = FontWeight.Bold,
+                                textDecoration = TextDecoration.Underline
+                            )
+                        ) {
+                            append("Privacy Policy")
+                        }
+                        pop()
+                        append(" and ")
+                        pushStringAnnotation(tag = "TERMS", annotation = "terms")
+                        withStyle(
+                            style = SpanStyle(
+                                color = BrandDark,
+                                fontWeight = FontWeight.Bold,
+                                textDecoration = TextDecoration.Underline
+                            )
+                        ) {
+                            append("Terms and Conditions")
+                        }
+                        pop()
+                    }
+
+                    ClickableText(
+                        text = termsAnnotatedString,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextSecondary,
+                            textAlign = TextAlign.Center,
+                            fontSize = 11.5.sp,
+                            lineHeight = 16.sp
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        onClick = { offset ->
+                            termsAnnotatedString.getStringAnnotations(tag = "PRIVACY", start = offset, end = offset)
+                                .firstOrNull()?.let {
+                                    onNavigateToPrivacy()
+                                }
+                            termsAnnotatedString.getStringAnnotations(tag = "TERMS", start = offset, end = offset)
+                                .firstOrNull()?.let {
+                                    onNavigateToTerms()
+                                }
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     // Quick Login Shortcuts
                     Text(

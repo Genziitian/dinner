@@ -3,6 +3,8 @@
 
 # SQLite Database storage (local data)
 storage/db/*.sqlite
+database/*.sqlite
+*.sqlite
 !storage/db/.gitkeep
 
 # macOS metadata

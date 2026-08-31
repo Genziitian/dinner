@@ -35,7 +35,9 @@ class SessionManager(context: Context) {
         username: String,
         role: String,
         restaurantId: Int?,
-        restaurantName: String?
+        restaurantName: String?,
+        restaurantAddress: String? = null,
+        restaurantPhone: String? = null
     ) {
         prefs.edit().apply {
             putString(Constants.KEY_AUTH_TOKEN, token)
@@ -44,6 +46,8 @@ class SessionManager(context: Context) {
             putString(Constants.KEY_USER_ROLE, role)
             if (restaurantId != null) putInt(Constants.KEY_RESTAURANT_ID, restaurantId) else remove(Constants.KEY_RESTAURANT_ID)
             putString(Constants.KEY_RESTAURANT_NAME, restaurantName ?: "")
+            if (!restaurantAddress.isNullOrBlank()) putString(Constants.KEY_RESTAURANT_ADDRESS, restaurantAddress)
+            if (!restaurantPhone.isNullOrBlank()) putString(Constants.KEY_RESTAURANT_PHONE, restaurantPhone)
             apply()
         }
         _isLoggedIn.value = true
@@ -57,6 +61,8 @@ class SessionManager(context: Context) {
             remove(Constants.KEY_USER_ROLE)
             remove(Constants.KEY_RESTAURANT_ID)
             remove(Constants.KEY_RESTAURANT_NAME)
+            remove(Constants.KEY_RESTAURANT_ADDRESS)
+            remove(Constants.KEY_RESTAURANT_PHONE)
             apply()
         }
         _isLoggedIn.value = false
@@ -73,6 +79,10 @@ class SessionManager(context: Context) {
     fun getRestaurantId(): Int = prefs.getInt(Constants.KEY_RESTAURANT_ID, -1)
 
     fun getRestaurantName(): String = prefs.getString(Constants.KEY_RESTAURANT_NAME, "") ?: ""
+
+    fun getRestaurantAddress(): String = prefs.getString(Constants.KEY_RESTAURANT_ADDRESS, "102 Flavor Street") ?: "102 Flavor Street"
+
+    fun getRestaurantPhone(): String = prefs.getString(Constants.KEY_RESTAURANT_PHONE, "+91 98765 43210") ?: "+91 98765 43210"
 
     fun getBaseUrl(): String = prefs.getString(Constants.KEY_BASE_URL, Constants.DEFAULT_BASE_URL) ?: Constants.DEFAULT_BASE_URL
 

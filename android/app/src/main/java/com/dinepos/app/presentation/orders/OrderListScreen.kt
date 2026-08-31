@@ -39,6 +39,10 @@ fun OrderListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.loadOrders()
+    }
+
     Scaffold(
         containerColor = BrandBackground,
         topBar = {

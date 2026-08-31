@@ -9,6 +9,8 @@ import androidx.navigation.navArgument
 import com.dinepos.app.presentation.auth.LoginScreen
 import com.dinepos.app.presentation.cashier.BillingScreen
 import com.dinepos.app.presentation.items.ManageItemsScreen
+import com.dinepos.app.presentation.legal.PrivacyPolicyScreen
+import com.dinepos.app.presentation.legal.TermsAndConditionsScreen
 import com.dinepos.app.presentation.manager.ManagerDashboardScreen
 import com.dinepos.app.presentation.orders.OrderDetailScreen
 import com.dinepos.app.presentation.orders.OrderListScreen
@@ -37,6 +39,12 @@ fun DinePosNavGraph(
                     navController.navigate(destination) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                },
+                onNavigateToPrivacy = {
+                    navController.navigate(Screen.PrivacyPolicy.route)
+                },
+                onNavigateToTerms = {
+                    navController.navigate(Screen.TermsAndConditions.route)
                 }
             )
         }
@@ -50,6 +58,9 @@ fun DinePosNavGraph(
                 },
                 onNavigateToScanner = {
                     navController.navigate(Screen.QrScanner.route)
+                },
+                onNavigateToOrders = {
+                    navController.navigate(Screen.ManagerOrders.route)
                 },
                 onNavigateBack = if (navController.previousBackStackEntry != null) {
                     { navController.popBackStack() }
@@ -153,6 +164,20 @@ fun DinePosNavGraph(
                         popUpTo(Screen.QrScanner.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // 11. Privacy Policy Screen
+        composable(Screen.PrivacyPolicy.route) {
+            PrivacyPolicyScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 12. Terms and Conditions Screen
+        composable(Screen.TermsAndConditions.route) {
+            TermsAndConditionsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

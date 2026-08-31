@@ -1,6 +1,7 @@
 package com.dinepos.app.presentation.manager
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -62,8 +63,33 @@ fun ManagerDashboardScreen(
                 },
                 title = {
                     Column {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = BrandOrange.copy(alpha = 0.12f),
+                            border = BorderStroke(1.dp, BrandOrange.copy(alpha = 0.35f)),
+                            modifier = Modifier.padding(bottom = 3.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(BrandOrange, CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "GI ORDER POS",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = BrandOrange,
+                                    letterSpacing = 0.6.sp
+                                )
+                            }
+                        }
                         Text(
-                            text = uiState.restaurantName.ifBlank { "DinePOS" },
+                            text = uiState.restaurantName.ifBlank { "The Royal Fork" },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark

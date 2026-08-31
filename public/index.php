@@ -117,6 +117,21 @@ try {
         exit;
     }
 
+    // 2.1 Legal & Policy Routes (Publicly Accessible)
+    if ($path === '/privacy-policy' || $path === '/privacy') {
+        startSecureSession();
+        sendSecurityHeaders();
+        require ROOT_PATH . '/views/legal/privacy.php';
+        exit;
+    }
+
+    if ($path === '/terms-and-conditions' || $path === '/terms') {
+        startSecureSession();
+        sendSecurityHeaders();
+        require ROOT_PATH . '/views/legal/terms.php';
+        exit;
+    }
+
     // 3. Cashier Routes
     if ($path === '/cashier/order') {
         (new CashierController())->order();

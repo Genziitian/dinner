@@ -9,9 +9,22 @@ import com.dinepos.app.domain.model.Order
 
 object ReceiptPrintHelper {
 
-    fun printOrDownloadPdf(context: Context, order: Order, restaurantName: String) {
+    fun printOrDownloadPdf(
+        context: Context,
+        order: Order,
+        restaurantName: String,
+        restaurantAddress: String = "",
+        restaurantPhone: String = "",
+        billerName: String = ""
+    ) {
         val webView = WebView(context)
-        val htmlContent = generateReceiptHtml(order, restaurantName)
+        val htmlContent = generateReceiptHtml(
+            order = order,
+            restaurantName = restaurantName,
+            restaurantAddress = restaurantAddress,
+            restaurantPhone = restaurantPhone,
+            billerName = billerName
+        )
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -30,7 +43,13 @@ object ReceiptPrintHelper {
         webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
     }
 
-    private fun generateReceiptHtml(order: Order, restaurantName: String): String {
+    private fun generateReceiptHtml(
+        order: Order,
+        restaurantName: String,
+        restaurantAddress: String,
+        restaurantPhone: String,
+        billerName: String
+    ): String {
         val itemsHtml = order.items.joinToString("") { item ->
             """
             <tr>
@@ -58,10 +77,12 @@ object ReceiptPrintHelper {
                     max-width: 480px;
                     margin: 0 auto;
                 }
-                .header { text-align: center; margin-bottom: 20px; }
+                .header { text-align: center; margin-bottom: 18px; }
                 .restaurant-name { font-size: 22px; font-weight: 800; color: #ea580c; }
-                .order-title { font-size: 18px; font-weight: 700; margin-top: 4px; }
+                .restaurant-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+                .order-title { font-size: 18px; font-weight: 700; margin-top: 8px; }
                 .meta { font-size: 12px; color: #64748b; margin-top: 4px; }
+                .biller-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 10px; margin-top: 8px; text-align: center; font-size: 12px; }
                 table { width: 100%; border-collapse: collapse; margin-top: 16px; }
                 .totals { margin-top: 16px; border-top: 2px solid #0f172a; padding-top: 12px; }
                 .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; }
@@ -71,9 +92,23 @@ object ReceiptPrintHelper {
         <body>
             <div class="header">
                 <div class="restaurant-name">$restaurantName</div>
+                ${if (restaurantAddress.isNotBlank()) "<div class=\"restaurant-meta\">$restaurantAddress</div>" else ""}
+                ${if (restaurantPhone.isNotBlank()) "<div class=\"restaurant-meta\">Tel: $restaurantPhone</div>" else ""}
+                
                 <div class="order-title">RECEIPT #ORDER-${order.orderNumber}</div>
                 <div class="meta">${order.orderDate} · ${order.orderTime}</div>
-                ${if (!order.customerName.isNullOrBlank()) "<div class=\"meta\">Customer: ${order.customerName}</div>" else ""}
+                
+                <div class="biller-box" style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; margin-top: 10px; font-size: 12px;">
+                    <div style="text-align: left;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase;">Customer</div>
+                        <div style="font-weight: bold; color: #0f172a;">${if (!order.customerName.isNullOrBlank()) order.customerName else "Walk-in Customer"}</div>
+                        ${if (!order.customerPhone.isNullOrBlank()) "<div style=\"color: #64748b; font-size: 11px;\">${order.customerPhone}</div>" else ""}
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase;">Billed by</div>
+                        <div style="font-weight: bold; color: #0f172a;">${if (billerName.isNotBlank()) billerName else "Cashier"}</div>
+                    </div>
+                </div>
             </div>
 
             <table>
@@ -94,6 +129,7 @@ object ReceiptPrintHelper {
             </div>
 
             <div class="footer">
+                <p style="font-weight: bold; color: #64748b; margin-bottom: 4px;">Scan to view E-receipt</p>
                 <p>Thank you for dining with us!</p>
                 <p>Powered by DinePOS</p>
             </div>

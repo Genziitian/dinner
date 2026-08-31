@@ -34,12 +34,14 @@ import com.dinepos.app.domain.model.Order
 import com.dinepos.app.presentation.cashier.components.*
 
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BillingScreen(
     onOrderPlaced: (Order) -> Unit,
     onNavigateToScanner: () -> Unit = {},
+    onNavigateToOrders: () -> Unit = {},
     onNavigateBack: (() -> Unit)? = null,
     viewModel: CashierViewModel = viewModel()
 ) {
@@ -80,6 +82,31 @@ fun BillingScreen(
                     },
                     title = {
                         Column {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = BrandOrange.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, BrandOrange.copy(alpha = 0.35f)),
+                                modifier = Modifier.padding(bottom = 3.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(BrandOrange, CircleShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "GI ORDER POS",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = BrandOrange,
+                                        letterSpacing = 0.6.sp
+                                    )
+                                }
+                            }
                             Text(
                                 text = uiState.restaurantName.ifBlank { "Menu Catalog" },
                                 style = MaterialTheme.typography.titleLarge,
@@ -94,6 +121,14 @@ fun BillingScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = onNavigateToOrders) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                                contentDescription = "Today's Orders & History",
+                                tint = BrandDark
+                            )
+                        }
+
                         IconButton(onClick = onNavigateToScanner) {
                             Icon(
                                 imageVector = Icons.Default.QrCode,

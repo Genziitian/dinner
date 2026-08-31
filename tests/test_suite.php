@@ -49,6 +49,7 @@ class TestRunner {
         $this->testManagerOrderEditingAndSoftDelete();
         $this->testAuditLogging();
         $this->testReportingAndCsvExport();
+        $this->testLegalAndPolicyPages();
 
         echo "\n========================================================\n";
         echo " Test Results: Passed: {$this->passed}, Failed: {$this->failed}\n";
@@ -353,6 +354,67 @@ class TestRunner {
 
         $exportRows = Order::getOrdersForExport(1, '2026-08-01', '2026-08-31');
         $this->assert(is_array($exportRows), "Export data query succeeded");
+    }
+
+    private function testLegalAndPolicyPages(): void {
+        echo "\n11. Testing Privacy Policy & Terms and Conditions Pages...\n";
+
+        // Web files check
+        $privacyPath = ROOT_PATH . '/views/legal/privacy.php';
+        $termsPath = ROOT_PATH . '/views/legal/terms.php';
+        $loginPath = ROOT_PATH . '/views/auth/login.php';
+
+        $this->assert(file_exists($privacyPath), "Privacy Policy view file exists");
+        $this->assert(file_exists($termsPath), "Terms & Conditions view file exists");
+
+        $privacyContent = file_get_contents($privacyPath);
+        $this->assert(
+            str_contains($privacyContent, 'Our restaurant management and billing software gives restaurant owners complete control over their daily operations'),
+            "Privacy Policy contains specified restaurant management description"
+        );
+        $this->assert(
+            str_contains($privacyContent, 'role-based access for Owners, Managers, and Cashiers'),
+            "Privacy Policy contains role-based access information"
+        );
+
+        $termsContent = file_get_contents($termsPath);
+        $this->assert(
+            stripos($termsContent, 'We are a platform only') !== false && stripos($termsContent, 'if data loss happens, we are not responsible for it') !== false,
+            "Terms & Conditions contains platform data liability disclaimer"
+        );
+
+        $loginContent = file_get_contents($loginPath);
+        $this->assert(
+            str_contains($loginContent, 'By continuing, you agree to our') &&
+            str_contains($loginContent, 'privacy-policy') &&
+            str_contains($loginContent, 'terms-and-conditions') &&
+            str_contains($loginContent, 'target="_blank"'),
+            "Login page has agreement text with links opening in new tab"
+        );
+
+        // Android files check
+        $androidLegal = ROOT_PATH . '/android/app/src/main/java/com/dinepos/app/presentation/legal/LegalScreens.kt';
+        $androidNav = ROOT_PATH . '/android/app/src/main/java/com/dinepos/app/presentation/navigation/NavRoutes.kt';
+        $androidLogin = ROOT_PATH . '/android/app/src/main/java/com/dinepos/app/presentation/auth/LoginScreen.kt';
+
+        $this->assert(file_exists($androidLegal), "Android LegalScreens.kt exists");
+        $androidLegalContent = file_get_contents($androidLegal);
+        $this->assert(
+            str_contains($androidLegalContent, "Our restaurant management and billing software gives restaurant owners complete control"),
+            "Android PrivacyPolicyScreen contains overview text"
+        );
+        $this->assert(
+            str_contains($androidLegalContent, "We are a platform only") && str_contains($androidLegalContent, "responsible for your data"),
+            "Android TermsAndConditionsScreen contains platform disclaimer"
+        );
+
+        $androidLoginContent = file_get_contents($androidLogin);
+        $this->assert(
+            str_contains($androidLoginContent, "By continuing you agree to") &&
+            str_contains($androidLoginContent, "Privacy Policy") &&
+            str_contains($androidLoginContent, "Terms and Conditions"),
+            "Android LoginScreen contains clickable legal agreement"
+        );
     }
 }
 
