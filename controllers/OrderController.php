@@ -68,39 +68,47 @@ class OrderController extends BaseController {
     }
 
     /**
-     * Internal receipt view for restaurant staff
+     * Internal receipt view for restaurant staff (Cashier, Manager, Admin)
      */
     public function view(): void {
         $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $restaurantId = $this->requireRestaurantId();
 
         $orderId = (int)($_GET['id'] ?? 0);
-        $token = (string)($_GET['token'] ?? '');
+        $orderNumber = (int)($_GET['order_number'] ?? 0);
+        $token = trim((string)($_GET['token'] ?? ''));
+        $search = trim((string)($_GET['search'] ?? $_GET['q'] ?? ''));
 
-        if ($orderId <= 0 && empty($token)) {
-            $this->redirect('/cashier/order', 'danger', 'Invalid receipt request.');
+        if (!empty($search)) {
+            // Strip out #, Order, url path if scanned
+            if (preg_match('#receipt/([a-zA-Z0-9_\-]+)#', $search, $m)) {
+                $token = $m[1];
+            } elseif (strlen($search) > 20 && preg_match('/^[a-zA-Z0-9_\-]+$/', $search)) {
+                $token = $search;
+            } else {
+                $cleanNum = (int)preg_replace('/[^0-9]/', '', $search);
+                if ($cleanNum > 0) {
+                    $orderNumber = $cleanNum;
+                }
+            }
         }
 
         $order = null;
         if (!empty($token)) {
-            // Find by token if provided
             $order = Order::findByReceiptToken($token);
         } elseif ($orderId > 0) {
-            // Cashiers cannot freely browse historical order IDs unless manager
-            if ($user['role'] === User::ROLE_CASHIER) {
-                $this->redirect('/cashier/order', 'danger', 'Cashiers can only view receipts immediately upon saving.');
-            }
             $order = Order::findById($orderId, $restaurantId);
+        } elseif ($orderNumber > 0) {
+            $order = Order::findByOrderNumber($orderNumber, $restaurantId);
         }
 
         if (!$order || (int)$order['restaurant_id'] !== $restaurantId) {
-            http_response_code(404);
-            $this->renderStandalone('errors/404', ['title' => 'Receipt Not Found']);
+            $fallbackUrl = $user['role'] === User::ROLE_CASHIER ? '/cashier/order' : '/manager/dashboard';
+            $this->redirect($fallbackUrl, 'danger', 'Receipt or Order not found.');
             return;
         }
 
-        // Generate public secure URL for QR code
-        // Note: The raw token is present if passed in URL or reconstructed if order was looked up
+        // Public URL token
         $rawToken = !empty($token) ? $token : null;
         $publicUrl = $rawToken ? url_absolute('receipt/' . $rawToken) : null;
 
@@ -108,7 +116,6 @@ class OrderController extends BaseController {
             'title' => "Receipt #{$order['order_number']} | DinePOS",
             'order' => $order,
             'publicUrl' => $publicUrl,
-            'rawToken' => $rawToken,
         ]);
     }
 

@@ -195,7 +195,7 @@ try {
         exit;
     }
 
-    if ($path === '/manager/orders/view') {
+    if ($path === '/manager/orders/view' || $path === '/orders/view') {
         (new ManagerController())->orderView();
         exit;
     }

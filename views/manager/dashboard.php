@@ -110,7 +110,7 @@ $currentUser = current_user();
                     $isCash = strtolower($order['payment_method']) === 'cash';
                     $payPillClass = $isCash ? 'cash' : 'upi';
                 ?>
-                <a href="<?= url('orders/view?id=' . (int)$order['id']) ?>" class="order-card-android">
+                <a href="<?= url('manager/orders/view?id=' . (int)$order['id']) ?>" class="order-card-android">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-1">
@@ -130,40 +130,3 @@ $currentUser = current_user();
         </div>
     <?php endif; ?>
 </div>
-
-<!-- QR Receipt Lookup Modal -->
-<div class="modal fade" id="qrLookupModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-android">
-            <div class="modal-header modal-header-android">
-                <h5 class="modal-title modal-title-android">🔍 Receipt QR Lookup</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-3">
-                <p class="text-secondary small mb-2">Scan QR with camera or enter the receipt token / order number below:</p>
-                <div class="mb-3">
-                    <input type="text" id="qrLookupInput" class="form-control" placeholder="Enter Token / Order #" style="border-radius: 12px;">
-                </div>
-                <button type="button" class="btn w-100 fw-bold text-white py-2" style="background: var(--brand-orange); border-radius: 12px;" onclick="lookupReceipt()">
-                    Lookup Receipt
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function openQrLookupModal() {
-    new bootstrap.Modal(document.getElementById('qrLookupModal')).show();
-}
-
-function lookupReceipt() {
-    const val = document.getElementById('qrLookupInput').value.trim();
-    if (!val) return;
-    if (val.length > 20) {
-        window.location.href = '<?= url('receipt/') ?>' + encodeURIComponent(val);
-    } else {
-        window.location.href = '<?= url('manager/orders?search=') ?>' + encodeURIComponent(val);
-    }
-}
-</script>

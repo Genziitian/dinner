@@ -82,7 +82,7 @@ $search = $search ?? '';
                     $payPillClass = $isCash ? 'cash' : 'upi';
                     $payText = $isCash ? 'Cash' : 'UPI';
                 ?>
-                <a href="<?= url('orders/view?id=' . (int)$order['id']) ?>" class="order-card-android">
+                <a href="<?= url('manager/orders/view?id=' . (int)$order['id']) ?>" class="order-card-android">
                     <!-- Row 1: Order# + Payment Badge | Total + Chevron -->
                     <div class="order-card-row-top">
                         <div class="order-card-left-group">

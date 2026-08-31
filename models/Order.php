@@ -209,6 +209,27 @@ class Order {
     }
 
     /**
+     * Find order by Daily Order Number within restaurant context (Staff or Manager)
+     */
+    public static function findByOrderNumber(int $orderNumber, int $restaurantId): ?array {
+        $sql = "SELECT o.*, r.name AS restaurant_name, r.phone AS restaurant_phone, r.address AS restaurant_address, u.username AS created_by_username 
+                FROM orders o 
+                JOIN restaurants r ON o.restaurant_id = r.id 
+                JOIN users u ON o.created_by = u.id 
+                WHERE o.order_number = :order_number AND o.restaurant_id = :restaurant_id AND o.deleted_at IS NULL 
+                ORDER BY o.id DESC 
+                LIMIT 1";
+
+        $order = Database::fetchOne($sql, [':order_number' => $orderNumber, ':restaurant_id' => $restaurantId]);
+        if (!$order) {
+            return null;
+        }
+
+        $order['items'] = OrderItem::getByOrderId((int)$order['id']);
+        return $order;
+    }
+
+    /**
      * Find order by internal ID within restaurant context (Manager or Authorized Staff)
      */
     public static function findById(int $orderId, int $restaurantId, bool $includeDeleted = false): ?array {

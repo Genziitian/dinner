@@ -106,11 +106,86 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Universal Live Camera QR Code Scanner & Lookup Modal -->
+<div class="modal fade" id="cameraQrLookupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content modal-content-android">
+            <div class="modal-header modal-header-android">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.25rem;">📷</span>
+                    <h5 class="modal-title modal-title-android m-0">Scan Receipt QR</h5>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <button type="button" class="btn btn-sm btn-light border p-1 rounded-circle" onclick="DineQrScanner.toggleCamera()" title="Switch Front/Back Camera" style="width: 32px; height: 32px;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+
+            <div class="modal-body p-3">
+                <!-- Camera Viewport Container -->
+                <div class="camera-viewport-wrap" style="position: relative; width: 100%; height: 260px; background: #0f172a; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                    <!-- Video Feed -->
+                    <video id="qrCameraVideo" playsinline autoplay muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+
+                    <!-- Loading Placeholder -->
+                    <div id="qrScannerLoading" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f172a; color: #ffffff;">
+                        <div class="spinner-border text-warning mb-2" role="status"></div>
+                        <div class="small fw-bold">Starting Camera Feed...</div>
+                    </div>
+
+                    <!-- Error Notice Placeholder -->
+                    <div id="qrScannerError" style="position: absolute; inset: 0; display: none; padding: 1.5rem; text-align: center; background: #0f172a; color: #ffffff;"></div>
+
+                    <!-- Animated Scanner Reticle Overlay -->
+                    <div id="qrScannerOverlay" style="position: absolute; inset: 0; pointer-events: none; display: none;">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 180px; height: 180px; border: 2.5px solid #ea580c; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);">
+                            <!-- Laser line -->
+                            <div class="qr-laser-line" style="position: absolute; width: 100%; height: 2px; background: #ea580c; box-shadow: 0 0 8px #ea580c; animation: scanLine 2s infinite alternate;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="qrScannerStatus" class="text-center my-2">
+                    <small class="text-secondary">Point camera directly at the receipt QR code</small>
+                </div>
+
+                <!-- Manual Input Fallback -->
+                <div class="p-3 bg-light rounded-3 mt-3 border">
+                    <label class="form-label small fw-bold text-dark mb-1">Or Enter Order # / Receipt Token:</label>
+                    <div class="d-flex gap-2">
+                        <input 
+                            type="text" 
+                            id="manualQrInput" 
+                            class="form-control" 
+                            placeholder="e.g. 7, #7, or paste token" 
+                            style="border-radius: 12px;"
+                            onkeydown="if(event.key==='Enter'){event.preventDefault(); DineQrScanner.submitManual();}"
+                        >
+                        <button type="button" class="btn fw-bold text-white px-3" style="background: var(--brand-orange); border-radius: 12px; white-space: nowrap;" onclick="DineQrScanner.submitManual()">
+                            Lookup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes scanLine {
+  0% { top: 5%; }
+  100% { top: 95%; }
+}
+</style>
 <?php endif; ?>
 
 <!-- Core JavaScript -->
 <script src="<?= asset('js/bootstrap.bundle.min.js') ?>"></script>
 <script src="<?= asset('js/qrcode.min.js') ?>"></script>
+<script src="<?= asset('js/qr-scanner.js?v=' . filemtime(ROOT_PATH . '/public/assets/js/qr-scanner.js')) ?>"></script>
 <script src="<?= asset('js/app.js') ?>"></script>
 
 </body>

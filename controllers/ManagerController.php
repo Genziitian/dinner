@@ -101,14 +101,15 @@ class ManagerController extends BaseController {
      * Manager View Single Order Details
      */
     public function orderView(): void {
-        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $restaurantId = $this->requireRestaurantId();
 
         $orderId = (int)($_GET['id'] ?? 0);
         $order = Order::findById($orderId, $restaurantId);
 
         if (!$order) {
-            $this->redirect('/manager/orders', 'danger', 'Order not found or inaccessible.');
+            $fallback = $user['role'] === User::ROLE_CASHIER ? '/cashier/order' : '/manager/orders';
+            $this->redirect($fallback, 'danger', 'Order not found or inaccessible.');
         }
 
         $this->render('manager/order_view', [
