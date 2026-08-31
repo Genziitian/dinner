@@ -1,6 +1,6 @@
 /**
  * Live Camera QR Code Scanner & Receipt Lookup Engine
- * Multi-layer Scanner: Live WebRTC Camera Stream + BarcodeDetector + Native Photo Snap + Manual Lookup
+ * Powered by jsQR engine + BarcodeDetector fallback + Native Camera Stream
  */
 (function() {
   'use strict';
@@ -10,15 +10,25 @@
   let barcodeDetector = null;
   let currentFacingMode = 'environment';
   let isScanning = false;
+  let scanCanvas = null;
+  let scanCtx = null;
+  let lastScanTime = 0;
 
   // Initialize BarcodeDetector if available
   if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
     try {
       barcodeDetector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'upc_a'] });
     } catch (e) {
-      console.warn('Native BarcodeDetector note:', e);
       barcodeDetector = null;
     }
+  }
+
+  function getScanContext() {
+    if (!scanCanvas) {
+      scanCanvas = document.createElement('canvas');
+      scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
+    }
+    return { canvas: scanCanvas, ctx: scanCtx };
   }
 
   // Audio beep on successful scan
@@ -30,14 +40,14 @@
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(950, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.15);
+        osc.stop(audioCtx.currentTime + 0.18);
       }
-      if (navigator.vibrate) navigator.vibrate(120);
+      if (navigator.vibrate) navigator.vibrate([80, 50, 80]);
     } catch (e) {
       // Audio notification not critical
     }
@@ -48,34 +58,34 @@
     const loadingNotice = document.getElementById('qrScannerLoading');
     const errorNotice = document.getElementById('qrScannerError');
     const scannerOverlay = document.getElementById('qrScannerOverlay');
+    const statusEl = document.getElementById('qrScannerStatus');
 
     if (!video) return;
 
     if (errorNotice) errorNotice.style.display = 'none';
     if (loadingNotice) loadingNotice.style.display = 'flex';
     if (scannerOverlay) scannerOverlay.style.display = 'none';
+    if (statusEl) statusEl.innerHTML = `<small class="text-secondary">Point camera directly at the receipt QR code</small>`;
 
     stopCameraScanner();
 
-    // Check if mediaDevices supported
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       if (loadingNotice) loadingNotice.style.display = 'none';
       if (errorNotice) {
         errorNotice.style.display = 'block';
         errorNotice.innerHTML = `
-          <div class="fw-bold mb-1" style="color: #ea580c;">📷 Live Stream Restricted</div>
-          <div class="text-secondary small mb-2">Use the Camera Snapshot button or enter Order # below.</div>
+          <div class="fw-bold mb-1" style="color: #ea580c;">📷 Camera Stream Unavailable</div>
+          <div class="text-secondary small mb-2">Use the photo button or enter Order # below.</div>
           <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5" style="background: var(--brand-orange); border-radius: 10px;" onclick="DineQrScanner.triggerPhotoCapture()">
-            📸 Take Photo with Camera
+            📸 Take Photo of QR
           </button>
         `;
       }
       return;
     }
 
-    // Try fallback constraint options for widest mobile device compatibility
     const constraintOptions = [
-      { video: { facingMode: { ideal: 'environment' } }, audio: false },
+      { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
       { video: { facingMode: 'environment' }, audio: false },
       { video: true, audio: false }
     ];
@@ -95,10 +105,10 @@
       if (errorNotice) {
         errorNotice.style.display = 'block';
         errorNotice.innerHTML = `
-          <div class="fw-bold mb-1" style="color: #ef4444;">📷 Camera Access Denied / Unavailable</div>
-          <div class="text-secondary small mb-2">Allow camera permissions or tap below to snap receipt photo:</div>
+          <div class="fw-bold mb-1" style="color: #ef4444;">📷 Camera Access Denied</div>
+          <div class="text-secondary small mb-2">Please allow camera permissions or snap a photo below:</div>
           <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5" style="background: var(--brand-orange); border-radius: 10px;" onclick="DineQrScanner.triggerPhotoCapture()">
-            📸 Take Photo with Camera
+            📸 Take Photo of QR
           </button>
         `;
       }
@@ -125,9 +135,9 @@
       if (errorNotice) {
         errorNotice.style.display = 'block';
         errorNotice.innerHTML = `
-          <div class="text-secondary small mb-2">Tap below to snap a photo of the receipt:</div>
+          <div class="text-secondary small mb-2">Tap below to snap a photo of the receipt QR:</div>
           <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5" style="background: var(--brand-orange); border-radius: 10px;" onclick="DineQrScanner.triggerPhotoCapture()">
-            📸 Take Photo with Camera
+            📸 Take Photo of QR
           </button>
         `;
       }
@@ -152,23 +162,46 @@
     if (!isScanning) return;
 
     const video = document.getElementById('qrCameraVideo');
-    if (!video || video.readyState < 2) {
+    if (!video || video.readyState < 2 || video.videoWidth === 0) {
       animationFrameId = requestAnimationFrame(scanVideoLoop);
       return;
     }
 
-    if (barcodeDetector) {
+    const now = performance.now();
+    // Throttle decoding to every ~40ms (~25 checks/sec) for optimal CPU performance
+    if (now - lastScanTime > 40) {
+      lastScanTime = now;
+
       try {
-        const barcodes = await barcodeDetector.detect(video);
-        if (barcodes && barcodes.length > 0) {
-          const rawValue = barcodes[0].rawValue;
-          if (rawValue) {
-            handleScanSuccess(rawValue);
+        const { canvas, ctx } = getScanContext();
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // 1. Primary decoder: jsQR (Instant software decode)
+        if (typeof window.jsQR === 'function') {
+          const qrCode = window.jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'attemptBoth'
+          });
+
+          if (qrCode && qrCode.data) {
+            handleScanSuccess(qrCode.data);
+            return;
+          }
+        }
+
+        // 2. Secondary fallback: BarcodeDetector API
+        if (barcodeDetector) {
+          const barcodes = await barcodeDetector.detect(video);
+          if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+            handleScanSuccess(barcodes[0].rawValue);
             return;
           }
         }
       } catch (e) {
-        // frame decode error
+        // scan frame error ignore
       }
     }
 
@@ -176,12 +209,14 @@
   }
 
   function handleScanSuccess(scannedData) {
+    if (!isScanning) return;
+    isScanning = false;
     playBeep();
     stopCameraScanner();
 
     const statusEl = document.getElementById('qrScannerStatus');
     if (statusEl) {
-      statusEl.innerHTML = `<span class="badge bg-success p-2 fs-6">✓ Scanned! Opening receipt...</span>`;
+      statusEl.innerHTML = `<span class="badge bg-success p-2 fs-6">✓ Scanned Successfully! Opening...</span>`;
     }
 
     executeLookup(scannedData);
@@ -226,10 +261,9 @@
       const modal = new bootstrap.Modal(modalEl);
       modal.show();
 
-      // Start camera immediately on open
       setTimeout(function() {
         startCameraScanner();
-      }, 200);
+      }, 150);
 
       modalEl.addEventListener('hidden.bs.modal', function onHidden() {
         modalEl.removeEventListener('hidden.bs.modal', onHidden);
@@ -253,7 +287,7 @@
 
       const statusEl = document.getElementById('qrScannerStatus');
       if (statusEl) {
-        statusEl.innerHTML = `<span class="spinner-border spinner-border-sm text-warning" role="status"></span> Analyzing photo...`;
+        statusEl.innerHTML = `<span class="spinner-border spinner-border-sm text-warning" role="status"></span> Decoding photo...`;
       }
 
       try {
@@ -261,6 +295,26 @@
         img.src = URL.createObjectURL(file);
         await img.decode();
 
+        const { canvas, ctx } = getScanContext();
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // 1. jsQR software decode
+        if (typeof window.jsQR === 'function') {
+          const qrCode = window.jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'attemptBoth'
+          });
+
+          if (qrCode && qrCode.data) {
+            handleScanSuccess(qrCode.data);
+            return;
+          }
+        }
+
+        // 2. BarcodeDetector fallback
         if (barcodeDetector) {
           const barcodes = await barcodeDetector.detect(img);
           if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
@@ -270,7 +324,7 @@
         }
 
         if (statusEl) {
-          statusEl.innerHTML = `<span class="text-danger small">No QR code found in photo. Please try entering the Order # below.</span>`;
+          statusEl.innerHTML = `<span class="text-danger small">No QR code found in photo. Please enter Order # below.</span>`;
         }
       } catch (err) {
         console.error('File scan error:', err);
@@ -288,7 +342,7 @@
     }
   };
 
-  // Backwards compatibility alias
+  // Backwards compatibility aliases
   window.openQrLookupModal = function() {
     window.DineQrScanner.openModal();
   };

@@ -14,25 +14,35 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 <div class="app-bottom-nav">
     <div class="app-bottom-nav-surface">
         <?php if ($currentUser['role'] === User::ROLE_CASHIER): ?>
-            <!-- Cashier Navigation: POS | Orders | Shift | Profile -->
+            <!-- Cashier Navigation: POS | Orders | [Center QR Scanner] | Shift | Profile -->
             <a href="<?= url('cashier/order') ?>" class="app-nav-item <?= (str_contains($currentUri, 'cashier/order') || $currentUri === '/') ? 'active' : '' ?>">
                 <div class="nav-icon">
                     <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
                 <span class="nav-label">POS</span>
             </a>
+
             <a href="<?= url('manager/orders') ?>" class="app-nav-item <?= str_contains($currentUri, 'manager/orders') ? 'active' : '' ?>">
                 <div class="nav-icon">
                     <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 </div>
                 <span class="nav-label">Orders</span>
             </a>
+
+            <!-- Elevated Center QR Scanner Button -->
+            <div class="app-nav-fab-wrap">
+                <button type="button" class="app-nav-fab-btn border-0" onclick="openQrLookupModal()" title="Scan Receipt QR Code">
+                    <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                </button>
+            </div>
+
             <a href="<?= url('cashier/summary') ?>" class="app-nav-item <?= str_contains($currentUri, 'cashier/summary') ? 'active' : '' ?>">
                 <div class="nav-icon">
                     <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 </div>
                 <span class="nav-label">Shift</span>
             </a>
+
             <a href="<?= url('manager/settings') ?>" class="app-nav-item <?= (str_contains($currentUri, 'manager/settings') || str_contains($currentUri, 'profile')) ? 'active' : '' ?>">
                 <div class="nav-icon">
                     <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -41,7 +51,7 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
             </a>
 
         <?php elseif ($currentUser['role'] === User::ROLE_MANAGER): ?>
-            <!-- Manager Navigation: Home | Orders | Elevated Center (+) FAB | Menu | Profile -->
+            <!-- Manager Navigation: Home | Orders | [Center QR Scanner] | Menu | Profile -->
             <a href="<?= url('manager/dashboard') ?>" class="app-nav-item <?= (str_contains($currentUri, 'manager/dashboard') || $currentUri === '/') ? 'active' : '' ?>">
                 <div class="nav-icon">
                     <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
@@ -56,11 +66,11 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
                 <span class="nav-label">Orders</span>
             </a>
 
-            <!-- Elevated Center '+' Floating Action Button -->
+            <!-- Elevated Center QR Scanner Button -->
             <div class="app-nav-fab-wrap">
-                <a href="<?= url('cashier/order') ?>" class="app-nav-fab-btn" title="New Order (POS Billing)">
-                    <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                </a>
+                <button type="button" class="app-nav-fab-btn border-0" onclick="openQrLookupModal()" title="Scan Receipt QR Code">
+                    <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                </button>
             </div>
 
             <a href="<?= url('manager/items') ?>" class="app-nav-item <?= str_contains($currentUri, 'manager/items') ? 'active' : '' ?>">
@@ -152,8 +162,17 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
                     <small class="text-secondary">Point camera directly at the receipt QR code</small>
                 </div>
 
+                <!-- Hidden Native Photo Input for instantaneous snapshot fallback -->
+                <input type="file" id="qrCameraFileInput" accept="image/*" capture="environment" style="display:none;" onchange="DineQrScanner.handleFileInput(this)">
+
+                <div class="d-grid gap-2 mb-3">
+                    <button type="button" class="btn btn-sm btn-light border fw-bold py-2" style="border-radius: 12px;" onclick="DineQrScanner.triggerPhotoCapture()">
+                        📸 Snap / Upload QR Photo
+                    </button>
+                </div>
+
                 <!-- Manual Input Fallback -->
-                <div class="p-3 bg-light rounded-3 mt-3 border">
+                <div class="p-3 bg-light rounded-3 border">
                     <label class="form-label small fw-bold text-dark mb-1">Or Enter Order # / Receipt Token:</label>
                     <div class="d-flex gap-2">
                         <input 
@@ -184,6 +203,7 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
 <!-- Core JavaScript -->
 <script src="<?= asset('js/bootstrap.bundle.min.js') ?>"></script>
+<script src="<?= asset('js/jsqr.min.js') ?>"></script>
 <script src="<?= asset('js/qrcode.min.js') ?>"></script>
 <script src="<?= asset('js/qr-scanner.js?v=' . filemtime(ROOT_PATH . '/public/assets/js/qr-scanner.js')) ?>"></script>
 <script src="<?= asset('js/app.js') ?>"></script>
