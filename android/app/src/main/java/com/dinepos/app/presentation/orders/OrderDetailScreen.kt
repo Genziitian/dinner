@@ -6,12 +6,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,16 +53,30 @@ fun OrderDetailScreen(
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text(text = if (order != null) "Order #${order?.orderNumber}" else "Order Details", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = if (order != null) "Order #${order?.orderNumber}" else "Order Details",
+                        fontWeight = FontWeight.Bold,
+                        color = BrandDark
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = BrandDark
+                        )
                     }
                 },
                 actions = {
                     if (order != null) {
                         IconButton(onClick = { onViewReceipt(orderId) }) {
-                            Icon(Icons.Default.QrCode, contentDescription = "View QR Receipt", tint = BrandDark)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
+                                contentDescription = "View Receipt",
+                                tint = BrandOrange
+                            )
                         }
                     }
                 },
@@ -123,7 +138,7 @@ fun OrderDetailScreen(
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        Divider(color = BrandBorder)
+                        HorizontalDivider(color = BrandBorder)
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(text = "ORDER ITEMS", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextSecondary)
@@ -153,7 +168,7 @@ fun OrderDetailScreen(
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        Divider(color = BrandBorder)
+                        HorizontalDivider(color = BrandBorder)
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Row(
@@ -172,15 +187,28 @@ fun OrderDetailScreen(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
+                        // View Order Receipt Action Button
                         Button(
                             onClick = { onViewReceipt(ord.id) },
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandDark),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
                         ) {
-                            Icon(Icons.Default.QrCode, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
+                                contentDescription = "Receipt",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("View Digital QR Receipt", fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "View Order Receipt",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color.White
+                            )
                         }
                     }
                 }
