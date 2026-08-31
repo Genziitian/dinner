@@ -10,7 +10,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -46,20 +46,23 @@ fun OrderListScreen(
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
-            TopAppBar(
-                title = { Text("Order History", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.loadOrders() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandSurface)
-            )
+            Column {
+                TopAppBar(
+                    title = { Text("Order History", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = BrandDark)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.loadOrders() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandDark)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+                HorizontalDivider(color = BrandBorder.copy(alpha = 0.7f), thickness = 1.dp)
+            }
         }
     ) { paddingValues ->
         Column(

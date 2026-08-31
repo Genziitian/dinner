@@ -28,12 +28,12 @@ fun ItemGridCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(135.dp)
+            .height(130.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BrandSurface),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         border = BorderStroke(1.dp, BrandBorder),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -43,19 +43,14 @@ fun ItemGridCard(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = item.emoji,
-                    fontSize = 22.sp
-                )
-
                 val (badgeBg, badgeText) = when (item.itemType) {
-                    "portion" -> BrandOrangeLight to BrandOrangeDark
-                    "piece" -> BrandAmberLight to Color(0xFFB45309)
-                    "weight" -> BrandEmeraldLight to Color(0xFF047857)
-                    else -> BrandBorder to TextSecondary
+                    "portion" -> Color(0xFFFFF7ED) to BrandOrange
+                    "piece" -> Color(0xFFFEF3C7) to Color(0xFFB45309)
+                    "weight" -> Color(0xFFECFDF5) to Color(0xFF047857)
+                    else -> Color(0xFFF1F5F9) to TextSecondary
                 }
 
                 Surface(
@@ -66,8 +61,8 @@ fun ItemGridCard(
                         text = item.itemType.uppercase(),
                         color = badgeText,
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                     )
                 }
             }
@@ -79,7 +74,7 @@ fun ItemGridCard(
                 color = BrandDark,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(vertical = 4.dp)
+                modifier = Modifier.padding(vertical = 2.dp)
             )
 
             Row(
@@ -95,7 +90,7 @@ fun ItemGridCard(
                 )
 
                 Surface(
-                    modifier = Modifier.size(26.dp),
+                    modifier = Modifier.size(28.dp),
                     shape = CircleShape,
                     color = BrandOrange
                 ) {
@@ -103,7 +98,7 @@ fun ItemGridCard(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Add",
                         tint = Color.White,
-                        modifier = Modifier.padding(4.dp)
+                        modifier = Modifier.padding(5.dp)
                     )
                 }
             }

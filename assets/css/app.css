@@ -238,7 +238,7 @@ html, body {
   pointer-events: auto;
   width: 100%;
   max-width: 700px;
-  height: var(--bottom-nav-height);
+  min-height: var(--bottom-nav-height);
   background-color: var(--brand-surface);
   border-top: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 20px 20px 0 0;
@@ -247,6 +247,7 @@ html, body {
   align-items: center;
   justify-content: space-around;
   padding: 0 0.5rem;
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom, 14px));
   position: relative;
 }
 
@@ -1144,19 +1145,22 @@ input:checked + .m3-switch-slider:before {
    Modals, Dialogs & Cart Drawer
    ========================================================================== */
 .modal-content-android {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
   border-radius: 20px;
-  border: none;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
 .modal-header-android {
-  border-bottom: 1px solid var(--brand-border);
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
   padding: 1.15rem 1.25rem;
 }
 .modal-title-android {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  color: var(--brand-dark);
+  color: #0f172a !important;
 }
 
 .portion-grid-android {
@@ -1165,10 +1169,10 @@ input:checked + .m3-switch-slider:before {
   gap: 0.75rem;
 }
 .portion-card-btn {
-  background: #fffaf5;
+  background: #ffffff;
   border: 2px solid #fed7aa;
   border-radius: 14px;
-  padding: 0.85rem 0.5rem;
+  padding: 1rem 0.6rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.12s ease;
@@ -1179,10 +1183,117 @@ input:checked + .m3-switch-slider:before {
 }
 .portion-card-btn:hover {
   border-color: var(--brand-orange);
-  background: #ffedd5;
+  background: #fff7ed;
 }
 .portion-card-btn:active {
   transform: scale(0.96);
+}
+
+/* ==========================================================================
+   PhonePe / Google Pay Style Full-Screen Payment Success Overlay
+   ========================================================================== */
+.payment-success-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: linear-gradient(180deg, #047857 0%, #065f46 60%, #0f172a 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeInSuccess 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInSuccess {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.success-ring-pulse {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(52, 211, 153, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulseGreenGlow 1.8s infinite ease-in-out;
+}
+
+@keyframes pulseGreenGlow {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 25px rgba(52, 211, 153, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+.success-check-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 3.5rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.5);
+  animation: checkPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0); }
+  80% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.success-title {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.success-amount {
+  color: #6ee7b7;
+  font-size: 2.4rem;
+  font-weight: 900;
+  margin-top: 0.35rem;
+  text-align: center;
+}
+
+.success-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  padding: 0.4rem 1rem;
+  border-radius: 50rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-top: 0.75rem;
+  backdrop-filter: blur(8px);
+}
+
+.success-view-btn {
+  background: #ffffff !important;
+  color: #047857 !important;
+  font-weight: 800 !important;
+  font-size: 1rem !important;
+  padding: 0.75rem 2rem !important;
+  border-radius: 14px !important;
+  margin-top: 2rem;
+  border: none !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.success-view-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
 }
 
 /* ==========================================================================

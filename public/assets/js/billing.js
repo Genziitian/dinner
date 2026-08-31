@@ -1,65 +1,92 @@
 /**
- * Cashier POS Billing & Cart Engine
- * Matches Android Native App interactions & reactivity
+ * DinePOS Android-Parity Reactive Billing Engine
+ * Zero-Trust Pricing, Client-Side Cart, Dual Weight/Rupee Calculator & PhonePe Payment Success Animation
  */
-(function() {
+(function () {
   'use strict';
 
-  // In-memory state for unsaved cart
   let cart = [];
-  let selectedPayment = 'Cash';
   let currentActiveItem = null;
-  let modalSelectedQty = 1;
+  let currentActiveVariant = null;
+  let weightModalMode = 'weight'; // 'weight' or 'rupees'
+  let selectedPayment = 'Cash';
 
-  // Modals
-  let variantModal = null;
-  let mobileCartModal = null;
+  function getCSRFToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
 
   function getVariantModal() {
-    const modalEl = document.getElementById('variantModal');
-    if (!modalEl) return null;
-    if (!variantModal && typeof bootstrap !== 'undefined') {
-      variantModal = new bootstrap.Modal(modalEl);
-    }
-    return variantModal;
+    const el = document.getElementById('variantModal');
+    if (!el) return null;
+    if (!window.bootstrap || !window.bootstrap.Modal) return null;
+    return bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
   }
 
   function getCartModal() {
-    const modalEl = document.getElementById('mobileCartModal');
-    if (!modalEl) return null;
-    if (!mobileCartModal && typeof bootstrap !== 'undefined') {
-      mobileCartModal = new bootstrap.Modal(modalEl);
+    const el = document.getElementById('mobileCartModal');
+    if (!el) return null;
+    if (!window.bootstrap || !window.bootstrap.Modal) return null;
+    return bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+  }
+
+  function playSuccessChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+    } catch (e) {
+      console.warn('Audio chime note:', e);
     }
-    return mobileCartModal;
   }
 
-  function init() {
-    initItemClickListeners();
-    renderCart();
-  }
+  function showPhonePeSuccessAnimation(res, onDone) {
+    playSuccessChime();
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+    const overlay = document.getElementById('paymentSuccessOverlay');
+    const amountEl = document.getElementById('successOverlayAmount');
+    const badgeEl = document.getElementById('successOverlayBadge');
+    const viewBtn = document.getElementById('successViewReceiptBtn');
 
-  function initItemClickListeners() {
-    document.querySelectorAll('.pos-item-card').forEach((card) => {
-      // Remove old listener if any and add fresh
-      card.onclick = (e) => {
-        e.preventDefault();
-        try {
-          const raw = card.getAttribute('data-item');
-          if (raw) {
-            const itemData = JSON.parse(raw);
-            handleItemClick(itemData);
-          }
-        } catch (err) {
-          console.error('Error parsing item data:', err);
-        }
-      };
-    });
+    const totalStr = res.total_amount ? ('₹' + parseFloat(res.total_amount).toFixed(2)) : (document.getElementById('mobileCartTotalModal')?.textContent || '₹0.00');
+    const orderNum = res.order_number || res.order_id || '0';
+    const payMethod = res.payment_method || selectedPayment || 'CASH';
+
+    if (amountEl) amountEl.textContent = totalStr;
+    if (badgeEl) badgeEl.textContent = `Order #${orderNum} • ${payMethod.toUpperCase()}`;
+
+    if (overlay) {
+      overlay.style.display = 'flex';
+    }
+
+    let redirected = false;
+    function proceed() {
+      if (redirected) return;
+      redirected = true;
+      if (overlay) overlay.style.display = 'none';
+      if (typeof onDone === 'function') onDone();
+    }
+
+    if (viewBtn) {
+      viewBtn.onclick = proceed;
+    }
+    if (overlay) {
+      overlay.onclick = proceed;
+    }
+
+    // Auto-transition after 1.8s
+    setTimeout(proceed, 1800);
   }
 
   function handleItemClick(item) {
@@ -77,6 +104,7 @@
       }
     } else if (item.item_type === 'weight') {
       const v = variants[0] || { id: 0, variant_name: 'Weight', price: item.price_per_unit || 0, quantity_unit: item.base_unit || 'kg' };
+      currentActiveVariant = v;
       showWeightModal(item, v);
     } else {
       // Piece or default: Instant add 1 piece!
@@ -91,19 +119,15 @@
     const bodyEl = document.getElementById('variantModalBody');
     if (!modal || !titleEl || !bodyEl) return;
 
-    titleEl.innerHTML = `<span style="color: #ea580c;">🍗</span> ${escapeHtml(item.name)} — Select Portion`;
+    titleEl.innerHTML = `<span class="fw-bold" style="color: #0f172a;">${escapeHtml(item.name)}</span>`;
 
     let html = `<div class="portion-grid-android mb-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem;">`;
     variants.forEach((v) => {
-      const isFull = v.variant_name.toLowerCase().includes('full');
-      const isHalf = v.variant_name.toLowerCase().includes('half');
-      const portionIcon = isFull ? '🍲' : (isHalf ? '🥣' : '🍽️');
       const priceVal = parseFloat(v.price || 0).toFixed(2);
       html += `
-        <button type="button" class="btn text-start p-3 border rounded-3 portion-choice-btn" style="background: #ffffff; border-color: #e2e8f0; border-radius: 14px !important;" onclick="DineBilling.selectPortion(${v.id})">
-          <div style="font-size: 1.6rem; margin-bottom: 0.25rem;">${portionIcon}</div>
-          <div style="font-weight: 800; font-size: 1rem; color: #0f172a;">${escapeHtml(v.variant_name)}</div>
-          <div style="color: #ea580c; font-weight: 900; font-size: 1.15rem; margin-top: 0.25rem;">₹${priceVal}</div>
+        <button type="button" class="btn text-center p-3 border rounded-3 portion-card-btn" style="background: #ffffff; border-color: #fed7aa; border-radius: 14px !important;" onclick="DineBilling.selectPortion(${v.id})">
+          <div style="font-weight: 800; font-size: 1.1rem; color: #0f172a;">${escapeHtml(v.variant_name)}</div>
+          <div style="color: #ea580c; font-weight: 900; font-size: 1.2rem; margin-top: 0.35rem;">₹${priceVal}</div>
         </button>
       `;
     });
@@ -119,25 +143,61 @@
     const bodyEl = document.getElementById('variantModalBody');
     if (!modal || !titleEl || !bodyEl) return;
 
+    weightModalMode = 'weight';
     const unit = variant.quantity_unit || item.base_unit || 'kg';
     const price = parseFloat(variant.price || item.price_per_unit || 0).toFixed(2);
-    titleEl.innerHTML = `<span style="color: #047857;">🌾</span> ${escapeHtml(item.name)} — By Weight`;
+    titleEl.innerHTML = `<span class="fw-bold" style="color: #0f172a;">${escapeHtml(item.name)}</span>`;
 
     bodyEl.innerHTML = `
-      <div class="py-2">
-        <div class="d-flex justify-content-between align-items-center p-3 mb-3 bg-light rounded-3">
-          <span class="fw-semibold text-secondary">Unit Rate:</span>
+      <div class="py-1">
+        <div class="d-flex justify-content-between align-items-center p-3 mb-3 bg-light rounded-3 border">
+          <span class="fw-semibold text-secondary" style="font-size: 0.9rem;">Unit Rate:</span>
           <span class="fs-5 fw-bold" style="color: #0f172a;">₹${price} / ${unit}</span>
         </div>
-        <label class="form-label fw-bold small text-secondary">ENTER QUANTITY IN ${unit.toUpperCase()}:</label>
-        <input type="number" id="modalWeightInput" class="form-control form-control-lg text-center fw-bold mb-2" value="1" step="0.05" min="0.05" style="border: 2px solid #10b981; font-size: 1.4rem; border-radius: 12px;">
-        <div class="d-flex gap-2 justify-content-center mb-3">
-          <button type="button" class="btn btn-sm btn-light border fw-bold" style="border-radius: 20px;" onclick="DineBilling.setWeightVal(0.25)">0.25 ${unit}</button>
-          <button type="button" class="btn btn-sm btn-light border fw-bold" style="border-radius: 20px;" onclick="DineBilling.setWeightVal(0.5)">0.5 ${unit}</button>
-          <button type="button" class="btn btn-sm btn-light border fw-bold" style="border-radius: 20px;" onclick="DineBilling.setWeightVal(1.0)">1.0 ${unit}</button>
-          <button type="button" class="btn btn-sm btn-light border fw-bold" style="border-radius: 20px;" onclick="DineBilling.setWeightVal(2.0)">2.0 ${unit}</button>
+
+        <!-- Mode Toggle Segmented Button -->
+        <div class="d-flex p-1 bg-light border rounded-3 mb-3" style="gap: 4px;">
+          <button type="button" class="btn flex-fill py-1.5 fw-bold rounded-2 active" id="weightTabWeight" style="background: #0f172a; color: #ffffff; font-size: 0.85rem;" onclick="DineBilling.switchWeightMode('weight')">
+            By Weight (${unit})
+          </button>
+          <button type="button" class="btn flex-fill py-1.5 fw-bold rounded-2" id="weightTabRupees" style="background: transparent; color: #64748b; font-size: 0.85rem;" onclick="DineBilling.switchWeightMode('rupees')">
+            By Rupees (₹ Amount)
+          </button>
         </div>
-        <button type="button" class="btn w-100 py-2.5 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px;" onclick="DineBilling.confirmWeightAdd(${variant.id || 0})">Add to Order</button>
+
+        <!-- By Weight Section -->
+        <div id="weightInputSection">
+          <label class="form-label fw-bold small text-secondary">ENTER QUANTITY IN ${unit.toUpperCase()}:</label>
+          <input type="number" id="modalWeightInput" class="form-control form-control-lg text-center fw-bold mb-2" value="1.0" step="0.05" min="0.01" style="border: 2px solid #0f172a; font-size: 1.3rem; border-radius: 12px;" oninput="DineBilling.recalcWeightOutput()">
+          <div class="d-flex gap-2 justify-content-center mb-3">
+            <button type="button" class="btn btn-sm btn-light border fw-bold px-2 py-1" style="border-radius: 10px;" onclick="DineBilling.setWeightVal(0.25)">0.25 ${unit}</button>
+            <button type="button" class="btn btn-sm btn-light border fw-bold px-2 py-1" style="border-radius: 10px;" onclick="DineBilling.setWeightVal(0.5)">0.5 ${unit}</button>
+            <button type="button" class="btn btn-sm btn-light border fw-bold px-2 py-1" style="border-radius: 10px;" onclick="DineBilling.setWeightVal(1.0)">1.0 ${unit}</button>
+            <button type="button" class="btn btn-sm btn-light border fw-bold px-2 py-1" style="border-radius: 10px;" onclick="DineBilling.setWeightVal(2.0)">2.0 ${unit}</button>
+          </div>
+        </div>
+
+        <!-- By Rupees Section (Auto-Calculator) -->
+        <div id="rupeesInputSection" style="display: none;">
+          <label class="form-label fw-bold small text-secondary">ENTER RUPEES (₹ AMOUNT):</label>
+          <input type="number" id="modalRupeesInput" class="form-control form-control-lg text-center fw-bold mb-2" placeholder="e.g. 10, 12, 50, 100" value="50" step="1" min="1" style="border: 2px solid #ea580c; font-size: 1.3rem; border-radius: 12px;" oninput="DineBilling.recalcRupeesOutput()">
+          <div class="d-flex gap-2 justify-content-center mb-3">
+            <button type="button" class="btn btn-sm btn-light border fw-bold px-3 py-1" style="border-radius: 10px;" onclick="DineBilling.setRupeesVal(10)">₹10</button>
+            <button type="button" class="btn btn-sm btn-light border fw-bold px-3 py-1" style="border-radius: 10px;" onclick="DineBilling.setRupeesVal(20)">₹20</button>
+            <button type="button" class="btn btn-sm btn-light border fw-bold px-3 py-1" style="border-radius: 10px;" onclick="DineBilling.setRupeesVal(50)">₹50</button>
+            <button type="button" class="btn btn-sm btn-light border fw-bold px-3 py-1" style="border-radius: 10px;" onclick="DineBilling.setRupeesVal(100)">₹100</button>
+          </div>
+        </div>
+
+        <!-- Calculated Summary Box -->
+        <div class="p-2.5 rounded-3 mb-3 border" style="background: #f0fdf4; border-color: #bbf7d0 !important;" id="weightCalculationBox">
+          <div class="fw-bold" style="color: #15803d; font-size: 0.95rem;" id="calcWeightSummary">Gives: 1.000 ${unit}</div>
+          <div class="fw-bold text-dark small" id="calcPriceSummary">Total: ₹${price}</div>
+        </div>
+
+        <button type="button" class="btn w-100 py-2.5 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px; font-size: 1rem;" onclick="DineBilling.confirmWeightAdd(${variant.id || 0})">
+          Add to Order
+        </button>
       </div>
     `;
     modal.show();
@@ -162,6 +222,7 @@
         variant_id: variantId,
         item_name: item.name,
         variant_name: variantName,
+        item_type: item.item_type,
         unit: variant.quantity_unit || item.base_unit || 'piece',
         unit_price: unitPrice,
         quantity: quantity,
@@ -170,97 +231,96 @@
     }
 
     renderCart();
+    playTapHaptic();
+  }
 
-    // Haptic / Visual bounce on bottom floating cart
-    if (navigator.vibrate) navigator.vibrate(40);
-    const floatingBar = document.querySelector('.pos-floating-cart-bar');
-    if (floatingBar) {
-      floatingBar.style.transform = 'scale(1.03)';
-      setTimeout(() => { floatingBar.style.transform = 'none'; }, 150);
+  function playTapHaptic() {
+    if (navigator.vibrate) {
+      try { navigator.vibrate(30); } catch (e) {}
     }
   }
 
   function renderCart() {
-    let subtotal = 0;
-    let totalItems = 0;
+    const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.total_price) || 0), 0);
+    const totalCount = cart.length;
 
-    cart.forEach(item => {
-      subtotal += item.total_price;
-      totalItems += item.quantity;
-    });
+    // Update Bottom Floating Cart Bar
+    const totalTextEl = document.getElementById('cartTotalText');
+    const itemsSubEl = document.getElementById('cartItemsSub');
+    const viewCartBtn = document.getElementById('viewCartActionBtn');
+    const modalTotalEl = document.getElementById('mobileCartTotalModal');
+    const saveBtn = document.getElementById('saveOrderBtnMobile');
 
-    const formattedTotal = '₹' + subtotal.toFixed(2);
+    if (totalTextEl) totalTextEl.textContent = '₹' + totalAmount.toFixed(2);
+    if (modalTotalEl) modalTotalEl.textContent = '₹' + totalAmount.toFixed(2);
 
-    // Update bottom floating bar elements
-    const cartTotalTextEl = document.getElementById('cartTotalText');
-    const cartItemsSubEl = document.getElementById('cartItemsSub');
-    const viewCartActionBtnEl = document.getElementById('viewCartActionBtn');
-
-    if (cartTotalTextEl) cartTotalTextEl.textContent = formattedTotal;
-    if (cartItemsSubEl) {
-      cartItemsSubEl.textContent = cart.length === 0 ? 'Cart is empty' : `${cart.length} item${cart.length > 1 ? 's' : ''} in cart`;
+    if (itemsSubEl) {
+      itemsSubEl.textContent = totalCount === 0 ? 'Cart is empty' : `${totalCount} item${totalCount > 1 ? 's' : ''} in cart`;
     }
-    if (viewCartActionBtnEl) {
-      viewCartActionBtnEl.disabled = cart.length === 0;
-      if (cart.length === 0) {
-        viewCartActionBtnEl.classList.add('disabled');
+
+    if (viewCartBtn) {
+      viewCartBtn.disabled = totalCount === 0;
+      if (totalCount === 0) {
+        viewCartBtn.classList.add('disabled');
       } else {
-        viewCartActionBtnEl.classList.remove('disabled');
+        viewCartBtn.classList.remove('disabled');
       }
     }
 
-    // Update Modal Cart elements
-    const mobileCartTotalModalEl = document.getElementById('mobileCartTotalModal');
-    const saveOrderBtnMobileEl = document.getElementById('saveOrderBtnMobile');
-    const mobileCartListEl = document.getElementById('mobileCartList');
+    if (saveBtn) {
+      saveBtn.disabled = totalCount === 0;
+    }
 
-    if (mobileCartTotalModalEl) mobileCartTotalModalEl.textContent = formattedTotal;
-    if (saveOrderBtnMobileEl) saveOrderBtnMobileEl.disabled = cart.length === 0;
+    // Render Items inside Cart Modal Drawer
+    const listContainer = document.getElementById('mobileCartList');
+    if (!listContainer) return;
 
-    if (mobileCartListEl) {
-      if (cart.length === 0) {
-        mobileCartListEl.innerHTML = `
-          <div class="text-center py-4 text-secondary">
-            <div style="font-size: 2.25rem; margin-bottom: 0.25rem;">🛒</div>
-            <div class="fw-bold">Your cart is empty</div>
-            <small>Tap items on the menu to add them.</small>
-          </div>
-        `;
-      } else {
-        let html = '';
-        cart.forEach((item, index) => {
-          const formattedQty = (item.quantity % 1 === 0) ? item.quantity : item.quantity.toFixed(2);
-          html += `
-            <div class="d-flex justify-content-between align-items-center p-2.5 mb-2 rounded-3 border bg-white" style="border-radius: 12px; border-color: #e2e8f0 !important;">
-              <div style="flex: 1; min-width: 0; padding-right: 0.5rem;">
-                <div class="fw-bold text-dark text-truncate" style="font-size: 0.92rem;">${escapeHtml(item.item_name)}</div>
-                <div class="text-secondary small">${escapeHtml(item.variant_name)} · ₹${item.unit_price.toFixed(2)}</div>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <div class="d-inline-flex align-items-center border rounded-pill px-2 py-1 bg-light">
-                  <button type="button" class="btn btn-sm p-0 border-0 fw-bold text-dark" style="width: 20px; line-height: 1;" onclick="DineBilling.updateQty(${index}, -1)">−</button>
-                  <span class="px-2 fw-bold small" style="min-width: 24px; text-align: center;">${formattedQty}</span>
-                  <button type="button" class="btn btn-sm p-0 border-0 fw-bold text-dark" style="width: 20px; line-height: 1;" onclick="DineBilling.updateQty(${index}, 1)">+</button>
-                </div>
-                <div class="fw-bold text-dark ps-2" style="min-width: 65px; text-align: right;">₹${item.total_price.toFixed(2)}</div>
-                <button type="button" class="btn btn-sm text-danger p-1 border-0 bg-transparent" onclick="DineBilling.removeItem(${index})" title="Remove">✕</button>
-              </div>
+    if (cart.length === 0) {
+      listContainer.innerHTML = `
+        <div class="text-center py-4 text-secondary">
+          <div class="fs-1 mb-2">🛒</div>
+          <div class="fw-bold">Your cart is empty</div>
+          <div class="small">Tap any menu card to add items.</div>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '<div class="d-flex flex-column gap-2">';
+    cart.forEach((item, index) => {
+      const qtyDisplay = item.item_type === 'weight' ? parseFloat(item.quantity).toFixed(3) + ' ' + item.unit : item.quantity;
+      html += `
+        <div class="d-flex align-items-center justify-content-between p-2.5 bg-white border rounded-3 shadow-2xs" style="border-radius: 12px !important;">
+          <div style="flex: 1; min-width: 0; padding-right: 0.5rem;">
+            <div class="fw-bold text-dark text-truncate" style="font-size: 0.95rem;">${escapeHtml(item.item_name)}</div>
+            <div class="text-secondary small">
+              ${escapeHtml(item.variant_name)} • ₹${parseFloat(item.unit_price).toFixed(2)}
             </div>
-          `;
-        });
-        mobileCartListEl.innerHTML = html;
-      }
-    }
-  }
-
-  function getCSRFToken() {
-    const meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute('content') : '';
+          </div>
+          
+          <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center bg-light border rounded-pill px-1 py-0.5">
+              <button type="button" class="btn btn-sm btn-link text-dark p-0 px-1 text-decoration-none fw-bold" onclick="DineBilling.updateQty(${index}, -1)">−</button>
+              <span class="px-2 fw-bold text-dark small">${qtyDisplay}</span>
+              <button type="button" class="btn btn-sm btn-link text-dark p-0 px-1 text-decoration-none fw-bold" onclick="DineBilling.updateQty(${index}, 1)">+</button>
+            </div>
+            <div class="fw-bold text-end" style="min-width: 65px; color: #0f172a; font-size: 0.95rem;">
+              ₹${parseFloat(item.total_price).toFixed(2)}
+            </div>
+            <button type="button" class="btn btn-sm text-danger p-1" onclick="DineBilling.removeItem(${index})" title="Remove item">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    listContainer.innerHTML = html;
   }
 
   async function saveOrder() {
     if (cart.length === 0) {
-      alert('Cart is empty. Please add items to save order.');
+      alert('Cart is empty. Please add items to complete billing.');
       return;
     }
 
@@ -303,7 +363,10 @@
         renderCart();
         const cartModal = getCartModal();
         if (cartModal) cartModal.hide();
-        window.location.href = res.redirect_url || '/receipt/view?id=' + res.order_id;
+
+        showPhonePeSuccessAnimation(res, function () {
+          window.location.href = res.redirect_url || '/receipt/view?id=' + res.order_id;
+        });
       } else {
         alert(res.message || 'Error saving order. Please check item availability.');
         if (saveBtn) {
@@ -329,7 +392,7 @@
 
   // Global window API object
   window.DineBilling = {
-    handleCardClick: function(cardEl) {
+    handleCardClick: function (cardEl) {
       try {
         const raw = cardEl.getAttribute('data-item');
         if (raw) {
@@ -340,7 +403,7 @@
       }
     },
 
-    selectPortion: function(variantId) {
+    selectPortion: function (variantId) {
       if (!currentActiveItem) return;
       const v = (currentActiveItem.variants || []).find(x => x.id === variantId);
       if (v) {
@@ -350,26 +413,98 @@
       }
     },
 
-    setWeightVal: function(val) {
-      const input = document.getElementById('modalWeightInput');
-      if (input) input.value = val;
+    switchWeightMode: function (mode) {
+      weightModalMode = mode;
+      const tabWeight = document.getElementById('weightTabWeight');
+      const tabRupees = document.getElementById('weightTabRupees');
+      const secWeight = document.getElementById('weightInputSection');
+      const secRupees = document.getElementById('rupeesInputSection');
+
+      if (mode === 'weight') {
+        if (tabWeight) { tabWeight.style.background = '#0f172a'; tabWeight.style.color = '#ffffff'; }
+        if (tabRupees) { tabRupees.style.background = 'transparent'; tabRupees.style.color = '#64748b'; }
+        if (secWeight) secWeight.style.display = 'block';
+        if (secRupees) secRupees.style.display = 'none';
+        this.recalcWeightOutput();
+      } else {
+        if (tabWeight) { tabWeight.style.background = 'transparent'; tabWeight.style.color = '#64748b'; }
+        if (tabRupees) { tabRupees.style.background = '#0f172a'; tabRupees.style.color = '#ffffff'; }
+        if (secWeight) secWeight.style.display = 'none';
+        if (secRupees) secRupees.style.display = 'block';
+        this.recalcRupeesOutput();
+      }
     },
 
-    confirmWeightAdd: function(variantId) {
-      if (!currentActiveItem) return;
+    setWeightVal: function (val) {
+      const input = document.getElementById('modalWeightInput');
+      if (input) {
+        input.value = val;
+        this.recalcWeightOutput();
+      }
+    },
+
+    setRupeesVal: function (val) {
+      const input = document.getElementById('modalRupeesInput');
+      if (input) {
+        input.value = val;
+        this.recalcRupeesOutput();
+      }
+    },
+
+    recalcWeightOutput: function () {
+      if (!currentActiveItem || !currentActiveVariant) return;
+      const unit = currentActiveVariant.quantity_unit || currentActiveItem.base_unit || 'kg';
+      const price = parseFloat(currentActiveVariant.price || currentActiveItem.price_per_unit || 0);
       const input = document.getElementById('modalWeightInput');
       const qty = input ? parseFloat(input.value) : 1;
-      if (isNaN(qty) || qty <= 0) {
-        alert('Please enter a valid weight quantity.');
+      const total = isNaN(qty) ? 0 : (qty * price);
+
+      const sumW = document.getElementById('calcWeightSummary');
+      const sumP = document.getElementById('calcPriceSummary');
+      if (sumW) sumW.textContent = `Gives: ${(isNaN(qty) ? 0 : qty).toFixed(3)} ${unit}`;
+      if (sumP) sumP.textContent = `Total: ₹${total.toFixed(2)}`;
+    },
+
+    recalcRupeesOutput: function () {
+      if (!currentActiveItem || !currentActiveVariant) return;
+      const unit = currentActiveVariant.quantity_unit || currentActiveItem.base_unit || 'kg';
+      const price = parseFloat(currentActiveVariant.price || currentActiveItem.price_per_unit || 0);
+      const input = document.getElementById('modalRupeesInput');
+      const rupees = input ? parseFloat(input.value) : 0;
+      const calculatedQty = (price > 0 && !isNaN(rupees)) ? (rupees / price) : 0;
+
+      const sumW = document.getElementById('calcWeightSummary');
+      const sumP = document.getElementById('calcPriceSummary');
+      if (sumW) sumW.textContent = `Gives: ${calculatedQty.toFixed(3)} ${unit}`;
+      if (sumP) sumP.textContent = `Total: ₹${(isNaN(rupees) ? 0 : rupees).toFixed(2)}`;
+    },
+
+    confirmWeightAdd: function (variantId) {
+      if (!currentActiveItem) return;
+      const v = (currentActiveItem.variants || []).find(x => x.id === variantId) || currentActiveVariant || { id: 0, price: currentActiveItem.price_per_unit || 0 };
+      const unitPrice = parseFloat(v.price || currentActiveItem.price_per_unit || 0);
+
+      let finalQty = 1;
+      if (weightModalMode === 'weight') {
+        const input = document.getElementById('modalWeightInput');
+        finalQty = input ? parseFloat(input.value) : 1;
+      } else {
+        const input = document.getElementById('modalRupeesInput');
+        const rupees = input ? parseFloat(input.value) : 0;
+        finalQty = unitPrice > 0 ? (rupees / unitPrice) : 0;
+      }
+
+      if (isNaN(finalQty) || finalQty <= 0) {
+        alert('Please enter a valid weight or amount.');
         return;
       }
-      const v = (currentActiveItem.variants || []).find(x => x.id === variantId) || { id: 0, price: currentActiveItem.price_per_unit || 0 };
-      addToCart(currentActiveItem, v, qty);
+
+      addToCart(currentActiveItem, v, finalQty);
       const modal = getVariantModal();
       if (modal) modal.hide();
     },
 
-    updateQty: function(index, delta) {
+    updateQty: function (index, delta) {
       if (!cart[index]) return;
       cart[index].quantity += delta;
       if (cart[index].quantity <= 0) {
@@ -380,28 +515,28 @@
       renderCart();
     },
 
-    removeItem: function(index) {
+    removeItem: function (index) {
       if (cart[index]) {
         cart.splice(index, 1);
         renderCart();
       }
     },
 
-    clearCart: function() {
+    clearCart: function () {
       if (cart.length > 0 && confirm('Clear all items from this order cart?')) {
         cart = [];
         renderCart();
       }
     },
 
-    openMobileCart: function() {
+    openMobileCart: function () {
       const cartModal = getCartModal();
       if (cartModal) {
         cartModal.show();
       }
     },
 
-    setPaymentMethod: function(method) {
+    setPaymentMethod: function (method) {
       selectedPayment = method;
     },
 

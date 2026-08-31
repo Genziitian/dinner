@@ -8,12 +8,12 @@ declare(strict_types=1);
 
 <div class="app-container" style="padding-bottom: calc(var(--bottom-nav-height) + 5rem);">
     <!-- Top App Bar Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3" style="border-bottom: 1.5px solid #e2e8f0; padding-bottom: 0.85rem;">
         <div class="d-flex align-items-center gap-2">
             <a href="<?= url('manager/dashboard') ?>" class="top-bar-back-btn" title="Back to Dashboard">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
-            <h4 class="top-bar-title m-0">Menu Items Catalog</h4>
+            <h4 class="top-bar-title fw-bold m-0" style="color: #0f172a; font-size: 1.25rem;">Menu Items Catalog</h4>
         </div>
         <div class="top-bar-actions">
             <a href="<?= url('manager/items') ?>" class="top-bar-icon-btn" title="Refresh">
@@ -25,7 +25,6 @@ declare(strict_types=1);
     <!-- Items Catalog List (Screenshot 4) -->
     <?php if (empty($items)): ?>
         <div class="card border-0 p-5 text-center my-3" style="border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0 !important;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍗</div>
             <div class="fw-bold text-dark fs-6 mb-1">No items found</div>
             <div class="text-secondary small">Tap the orange '+' button below to create your first item.</div>
         </div>
@@ -34,12 +33,6 @@ declare(strict_types=1);
             <?php foreach ($items as $item): ?>
                 <?php
                     $itemType = $item['item_type'] ?? 'piece';
-                    $emoji = match($itemType) {
-                        'portion' => '🍗',
-                        'piece' => '🥚',
-                        'weight' => ($item['base_unit'] === 'l' || $item['base_unit'] === 'ml') ? '🥤' : '🌾',
-                        default => '🍴'
-                    };
                     $displayPrice = $item['display_price'] ?? '';
                     if (empty($displayPrice) && !empty($item['variants'])) {
                         $minPrice = min(array_column($item['variants'], 'price'));
@@ -49,7 +42,6 @@ declare(strict_types=1);
                 ?>
                 <div class="catalog-item-card">
                     <a href="<?= url('manager/items/edit?id=' . (int)$item['id']) ?>" class="catalog-item-left text-decoration-none" title="Edit Item & Rates">
-                        <span class="catalog-item-emoji"><?= $emoji ?></span>
                         <div>
                             <div class="catalog-item-name"><?= e($item['name']) ?></div>
                             <div class="catalog-item-meta">

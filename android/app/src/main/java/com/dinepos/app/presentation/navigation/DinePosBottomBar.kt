@@ -68,6 +68,7 @@ fun DinePosBottomBar(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .wrapContentHeight()
         ) {
             // Main Bottom Bar Surface

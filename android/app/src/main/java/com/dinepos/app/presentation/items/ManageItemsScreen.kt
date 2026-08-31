@@ -8,8 +8,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,20 +41,23 @@ fun ManageItemsScreen(
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
-            TopAppBar(
-                title = { Text("Menu Items Catalog", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.loadItems() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandSurface)
-            )
+            Column {
+                TopAppBar(
+                    title = { Text("Menu Items Catalog", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = BrandDark)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.loadItems() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandDark)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+                HorizontalDivider(color = BrandBorder.copy(alpha = 0.7f), thickness = 1.dp)
+            }
         },
         floatingActionButton = {
             FloatingActionButton(

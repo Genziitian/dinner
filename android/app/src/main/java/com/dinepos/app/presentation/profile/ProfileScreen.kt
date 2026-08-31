@@ -71,46 +71,50 @@ fun ProfileScreen(
     var showExportDialog by remember { mutableStateOf(false) }
 
     // Role specific badge and title
-    val (roleTitle, roleBadgeColor, roleIcon) = when (role) {
-        "superadmin" -> Triple("Master Super Administrator", Color(0xFFF59E0B), "👑")
-        "manager" -> Triple("Restaurant General Manager", Color(0xFF3B82F6), "👔")
-        "cashier" -> Triple("POS Billing Operator & Cashier", Color(0xFF10B981), "🛒")
-        else -> Triple("Staff Member", TextSecondary, "👤")
+    val (roleTitle, roleBadgeColor, _) = when (role) {
+        "superadmin" -> Triple("Master Super Administrator", Color(0xFFF59E0B), "")
+        "manager" -> Triple("Restaurant General Manager", Color(0xFF3B82F6), "")
+        "cashier" -> Triple("POS Billing Operator & Cashier", Color(0xFF10B981), "")
+        else -> Triple("Staff Member", TextSecondary, "")
     }
 
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "My Profile",
-                        fontWeight = FontWeight.Bold,
-                        color = BrandDark
-                    )
-                },
-                navigationIcon = {
-                    if (onNavigateBack != null) {
-                        IconButton(onClick = onNavigateBack) {
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "My Profile",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp,
+                            color = BrandDark
+                        )
+                    },
+                    navigationIcon = {
+                        if (onNavigateBack != null) {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = BrandDark
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { showLogoutDialog = true }) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = BrandDark
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = "Logout",
+                                tint = StatusError
                             )
                         }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showLogoutDialog = true }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = "Logout",
-                            tint = StatusError
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandSurface)
-            )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+                HorizontalDivider(color = BrandBorder.copy(alpha = 0.7f), thickness = 1.dp)
+            }
         }
     ) { paddingValues ->
         Column(
@@ -142,9 +146,11 @@ fun ProfileScreen(
                             .background(BrandOrange.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = roleIcon,
-                            fontSize = 36.sp
+                        Icon(
+                            imageVector = Icons.Outlined.Person,
+                            contentDescription = "User Avatar",
+                            tint = BrandOrange,
+                            modifier = Modifier.size(38.dp)
                         )
                     }
 
@@ -169,8 +175,6 @@ fun ProfileScreen(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = roleIcon, fontSize = 13.sp)
-                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = roleTitle,
                                 color = roleBadgeColor,
@@ -420,7 +424,7 @@ fun ProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "ℹ️ Legal & Application",
+                        text = "Legal & Application",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = BrandDark
@@ -498,8 +502,12 @@ fun ProfileScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text(text = "Sign Out", fontWeight = FontWeight.Bold) },
-            text = { Text("Are you sure you want to sign out of your account on this device?") },
+            containerColor = Color.White,
+            titleContentColor = BrandDark,
+            textContentColor = TextPrimary,
+            shape = RoundedCornerShape(20.dp),
+            title = { Text(text = "Sign Out", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+            text = { Text("Are you sure you want to sign out of your account on this device?", color = TextSecondary, fontSize = 14.sp) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -507,14 +515,15 @@ fun ProfileScreen(
                         sessionManager.clearSession()
                         onLogout()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = StatusError)
+                    colors = ButtonDefaults.buttonColors(containerColor = StatusError),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Yes, Sign Out")
+                    Text("Yes, Sign Out", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text("Cancel", fontWeight = FontWeight.SemiBold, color = TextSecondary)
                 }
             }
         )

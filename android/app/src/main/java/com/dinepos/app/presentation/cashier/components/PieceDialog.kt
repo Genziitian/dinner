@@ -31,11 +31,17 @@ fun PieceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        titleContentColor = BrandDark,
+        textContentColor = TextPrimary,
+        shape = RoundedCornerShape(20.dp),
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "🥚 ", fontSize = 22.sp)
-                Text(text = item.name, fontWeight = FontWeight.Bold)
-            }
+            Text(
+                text = item.name,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 18.sp,
+                color = BrandDark
+            )
         },
         text = {
             Column(
@@ -102,7 +108,7 @@ fun PieceDialog(
 
                 Text(
                     text = "Total: ${CurrencyFormatter.formatInr(variant.price * quantity)}",
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     fontSize = 18.sp,
                     color = BrandOrange
                 )
@@ -114,12 +120,12 @@ fun PieceDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Add to Order")
+                Text("Add to Order", fontWeight = FontWeight.Bold, color = Color.White)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel", fontWeight = FontWeight.SemiBold, color = TextSecondary)
             }
         }
     )

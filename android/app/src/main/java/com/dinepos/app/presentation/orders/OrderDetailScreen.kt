@@ -52,36 +52,39 @@ fun OrderDetailScreen(
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (order != null) "Order #${order?.orderNumber}" else "Order Details",
-                        fontWeight = FontWeight.Bold,
-                        color = BrandDark
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = BrandDark
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = if (order != null) "Order #${order?.orderNumber}" else "Order Details",
+                            fontWeight = FontWeight.ExtraBold,
+                            color = BrandDark
                         )
-                    }
-                },
-                actions = {
-                    if (order != null) {
-                        IconButton(onClick = { onViewReceipt(orderId) }) {
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
-                                contentDescription = "View Receipt",
-                                tint = BrandOrange
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = BrandDark
                             )
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandSurface)
-            )
+                    },
+                    actions = {
+                        if (order != null) {
+                            IconButton(onClick = { onViewReceipt(orderId) }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
+                                    contentDescription = "View Receipt",
+                                    tint = BrandOrange
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+                HorizontalDivider(color = BrandBorder.copy(alpha = 0.7f), thickness = 1.dp)
+            }
         }
     ) { paddingValues ->
         Box(

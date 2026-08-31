@@ -11,7 +11,7 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
 
 <div class="app-container" style="padding-bottom: calc(var(--bottom-nav-height) + 4.5rem);">
     <!-- Top App Bar Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3" style="border-bottom: 1.5px solid #e2e8f0; padding-bottom: 0.85rem;">
         <div class="d-flex align-items-center gap-2">
             <a href="<?= $backUrl ?>" class="top-bar-back-btn" title="Back">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
@@ -21,7 +21,7 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
                     <span class="dot"></span>
                     <span>GI ORDER POS</span>
                 </div>
-                <h4 class="top-bar-title"><?= e($restaurant['name']) ?></h4>
+                <h4 class="top-bar-title fw-bold m-0" style="color: #0f172a; font-size: 1.25rem;"><?= e($restaurant['name']) ?></h4>
                 <div class="top-bar-subtitle" id="itemCountSub"><?= count($items) ?> items available</div>
             </div>
         </div>
@@ -49,19 +49,19 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
         >
     </div>
 
-    <!-- Category Filter Chips Row -->
+    <!-- Category Filter Chips Row (Clean typography without emojis) -->
     <div class="filter-chips-scroll">
         <button type="button" class="filter-chip-btn active" onclick="filterItems('all', this)">
-            <span>🍽️</span> All Items
+            All Items
         </button>
         <button type="button" class="filter-chip-btn" onclick="filterItems('portion', this)">
-            <span>🍗</span> Portion Meals
+            Portion Meals
         </button>
         <button type="button" class="filter-chip-btn" onclick="filterItems('piece', this)">
-            <span>🥚</span> Per Piece
+            Per Piece
         </button>
         <button type="button" class="filter-chip-btn" onclick="filterItems('weight', this)">
-            <span>🌾</span> By Weight
+            By Weight / Vol
         </button>
     </div>
 
@@ -69,7 +69,6 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
     <div class="pos-items-grid" id="itemsGrid">
         <?php if (empty($items)): ?>
             <div class="card border-0 p-5 text-center my-3 w-100" style="grid-column: 1 / -1; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0 !important;">
-                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍽️</div>
                 <div class="fw-bold text-dark fs-6">No menu items found</div>
                 <div class="text-secondary small">Add items from the Menu catalog to start billing.</div>
             </div>
@@ -83,12 +82,6 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
                         'weight' => 'weight',
                         default => 'piece'
                     };
-                    $emoji = match($itemType) {
-                        'portion' => '🍗',
-                        'piece' => '🥚',
-                        'weight' => ($item['base_unit'] === 'l' || $item['base_unit'] === 'ml') ? '🥤' : '🌾',
-                        default => '🍴'
-                    };
                 ?>
                 <div 
                     class="pos-item-card item-card" 
@@ -98,8 +91,7 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
                     onclick="DineBilling.handleCardClick(this)"
                     style="cursor: pointer;"
                 >
-                    <div class="pos-item-top-row">
-                        <span class="pos-item-emoji"><?= $emoji ?></span>
+                    <div class="pos-item-top-row justify-content-end">
                         <span class="pos-item-type-pill <?= $typeClass ?>"><?= strtoupper(e($item['item_type'])) ?></span>
                     </div>
                     <div class="pos-item-name"><?= e($item['name']) ?></div>
@@ -205,6 +197,17 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
             </div>
         </div>
     </div>
+<!-- Full-Screen PhonePe / Google Pay Style Payment Success Overlay -->
+<div id="paymentSuccessOverlay" class="payment-success-overlay" style="display: none;">
+    <div class="success-ring-pulse">
+        <div class="success-check-circle">✓</div>
+    </div>
+    <div class="success-title">Order Placed Successfully!</div>
+    <div class="success-amount" id="successOverlayAmount">₹0.00</div>
+    <div class="success-badge" id="successOverlayBadge">Order #0 • CASH</div>
+    <button type="button" class="btn success-view-btn" id="successViewReceiptBtn">
+        View Receipt ➔
+    </button>
 </div>
 
 <script src="<?= asset('js/billing.js?v=' . filemtime(ROOT_PATH . '/public/assets/js/billing.js')) ?>"></script>

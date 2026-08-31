@@ -6,7 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -30,26 +30,35 @@ fun SummaryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val stats = uiState.stats
+    val sessionManager = com.dinepos.app.DinePosApp.instance.sessionManager
+    val isManager = sessionManager.getUserRole().lowercase() in listOf("manager", "superadmin")
 
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = "Today's Summary", fontWeight = FontWeight.Bold)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.loadSummary() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandSurface)
-            )
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = if (isManager) "Daily Sales Summary" else "Shift Collection Summary",
+                            fontWeight = FontWeight.ExtraBold,
+                            color = BrandDark
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = BrandDark)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.loadSummary() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandDark)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+                HorizontalDivider(color = BrandBorder.copy(alpha = 0.7f), thickness = 1.dp)
+            }
         }
     ) { paddingValues ->
         BoxWithConstraints(

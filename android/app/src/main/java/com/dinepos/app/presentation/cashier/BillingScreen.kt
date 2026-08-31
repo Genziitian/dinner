@@ -1,6 +1,11 @@
 package com.dinepos.app.presentation.cashier
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,7 +18,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -22,9 +28,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,9 +41,7 @@ import com.dinepos.app.core.theme.*
 import com.dinepos.app.core.utils.CurrencyFormatter
 import com.dinepos.app.domain.model.Order
 import com.dinepos.app.presentation.cashier.components.*
-
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,13 +54,13 @@ fun BillingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var successOrder by remember { mutableStateOf<Order?>(null) }
 
     LaunchedEffect(key1 = true) {
         viewModel.events.collect { event ->
             when (event) {
                 is CashierEvent.OrderSubmittedSuccess -> {
-                    Toast.makeText(context, "Order #${event.order.orderNumber} Saved!", Toast.LENGTH_SHORT).show()
-                    onOrderPlaced(event.order)
+                    successOrder = event.order
                 }
                 is CashierEvent.ShowToast -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
@@ -68,102 +75,89 @@ fun BillingScreen(
         Scaffold(
             containerColor = BrandBackground,
             topBar = {
-                TopAppBar(
-                    navigationIcon = {
-                        if (onNavigateBack != null) {
-                            IconButton(onClick = onNavigateBack) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = BrandDark
-                                )
-                            }
-                        }
-                    },
-                    title = {
-                        Column {
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = BrandOrange.copy(alpha = 0.12f),
-                                border = BorderStroke(1.dp, BrandOrange.copy(alpha = 0.35f)),
-                                modifier = Modifier.padding(bottom = 3.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(6.dp)
-                                            .background(BrandOrange, CircleShape)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "GI ORDER POS",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = BrandOrange,
-                                        letterSpacing = 0.6.sp
+                Column {
+                    TopAppBar(
+                        navigationIcon = {
+                            if (onNavigateBack != null) {
+                                IconButton(onClick = onNavigateBack) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back",
+                                        tint = BrandDark
                                     )
                                 }
                             }
-                            Text(
-                                text = uiState.restaurantName.ifBlank { "Menu Catalog" },
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandDark
-                            )
-                            Text(
-                                text = "${uiState.items.size} items available",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = onNavigateToOrders) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-                                contentDescription = "Today's Orders & History",
-                                tint = BrandDark
-                            )
-                        }
-
-                        IconButton(onClick = onNavigateToScanner) {
-                            Icon(
-                                imageVector = Icons.Default.QrCode,
-                                contentDescription = "Scan Receipt QR",
-                                tint = BrandOrange
-                            )
-                        }
-
-                        // Next Order # Badge
-                        Surface(
-                            shape = CircleShape,
-                            color = BrandDark,
-                            modifier = Modifier.padding(end = 4.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(BrandAmber))
+                        },
+                        title = {
+                            Column {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = BrandOrange.copy(alpha = 0.12f),
+                                    border = BorderStroke(1.dp, BrandOrange.copy(alpha = 0.35f)),
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .background(BrandOrange, CircleShape)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "GI ORDER POS",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = BrandOrange,
+                                            letterSpacing = 0.6.sp
+                                        )
+                                    }
+                                }
                                 Text(
-                                    text = "Order #${uiState.previewOrderNumber}",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
+                                    text = uiState.restaurantName.ifBlank { "Menu Catalog" },
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = BrandDark
+                                )
+                                Text(
+                                    text = "${uiState.items.size} items available",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
                                 )
                             }
-                        }
+                        },
+                        actions = {
+                            // Next Order # Badge
+                            Surface(
+                                shape = CircleShape,
+                                color = BrandDark,
+                                modifier = Modifier.padding(end = 4.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(BrandAmber))
+                                    Text(
+                                        text = "Order #${uiState.previewOrderNumber}",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
 
-                        IconButton(onClick = { viewModel.loadMenu() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandDark)
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandSurface)
-                )
+                            IconButton(onClick = { viewModel.loadMenu() }) {
+                                Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandDark)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                    )
+                    HorizontalDivider(color = BrandBorder.copy(alpha = 0.7f), thickness = 1.dp)
+                }
             },
             bottomBar = {
                 // Cart Bottom Bar (Only on phones/compact screens)
@@ -171,7 +165,7 @@ fun BillingScreen(
                     val cartTotal = uiState.cartItems.sumOf { it.lineTotal }
 
                     Surface(
-                        color = BrandSurface,
+                        color = Color.White,
                         shadowElevation = 12.dp,
                         border = BorderStroke(1.dp, BrandBorder),
                         modifier = Modifier.fillMaxWidth()
@@ -358,16 +352,10 @@ fun BillingScreen(
                         )
                     }
                 }
-                else -> {
-                    val variant = activeItem.variants.firstOrNull { it.active } ?: activeItem.variants.firstOrNull()
-                    if (variant != null) {
-                        viewModel.addVariantToCart(activeItem, variant, 1.0)
-                    }
-                }
             }
         }
 
-        // Active Cart Bottom Sheet (Only on phone layout)
+        // Bottom Sheet Cart for Phone Form Factor
         if (!isTabletLayout && uiState.showCartBottomSheet) {
             CartBottomSheet(
                 cartItems = uiState.cartItems,
@@ -376,15 +364,154 @@ fun BillingScreen(
                 selectedPayment = uiState.selectedPayment,
                 previewOrderNumber = uiState.previewOrderNumber,
                 isSubmitting = uiState.isSubmitting,
+                onDismiss = { viewModel.setShowCartBottomSheet(false) },
                 onCustomerNameChange = { viewModel.onCustomerNameChange(it) },
                 onCustomerPhoneChange = { viewModel.onCustomerPhoneChange(it) },
                 onPaymentMethodChange = { viewModel.onPaymentMethodChange(it) },
                 onUpdateQuantity = { index, delta -> viewModel.updateCartItemQuantity(index, delta) },
                 onRemoveItem = { index -> viewModel.removeCartItem(index) },
                 onClearCart = { viewModel.clearCart() },
-                onSubmitOrder = { viewModel.submitOrder() },
-                onDismiss = { viewModel.setShowCartBottomSheet(false) }
+                onSubmitOrder = { viewModel.submitOrder() }
             )
+        }
+
+        // Full Screen PhonePe Style Payment Success Animation Overlay
+        val order = successOrder
+        if (order != null) {
+            PaymentSuccessOverlay(
+                order = order,
+                onComplete = {
+                    val targetOrder = order
+                    successOrder = null
+                    onOrderPlaced(targetOrder)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun PaymentSuccessOverlay(
+    order: Order,
+    onComplete: () -> Unit
+) {
+    // Auto navigate after 1.8 seconds
+    LaunchedEffect(Unit) {
+        delay(1800)
+        onComplete()
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse_scale"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF047857),
+                        Color(0xFF065F46),
+                        Color(0xFF0F172A)
+                    )
+                )
+            )
+            .clickable { onComplete() },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(24.dp)
+        ) {
+            // Pulsing Green Glow Ring
+            Box(
+                modifier = Modifier
+                    .size(140.dp)
+                    .scale(pulseScale)
+                    .clip(CircleShape)
+                    .background(Color(0x3334D399)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(105.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF10B981)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Success",
+                        tint = Color.White,
+                        modifier = Modifier.size(64.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            Text(
+                text = "Order Placed Successfully!",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = CurrencyFormatter.formatInr(order.total),
+                color = Color(0xFF6EE7B7),
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color(0x33FFFFFF),
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Order #${order.orderNumber} • ${order.paymentMethod.uppercase()}",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            Button(
+                onClick = onComplete,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+            ) {
+                Text(
+                    text = "View Receipt ➔",
+                    color = Color(0xFF047857),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 15.sp
+                )
+            }
         }
     }
 }
@@ -400,25 +527,29 @@ private fun MenuSearchAndFilter(
     OutlinedTextField(
         value = searchQuery,
         onValueChange = onSearchQueryChange,
-        placeholder = { Text("Search menu item (e.g. Curry, Egg, Rice)...") },
+        placeholder = { Text("Search menu item (e.g. Curry, Egg, Rice)...", color = TextMuted) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextMuted) },
         singleLine = true,
         shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = BrandSurface,
-            unfocusedContainerColor = BrandSurface
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            focusedTextColor = BrandDark,
+            unfocusedTextColor = BrandDark,
+            focusedBorderColor = BrandOrange,
+            unfocusedBorderColor = BrandBorder
         ),
         modifier = Modifier.fillMaxWidth()
     )
 
     Spacer(modifier = Modifier.height(10.dp))
 
-    // Category Filter Chips
+    // Category Filter Chips (Clean Typography without Emojis)
     val categories = listOf(
-        "all" to "🍽️ All Items",
-        "portion" to "🍗 Portion Meals",
-        "piece" to "🥚 Per Piece",
-        "weight" to "🌾 By Weight / Vol"
+        "all" to "All Items",
+        "portion" to "Portion Meals",
+        "piece" to "Per Piece",
+        "weight" to "By Weight / Vol"
     )
 
     LazyRow(
@@ -429,7 +560,7 @@ private fun MenuSearchAndFilter(
             val isSelected = selectedCategory == catKey
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = if (isSelected) BrandDark else BrandSurface,
+                color = if (isSelected) BrandDark else Color.White,
                 border = BorderStroke(1.dp, if (isSelected) BrandDark else BrandBorder),
                 modifier = Modifier.clickable { onCategorySelect(catKey) }
             ) {

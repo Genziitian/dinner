@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,16 +28,22 @@ fun PortionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        titleContentColor = BrandDark,
+        textContentColor = TextPrimary,
+        shape = RoundedCornerShape(20.dp),
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "🍗 ", fontSize = 22.sp)
-                Text(text = item.name, fontWeight = FontWeight.Bold)
-            }
+            Text(
+                text = item.name,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 18.sp,
+                color = BrandDark
+            )
         },
         text = {
             Column {
                 Text(
-                    text = "Select portion meal size:",
+                    text = "Select portion size:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary
                 )
@@ -54,32 +61,26 @@ fun PortionDialog(
                                 .fillMaxWidth()
                                 .clickable { onSelectVariant(variant) },
                             shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = BrandOrangeLight),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
                             border = BorderStroke(1.5.dp, BrandOrange)
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(14.dp),
+                                    .padding(vertical = 16.dp, horizontal = 12.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                val portionIcon = when {
-                                    variant.variantName.contains("Full", ignoreCase = true) -> "🍲"
-                                    variant.variantName.contains("Half", ignoreCase = true) -> "🥣"
-                                    else -> "🍽️"
-                                }
-                                Text(text = portionIcon, fontSize = 26.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = variant.variantName,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.ExtraBold,
                                     color = BrandDark,
-                                    fontSize = 15.sp
+                                    fontSize = 16.sp
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = CurrencyFormatter.formatInr(variant.price),
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = BrandOrangeDark,
+                                    color = BrandOrange,
                                     fontSize = 16.sp
                                 )
                             }
@@ -91,7 +92,7 @@ fun PortionDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel", fontWeight = FontWeight.SemiBold, color = TextSecondary)
             }
         }
     )

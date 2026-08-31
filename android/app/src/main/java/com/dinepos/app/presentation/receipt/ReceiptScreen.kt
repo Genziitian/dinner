@@ -94,19 +94,27 @@ fun ReceiptScreen(
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (order != null) "Receipt #${order?.orderNumber}" else "Order Receipt",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = if (order != null) "Receipt #${order?.orderNumber}" else "Order Receipt",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp,
+                            color = BrandDark
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = BrandDark
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
+                    actions = {
                     if (order != null) {
                         IconButton(onClick = {
                             val currentOrder = order ?: return@IconButton
@@ -141,10 +149,11 @@ fun ReceiptScreen(
                             Icon(Icons.Default.Share, contentDescription = "Share Receipt")
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandSurface)
+                }
             )
+            HorizontalDivider(color = BrandBorder.copy(alpha = 0.7f), thickness = 1.dp)
         }
+    }
     ) { paddingValues ->
         Box(
             modifier = Modifier
