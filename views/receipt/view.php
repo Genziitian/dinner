@@ -96,13 +96,13 @@ declare(strict_types=1);
 
         <!-- Customer Secure QR Code -->
         <?php if (!empty($publicUrl)): ?>
-            <div class="receipt-qr-box" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 0.75rem; padding: 1rem; text-align: center; margin: 1rem 0;">
+            <div class="receipt-qr-box" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 0.75rem; padding: 1rem; text-align: center; margin: 1rem 0; overflow: visible;">
                 <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; color: #475569; font-weight: 700;">
                     Scan to view e-Receipt
                 </div>
                 <!-- Solid White Quiet Zone Container -->
-                <div style="background: #ffffff; padding: 20px; display: inline-block; border-radius: 0.75rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-                    <div id="receiptQr" style="width: 280px; height: 280px;"></div>
+                <div style="background: #ffffff; padding: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 0.75rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); width: 232px; height: 232px; margin: 0 auto;">
+                    <div id="receiptQr" style="width: 200px; height: 200px;"></div>
                 </div>
                 <div style="font-size: 0.7rem; color: #64748b; word-break: break-all; margin-top: 0.75rem; line-height: 1.3;">
                     <?= e($publicUrl) ?>
@@ -111,9 +111,10 @@ declare(strict_types=1);
 
             <style>
             #receiptQr img, #receiptQr canvas {
-                width: 280px !important;
-                height: 280px !important;
+                width: 200px !important;
+                height: 200px !important;
                 display: block;
+                margin: 0 auto;
                 image-rendering: -moz-crisp-edges;
                 image-rendering: -o-crisp-edges;
                 image-rendering: -webkit-optimize-contrast;
@@ -128,8 +129,8 @@ declare(strict_types=1);
                 const payload = "<?= trim($publicUrl) ?>";
                 new QRCode(document.getElementById('receiptQr'), {
                     text: payload,
-                    width: 280,
-                    height: 280,
+                    width: 200,
+                    height: 200,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.M

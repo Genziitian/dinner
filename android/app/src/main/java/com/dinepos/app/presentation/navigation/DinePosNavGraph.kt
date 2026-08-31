@@ -75,8 +75,12 @@ fun DinePosNavGraph(
                     defaultValue = null
                 }
             )
-        ) {
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId")?.toIntOrNull() ?: 0
+            val token = backStackEntry.arguments?.getString("token")
             ReceiptScreen(
+                orderId = orderId,
+                token = token,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
