@@ -69,13 +69,16 @@ declare(strict_types=1);
         </div>
     </div>
 
+    <?php $currentUser = current_user(); ?>
     <!-- Actions -->
     <div class="d-flex gap-2">
         <a href="<?= url('receipt/view?id=' . (int)$order['id']) ?>" class="btn flex-fill py-2.5 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px;">
             🧾 View Order Receipt
         </a>
-        <a href="<?= url('manager/orders/edit?id=' . (int)$order['id']) ?>" class="btn btn-light border py-2.5 px-3 fw-bold" style="border-radius: 12px;">
-            Edit Order
-        </a>
+        <?php if ($currentUser && $currentUser['role'] !== User::ROLE_CASHIER): ?>
+            <a href="<?= url('manager/orders/edit?id=' . (int)$order['id']) ?>" class="btn btn-light border py-2.5 px-3 fw-bold" style="border-radius: 12px;">
+                Edit Order
+            </a>
+        <?php endif; ?>
     </div>
 </div>

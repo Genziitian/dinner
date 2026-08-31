@@ -120,18 +120,17 @@ class OrderController extends BaseController {
     }
 
     /**
-     * Manager Edit Order Screen
+     * Manager Edit Order Screen (Manager / Superadmin only)
      */
     public function edit(): void {
-        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $restaurantId = $this->requireRestaurantId();
 
         $orderId = (int)($_GET['id'] ?? 0);
         $order = Order::findById($orderId, $restaurantId);
 
         if (!$order) {
-            $fallback = $user['role'] === User::ROLE_CASHIER ? '/cashier/order' : '/manager/orders';
-            $this->redirect($fallback, 'danger', 'Order not found or inaccessible.');
+            $this->redirect('/manager/orders', 'danger', 'Order not found or inaccessible.');
         }
 
         $items = Item::allByRestaurant($restaurantId, false);
@@ -144,10 +143,10 @@ class OrderController extends BaseController {
     }
 
     /**
-     * Manager & Cashier Update Order Submission
+     * Manager Update Order Submission (Manager / Superadmin only)
      */
     public function update(): void {
-        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $this->validateCsrf();
         $restaurantId = $this->requireRestaurantId();
 
@@ -191,10 +190,10 @@ class OrderController extends BaseController {
     }
 
     /**
-     * Manager & Cashier Soft Delete Order
+     * Manager Soft Delete Order (Manager / Superadmin only)
      */
     public function delete(): void {
-        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $this->validateCsrf();
         $restaurantId = $this->requireRestaurantId();
 
