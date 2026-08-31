@@ -37,7 +37,7 @@ class ManagerController extends BaseController {
      * Manager Order History with Filters
      */
     public function orders(): void {
-        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $restaurantId = $this->requireRestaurantId();
 
         $filter = $_GET['filter'] ?? 'today';
@@ -308,7 +308,7 @@ class ManagerController extends BaseController {
      * Restaurant Settings
      */
     public function settings(): void {
-        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $restaurantId = $this->requireRestaurantId();
 
         $restaurant = Restaurant::findById($restaurantId);

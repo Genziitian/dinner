@@ -1,6 +1,6 @@
 /**
  * Live Camera QR Code Scanner & Receipt Lookup Engine
- * Supports Native BarcodeDetector API + Camera Stream + Fallback
+ * Multi-layer Scanner: Live WebRTC Camera Stream + BarcodeDetector + Native Photo Snap + Manual Lookup
  */
 (function() {
   'use strict';
@@ -12,11 +12,11 @@
   let isScanning = false;
 
   // Initialize BarcodeDetector if available
-  if ('BarcodeDetector' in window) {
+  if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
     try {
       barcodeDetector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'upc_a'] });
     } catch (e) {
-      console.warn('Native BarcodeDetector initialization note:', e);
+      console.warn('Native BarcodeDetector note:', e);
       barcodeDetector = null;
     }
   }
@@ -24,19 +24,22 @@
   // Audio beep on successful scan
   function playBeep() {
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
-      if (navigator.vibrate) navigator.vibrate(100);
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        const audioCtx = new AudioContextClass();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      }
+      if (navigator.vibrate) navigator.vibrate(120);
     } catch (e) {
-      // AudioContext not allowed or unsupported
+      // Audio notification not critical
     }
   }
 
@@ -54,18 +57,61 @@
 
     stopCameraScanner();
 
-    try {
-      const constraints = {
-        video: {
-          facingMode: currentFacingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      };
+    // Check if mediaDevices supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (loadingNotice) loadingNotice.style.display = 'none';
+      if (errorNotice) {
+        errorNotice.style.display = 'block';
+        errorNotice.innerHTML = `
+          <div class="fw-bold mb-1" style="color: #ea580c;">📷 Live Stream Restricted</div>
+          <div class="text-secondary small mb-2">Use the Camera Snapshot button or enter Order # below.</div>
+          <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5" style="background: var(--brand-orange); border-radius: 10px;" onclick="DineQrScanner.triggerPhotoCapture()">
+            📸 Take Photo with Camera
+          </button>
+        `;
+      }
+      return;
+    }
 
-      videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+    // Try fallback constraint options for widest mobile device compatibility
+    const constraintOptions = [
+      { video: { facingMode: { ideal: 'environment' } }, audio: false },
+      { video: { facingMode: 'environment' }, audio: false },
+      { video: true, audio: false }
+    ];
+
+    let stream = null;
+    for (const constraints of constraintOptions) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (stream) break;
+      } catch (err) {
+        console.warn('Constraint attempt failed, trying next:', err);
+      }
+    }
+
+    if (!stream) {
+      if (loadingNotice) loadingNotice.style.display = 'none';
+      if (errorNotice) {
+        errorNotice.style.display = 'block';
+        errorNotice.innerHTML = `
+          <div class="fw-bold mb-1" style="color: #ef4444;">📷 Camera Access Denied / Unavailable</div>
+          <div class="text-secondary small mb-2">Allow camera permissions or tap below to snap receipt photo:</div>
+          <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5" style="background: var(--brand-orange); border-radius: 10px;" onclick="DineQrScanner.triggerPhotoCapture()">
+            📸 Take Photo with Camera
+          </button>
+        `;
+      }
+      return;
+    }
+
+    try {
+      videoStream = stream;
       video.srcObject = videoStream;
+      video.setAttribute('autoplay', '');
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
       await video.play();
 
       if (loadingNotice) loadingNotice.style.display = 'none';
@@ -73,14 +119,16 @@
       isScanning = true;
 
       scanVideoLoop();
-    } catch (err) {
-      console.error('Camera access error:', err);
+    } catch (playErr) {
+      console.error('Video play error:', playErr);
       if (loadingNotice) loadingNotice.style.display = 'none';
       if (errorNotice) {
         errorNotice.style.display = 'block';
         errorNotice.innerHTML = `
-          <div class="text-danger fw-bold mb-1">📷 Camera Access Required</div>
-          <div class="text-secondary small">Please allow camera permissions or enter the order number manually below.</div>
+          <div class="text-secondary small mb-2">Tap below to snap a photo of the receipt:</div>
+          <button type="button" class="btn btn-sm text-white fw-bold px-3 py-1.5" style="background: var(--brand-orange); border-radius: 10px;" onclick="DineQrScanner.triggerPhotoCapture()">
+            📸 Take Photo with Camera
+          </button>
         `;
       }
     }
@@ -93,7 +141,9 @@
       animationFrameId = null;
     }
     if (videoStream) {
-      videoStream.getTracks().forEach(track => track.stop());
+      videoStream.getTracks().forEach(track => {
+        try { track.stop(); } catch(e) {}
+      });
       videoStream = null;
     }
   }
@@ -118,7 +168,7 @@
           }
         }
       } catch (e) {
-        // detection frame error
+        // frame decode error
       }
     }
 
@@ -131,7 +181,7 @@
 
     const statusEl = document.getElementById('qrScannerStatus');
     if (statusEl) {
-      statusEl.innerHTML = `<span class="badge bg-success p-2">✓ QR Code Detected! Redirecting...</span>`;
+      statusEl.innerHTML = `<span class="badge bg-success p-2 fs-6">✓ Scanned! Opening receipt...</span>`;
     }
 
     executeLookup(scannedData);
@@ -156,7 +206,7 @@
       return;
     }
 
-    // Check if Order Number (e.g. 7 or #7 or Order #7)
+    // Check if Order Number (e.g. 7, #7, Order #7)
     const cleanNum = val.replace(/[^0-9]/g, '');
     if (cleanNum) {
       window.location.href = '/receipt/view?order_number=' + encodeURIComponent(cleanNum);
@@ -176,10 +226,10 @@
       const modal = new bootstrap.Modal(modalEl);
       modal.show();
 
-      modalEl.addEventListener('shown.bs.modal', function onShown() {
-        modalEl.removeEventListener('shown.bs.modal', onShown);
+      // Start camera immediately on open
+      setTimeout(function() {
         startCameraScanner();
-      });
+      }, 200);
 
       modalEl.addEventListener('hidden.bs.modal', function onHidden() {
         modalEl.removeEventListener('hidden.bs.modal', onHidden);
@@ -190,6 +240,44 @@
     toggleCamera: function() {
       currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
       startCameraScanner();
+    },
+
+    triggerPhotoCapture: function() {
+      const input = document.getElementById('qrCameraFileInput');
+      if (input) input.click();
+    },
+
+    handleFileInput: async function(inputEl) {
+      const file = inputEl.files && inputEl.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('qrScannerStatus');
+      if (statusEl) {
+        statusEl.innerHTML = `<span class="spinner-border spinner-border-sm text-warning" role="status"></span> Analyzing photo...`;
+      }
+
+      try {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        await img.decode();
+
+        if (barcodeDetector) {
+          const barcodes = await barcodeDetector.detect(img);
+          if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+            handleScanSuccess(barcodes[0].rawValue);
+            return;
+          }
+        }
+
+        if (statusEl) {
+          statusEl.innerHTML = `<span class="text-danger small">No QR code found in photo. Please try entering the Order # below.</span>`;
+        }
+      } catch (err) {
+        console.error('File scan error:', err);
+        if (statusEl) {
+          statusEl.innerHTML = `<span class="text-danger small">Could not read image. Please enter Order # below.</span>`;
+        }
+      }
     },
 
     submitManual: function() {

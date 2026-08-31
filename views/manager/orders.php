@@ -1,23 +1,28 @@
 <?php
 /**
- * Manager Order History View Template
+ * Manager & Cashier Order History View Template
  * Matches Android Native App UI 1:1 (Dynamic Data)
  */
 declare(strict_types=1);
+$currentUser = current_user();
 $currentFilter = $currentFilter ?? 'today';
 $search = $search ?? '';
+$backUrl = ($currentUser && $currentUser['role'] === User::ROLE_CASHIER) ? url('cashier/order') : url('manager/dashboard');
 ?>
 
 <div class="app-container">
     <!-- Top App Bar Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex align-items-center gap-2">
-            <a href="<?= url('manager/dashboard') ?>" class="top-bar-back-btn" title="Back to Dashboard">
+            <a href="<?= $backUrl ?>" class="top-bar-back-btn" title="Back">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
             <h4 class="top-bar-title m-0">Order History</h4>
         </div>
         <div class="top-bar-actions">
+            <button type="button" class="top-bar-icon-btn orange" onclick="openQrLookupModal()" title="Scan Receipt QR / Search Order #">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+            </button>
             <a href="<?= url('manager/orders') ?>" class="top-bar-icon-btn" title="Refresh">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </a>
@@ -82,7 +87,7 @@ $search = $search ?? '';
                     $payPillClass = $isCash ? 'cash' : 'upi';
                     $payText = $isCash ? 'Cash' : 'UPI';
                 ?>
-                <a href="<?= url('manager/orders/view?id=' . (int)$order['id']) ?>" class="order-card-android">
+                <a href="<?= url('orders/view?id=' . (int)$order['id']) ?>" class="order-card-android">
                     <!-- Row 1: Order# + Payment Badge | Total + Chevron -->
                     <div class="order-card-row-top">
                         <div class="order-card-left-group">
