@@ -62,22 +62,7 @@ fun LoginScreen(
     }
 
     Scaffold(
-        containerColor = BrandBackground,
-        topBar = {
-            TopAppBar(
-                title = {},
-                actions = {
-                    IconButton(onClick = { viewModel.setShowServerConfig(true) }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Server Settings",
-                            tint = BrandDark
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        }
+        containerColor = BrandBackground
     ) { paddingValues ->
         Box(
             modifier = Modifier
