@@ -111,7 +111,38 @@ $roleDetails = match($role) {
         </div>
     </div>
 
-    <!-- 3. Sign Out Button -->
+    <!-- 3. Staff & Export Management Tools -->
+    <?php if ($role === 'manager'): ?>
+        <div class="mb-3">
+            <div class="section-header">
+                <h6 class="section-title">👔 STAFF & EXPORT MANAGEMENT</h6>
+            </div>
+
+            <a href="<?= url('manager/users') ?>" class="profile-action-card">
+                <div class="profile-action-left">
+                    <span class="profile-action-icon">👥</span>
+                    <div>
+                        <div class="profile-action-title">Staff Management (Cashiers)</div>
+                        <div class="profile-action-sub">Create & manage cashier operator staff</div>
+                    </div>
+                </div>
+                <span class="text-secondary fw-bold">›</span>
+            </a>
+
+            <a href="<?= url('manager/exports') ?>" class="profile-action-card">
+                <div class="profile-action-left">
+                    <span class="profile-action-icon">📥</span>
+                    <div>
+                        <div class="profile-action-title">Export Sales Reports (CSV)</div>
+                        <div class="profile-action-sub">Download Excel/CSV reports for any date range</div>
+                    </div>
+                </div>
+                <span class="text-secondary fw-bold">›</span>
+            </a>
+        </div>
+    <?php endif; ?>
+
+    <!-- 4. Sign Out Button -->
     <a href="<?= url('logout') ?>" class="sign-out-btn-card">
         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
         <span>Sign Out Account</span>
