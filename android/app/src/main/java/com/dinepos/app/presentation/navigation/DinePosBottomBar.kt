@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
@@ -37,7 +38,8 @@ import com.dinepos.app.core.theme.*
 fun DinePosBottomBar(
     currentRoute: String?,
     onNavigateToRoute: (String) -> Unit,
-    onTakeOrderClick: () -> Unit
+    onTakeOrderClick: () -> Unit = {},
+    onScannerClick: () -> Unit = {}
 ) {
     val sessionManager = DinePosApp.instance.sessionManager
     val role = sessionManager.getUserRole().lowercase()
@@ -119,7 +121,7 @@ fun DinePosBottomBar(
                             )
                         }
                         "cashier" -> {
-                            // Cashier Navigation
+                            // Cashier Navigation (POS | Orders | [Elevated Center Scanner Button] | Shift | Profile)
                             NavItem(
                                 icon = Icons.Outlined.ShoppingCart,
                                 label = "POS",
@@ -134,6 +136,7 @@ fun DinePosBottomBar(
                                 onClick = { onNavigateToRoute(Screen.ManagerOrders.route) },
                                 modifier = Modifier.weight(1f)
                             )
+                            Spacer(modifier = Modifier.weight(1.2f))
                             NavItem(
                                 icon = Icons.Outlined.Assessment,
                                 label = "Shift",
@@ -150,7 +153,7 @@ fun DinePosBottomBar(
                             )
                         }
                         else -> {
-                            // Manager Navigation (Home | Orders | (+) | Menu | Profile)
+                            // Manager Navigation (Home | Orders | [Elevated Center + Button] | Menu | Profile)
                             NavItem(
                                 icon = Icons.Outlined.Home,
                                 label = "Home",
@@ -185,8 +188,34 @@ fun DinePosBottomBar(
                 }
             }
 
-            // Elevated Center '+' Floating Button (For Managers to quickly open POS Billing)
-            if (role == "manager") {
+            // Elevated Center Floating Action Button
+            if (role == "cashier") {
+                // Elevated QR Scanner Button for Cashiers
+                Surface(
+                    onClick = onScannerClick,
+                    shape = CircleShape,
+                    color = BrandOrange,
+                    shadowElevation = 12.dp,
+                    border = BorderStroke(3.dp, Color.White),
+                    modifier = Modifier
+                        .size(60.dp)
+                        .align(Alignment.TopCenter)
+                        .offset(y = (-14).dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.QrCodeScanner,
+                            contentDescription = "Scan QR Order Receipt",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            } else if (role == "manager") {
+                // Elevated '+' New Order / POS Billing Button for Managers
                 Surface(
                     onClick = onTakeOrderClick,
                     shape = CircleShape,

@@ -1,67 +1,77 @@
 <?php
 /**
- * Modern Vibrant Cashier Today's Summary View Template
- * Restaurant Billing & Order Management System
+ * Cashier Shift Summary View Template
+ * Matches Android Native App UI 1:1 (Dynamic Data)
  */
 declare(strict_types=1);
 ?>
 
-<div class="row justify-content-center">
-    <div class="col-12 col-md-8 col-lg-6">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h4 class="fw-bold m-0" style="color: #0f172a; letter-spacing: -0.5px;">Collection Summary</h4>
-                <small class="text-muted"><?= format_date($todayDate) ?> · <?= e($restaurant['name']) ?></small>
-            </div>
-            <a href="<?= url('cashier/order') ?>" class="btn btn-save-order btn-sm px-3">+ New Order</a>
+<div class="app-container">
+    <!-- Top App Bar Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <a href="<?= url('cashier/order') ?>" class="top-bar-back-btn" title="Back to POS">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <h4 class="top-bar-title m-0">Shift Summary</h4>
         </div>
-
-        <!-- Total Revenue Card -->
-        <div class="card shadow-sm mb-3 border-0 metric-card-primary" style="border-radius: 1.25rem;">
-            <div class="card-body p-4 text-center">
-                <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.78rem; letter-spacing: 1px;">TOTAL SALES TODAY</div>
-                <div class="metric-value text-white my-2"><?= format_currency($stats['total_sales']) ?></div>
-                <div class="badge bg-warning text-dark px-3 py-2 fw-bold fs-6 rounded-pill">
-                    <?= (int)$stats['total_orders'] ?> Orders Completed
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment Breakdown Cards -->
-        <div class="card shadow-sm border-0 mb-4" style="border-radius: 1.25rem; overflow: hidden;">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="fw-bold m-0" style="color: #0f172a;">Payment Methods Breakdown</h6>
-            </div>
-            <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
-                    <div class="d-flex align-items-center gap-3">
-                        <span style="font-size: 1.5rem;">💵</span>
-                        <div>
-                            <div class="fw-bold text-dark fs-6">Cash Collection</div>
-                            <small class="text-muted">Recorded physical cash</small>
-                        </div>
-                    </div>
-                    <span class="fw-bold fs-5 text-success"><?= format_currency($stats['cash_sales']) ?></span>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center py-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <span style="font-size: 1.5rem;">📱</span>
-                        <div>
-                            <div class="fw-bold text-dark fs-6">Online / UPI Collection</div>
-                            <small class="text-muted">QR code scanner, UPI apps, cards</small>
-                        </div>
-                    </div>
-                    <span class="fw-bold fs-5 text-warning"><?= format_currency($stats['online_sales']) ?></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="d-grid gap-2">
-            <a href="<?= url('cashier/order') ?>" class="btn btn-save-order py-3 fs-6">
-                <span>Start Next Order</span>
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        <div class="top-bar-actions">
+            <a href="<?= url('cashier/summary') ?>" class="top-bar-icon-btn" title="Refresh">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </a>
         </div>
     </div>
+
+    <!-- 1. Dark Revenue Summary Card -->
+    <div class="dark-revenue-card">
+        <div class="card-heading">TODAY'S SHIFT COLLECTION</div>
+        <div class="revenue-amount"><?= format_currency($stats['total_sales'] ?? 0.0) ?></div>
+        <div class="small text-white-50 mb-2">
+            <span style="color: var(--brand-amber); font-weight: 700;"><?= (int)($stats['total_orders'] ?? 0) ?> orders</span> completed today
+        </div>
+        <div class="revenue-breakdown">
+            <span class="cash-text">Cash: <?= format_currency($stats['cash_sales'] ?? 0.0) ?></span>
+            <span class="upi-text">UPI: <?= format_currency($stats['online_sales'] ?? 0.0) ?></span>
+        </div>
+    </div>
+
+    <!-- 2. Breakdown Card -->
+    <div class="outlet-details-card">
+        <div class="outlet-card-header">
+            <h6 class="outlet-card-title">
+                <span>💳</span>
+                <span>Payment Methods Breakdown</span>
+            </h6>
+        </div>
+
+        <div class="outlet-info-list">
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.35rem;">💵</span>
+                    <div>
+                        <div class="fw-bold text-dark">Cash Collection</div>
+                        <div class="text-secondary small">Direct physical cash receipts</div>
+                    </div>
+                </div>
+                <div class="fw-bold text-success fs-5"><?= format_currency($stats['cash_sales'] ?? 0.0) ?></div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.35rem;">📱</span>
+                    <div>
+                        <div class="fw-bold text-dark">Online / UPI Collection</div>
+                        <div class="text-secondary small">QR codes & digital transfers</div>
+                    </div>
+                </div>
+                <div class="fw-bold text-warning fs-5"><?= format_currency($stats['online_sales'] ?? 0.0) ?></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Next Order Button -->
+    <a href="<?= url('cashier/order') ?>" class="btn w-100 py-3 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 14px; font-size: 1rem;">
+        <span>Start Next Order</span>
+        <span class="ms-1">➔</span>
+    </a>
 </div>

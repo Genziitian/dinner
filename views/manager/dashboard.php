@@ -1,308 +1,169 @@
 <?php
 /**
- * Modern Vibrant Manager Dashboard View Template
- * Restaurant Billing & Order Management System
+ * Manager Dashboard View Template
+ * Matches Android Native App UI 1:1 (Dynamic Data)
  */
 declare(strict_types=1);
+$currentUser = current_user();
 ?>
 
-<!-- Mobile Dashboard (< 768px) -->
-<div class="d-md-none">
-    <!-- Compact Header -->
+<div class="app-container">
+    <!-- Android Native Top App Bar Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h4 class="fw-bold m-0" style="color: #0f172a; letter-spacing: -0.5px; font-size: 1.25rem;">Dashboard</h4>
-            <small class="text-muted" style="font-size: 0.78rem;"><?= e($restaurant['name']) ?> · <?= format_date($stats['start_date']) ?></small>
-        </div>
-        <a href="<?= url('manager/exports') ?>" class="btn btn-sm btn-light border px-2 py-1" style="border-radius: 0.6rem;" title="Export CSV">
-            <span style="font-size: 1rem;">📥</span>
-        </a>
-    </div>
-
-    <!-- Compact Metrics Row: 3 cards in a horizontal strip -->
-    <div class="d-flex gap-2 mb-3" style="overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-        <!-- Total Sales -->
-        <div style="flex: 1; min-width: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 0.9rem; padding: 0.85rem 0.9rem; color: #fff;">
-            <div style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.6; font-weight: 700;">Sales</div>
-            <div class="fw-bold" style="font-size: 1.2rem; line-height: 1.3;"><?= format_currency($stats['total_sales']) ?></div>
-            <div style="font-size: 0.65rem; opacity: 0.5; margin-top: 2px;"><?= (int)$stats['total_orders'] ?> orders</div>
-        </div>
-        <!-- Cash -->
-        <div style="flex: 1; min-width: 0; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.9rem; padding: 0.85rem 0.9rem;">
-            <div style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px; color: #16a34a; font-weight: 700;">Cash</div>
-            <div class="fw-bold" style="font-size: 1.2rem; line-height: 1.3; color: #15803d;"><?= format_currency($stats['cash_sales']) ?></div>
-        </div>
-        <!-- Online -->
-        <div style="flex: 1; min-width: 0; background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.9rem; padding: 0.85rem 0.9rem;">
-            <div style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.8px; color: #d97706; font-weight: 700;">Online</div>
-            <div class="fw-bold" style="font-size: 1.2rem; line-height: 1.3; color: #b45309;"><?= format_currency($stats['online_sales']) ?></div>
-        </div>
-    </div>
-
-    <!-- Quick Actions: icon-heavy, compact 2x2 grid -->
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
-        <a href="<?= url('manager/orders') ?>" class="text-decoration-none" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.7rem 0.25rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.85rem;">
-            <span style="font-size: 1.35rem; line-height: 1;">📋</span>
-            <span style="font-size: 0.7rem; font-weight: 600; color: #334155;">Orders</span>
-        </a>
-        <a href="<?= url('manager/items') ?>" class="text-decoration-none" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.7rem 0.25rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.85rem;">
-            <span style="font-size: 1.35rem; line-height: 1;">🍗</span>
-            <span style="font-size: 0.7rem; font-weight: 600; color: #334155;">Menu</span>
-        </a>
-        <a href="<?= url('manager/reports') ?>" class="text-decoration-none" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.7rem 0.25rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.85rem;">
-            <span style="font-size: 1.35rem; line-height: 1;">📊</span>
-            <span style="font-size: 0.7rem; font-weight: 600; color: #334155;">Reports</span>
-        </a>
-        <a href="<?= url('manager/users') ?>" class="text-decoration-none" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.7rem 0.25rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.85rem;">
-            <span style="font-size: 1.35rem; line-height: 1;">👥</span>
-            <span style="font-size: 0.7rem; font-weight: 600; color: #334155;">Staff</span>
-        </a>
-    </div>
-
-    <!-- Recent Orders -->
-    <div style="margin-bottom: 5rem;">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="fw-bold m-0" style="font-size: 0.95rem; color: #0f172a;">Recent Orders</h6>
-            <a href="<?= url('manager/orders') ?>" class="text-decoration-none" style="font-size: 0.78rem; font-weight: 600; color: var(--brand-orange);">View all →</a>
-        </div>
-
-        <?php if (empty($recentOrders)): ?>
-            <div class="text-center py-4 px-2" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 0.85rem;">
-                <div style="font-size: 1.5rem; margin-bottom: 0.35rem;">🍽️</div>
-                <div class="text-muted" style="font-size: 0.85rem;">No orders today yet</div>
+            <div class="brand-pill-tag mb-1">
+                <span class="dot"></span>
+                <span>GI ORDER POS</span>
             </div>
-        <?php else: ?>
-            <div class="d-flex flex-column gap-2">
-                <?php foreach ($recentOrders as $order): ?>
-                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.85rem; padding: 0.75rem 0.85rem;">
-                        <!-- Row 1: Order# + Time | Amount -->
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="order-badge" style="font-size: 0.78rem !important; padding: 0.2rem 0.55rem !important;">#<?= (int)$order['order_number'] ?></span>
-                                <span class="text-muted" style="font-size: 0.72rem; font-weight: 500;"><?= date('h:i A', strtotime($order['created_at'])) ?></span>
+            <h4 class="top-bar-title"><?= e($restaurant['name']) ?></h4>
+            <div class="top-bar-subtitle">Manager Dashboard</div>
+        </div>
+        <div class="top-bar-actions">
+            <button type="button" class="top-bar-icon-btn orange" onclick="openQrLookupModal()" title="Scan / Search QR Receipt">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+            </button>
+            <a href="<?= url('manager/dashboard') ?>" class="top-bar-icon-btn" title="Refresh">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </a>
+            <a href="<?= url('logout') ?>" class="top-bar-icon-btn red" title="Logout">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- 1. Dark Revenue Summary Card -->
+    <div class="dark-revenue-card">
+        <div class="card-heading">TODAY'S REVENUE</div>
+        <div class="revenue-amount"><?= format_currency($stats['total_sales'] ?? 0.0) ?></div>
+        <div class="revenue-breakdown">
+            <span class="cash-text">Cash: <?= format_currency($stats['cash_sales'] ?? 0.0) ?></span>
+            <span class="upi-text">UPI: <?= format_currency($stats['online_sales'] ?? 0.0) ?></span>
+        </div>
+    </div>
+
+    <!-- 2. QUICK ACTIONS (2x2 Grid) -->
+    <div class="section-header">
+        <h6 class="section-title">QUICK ACTIONS</h6>
+    </div>
+
+    <div class="quick-actions-grid">
+        <!-- New Order -->
+        <a href="<?= url('cashier/order') ?>" class="quick-action-card">
+            <div class="action-icon-box orange">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </div>
+            <div>
+                <div class="card-title">New Order</div>
+                <div class="card-subtitle">POS Billing Screen</div>
+            </div>
+        </a>
+
+        <!-- Orders -->
+        <a href="<?= url('manager/orders') ?>" class="quick-action-card">
+            <div class="action-icon-box blue">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <div>
+                <div class="card-title">Orders</div>
+                <div class="card-subtitle">View History</div>
+            </div>
+        </a>
+
+        <!-- Menu Items -->
+        <a href="<?= url('manager/items') ?>" class="quick-action-card">
+            <div class="action-icon-box green">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <div>
+                <div class="card-title">Menu Items</div>
+                <div class="card-subtitle">Rates & Portions</div>
+            </div>
+        </a>
+
+        <!-- Reports -->
+        <a href="<?= url('manager/reports') ?>" class="quick-action-card">
+            <div class="action-icon-box purple">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div>
+                <div class="card-title">Reports</div>
+                <div class="card-subtitle">Sales & Analytics</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- 3. RECENT ORDERS -->
+    <div class="section-header">
+        <h6 class="section-title">RECENT ORDERS</h6>
+        <a href="<?= url('manager/orders') ?>" class="section-link">View All</a>
+    </div>
+
+    <?php if (empty($recentOrders)): ?>
+        <div class="card border-0 p-4 text-center" style="border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0 !important;">
+            <div style="font-size: 2rem; margin-bottom: 0.25rem;">🧾</div>
+            <div class="text-secondary small fw-bold">No recent orders recorded today.</div>
+        </div>
+    <?php else: ?>
+        <div class="orders-list-wrap">
+            <?php foreach ($recentOrders as $order): ?>
+                <?php 
+                    $isCash = strtolower($order['payment_method']) === 'cash';
+                    $payPillClass = $isCash ? 'cash' : 'upi';
+                ?>
+                <a href="<?= url('orders/view?id=' . (int)$order['id']) ?>" class="order-card-android">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="fw-bold fs-6" style="color: #0f172a;">Order #<?= (int)$order['order_number'] ?></span>
+                                <span class="payment-pill <?= $payPillClass ?>"><?= strtoupper(e($order['payment_method'] === 'Cash' ? 'CASH' : 'UPI')) ?></span>
                             </div>
-                            <span class="fw-bold" style="font-size: 1rem; color: #0f172a;"><?= format_currency((float)$order['total']) ?></span>
+                            <div class="order-card-meta">
+                                <?= date('H:i:s', strtotime($order['created_at'])) ?> · <?= e(!empty($order['customer_name']) ? $order['customer_name'] : 'Walk-in Customer') ?>
+                            </div>
                         </div>
-                        <!-- Row 2: Customer + badges + actions -->
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center gap-1">
-                                <span style="font-size: 0.78rem; color: #334155; font-weight: 500;"><?= e($order['customer_name'] ?? 'Walk-in') ?></span>
-                                <span class="badge bg-<?= $order['payment_method'] === 'Cash' ? 'success' : 'warning text-dark' ?>" style="font-size: 0.6rem; padding: 0.15rem 0.4rem;"><?= e($order['payment_method'] === 'Cash' ? 'Cash' : 'UPI') ?></span>
-                            </div>
-                            <div class="d-flex gap-1">
-                                <a href="<?= url('orders/view?id=' . $order['id']) ?>" class="btn btn-sm btn-light border fw-semibold" style="font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 0.4rem;">View</a>
-                                <a href="<?= url('manager/orders/edit?id=' . $order['id']) ?>" class="btn btn-sm btn-outline-secondary fw-semibold" style="font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 0.4rem;">Edit</a>
-                                <button type="button" class="btn btn-sm btn-outline-danger fw-semibold" style="font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 0.4rem;" onclick="confirmDelete(<?= (int)$order['id'] ?>, <?= (int)$order['order_number'] ?>)">Del</button>
-                            </div>
+                        <div class="fs-5 fw-bold" style="color: #0f172a;">
+                            <?= format_currency((float)$order['total']) ?>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 </div>
 
-<!-- Desktop Dashboard (>= 768px) — unchanged -->
-<div class="d-none d-md-block">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <div>
-            <h3 class="fw-bold m-0" style="color: #0f172a; letter-spacing: -0.5px;">Manager Dashboard</h3>
-            <small class="text-muted"><?= e($restaurant['name']) ?> · Overview for Today (<?= format_date($stats['start_date']) ?>)</small>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="<?= url('cashier/order') ?>" class="btn-boxed-primary">
-                <span style="font-size: 1.1rem; line-height: 1;">+</span>
-                <span>New Order</span>
-            </a>
-            <a href="<?= url('manager/exports') ?>" class="btn-boxed-outline">
-                <span>📥</span>
-                <span>Export CSV</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- 3 Balanced Metrics Cards Row -->
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
-            <div class="card metric-card-primary h-100">
-                <div class="card-body p-3 p-md-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.8px;">TOTAL SALES TODAY</div>
-                            <div class="metric-value text-white my-1"><?= format_currency($stats['total_sales']) ?></div>
-                        </div>
-                        <span style="font-size: 1.8rem;">💰</span>
-                    </div>
-                    <div class="text-white-50 small mt-2">
-                        <span class="badge bg-warning text-dark fw-bold rounded-pill px-2"><?= (int)$stats['total_orders'] ?> orders</span> completed today
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-md-4">
-            <div class="card metric-card-cash h-100">
-                <div class="card-body p-3 p-md-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="text-success text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.8px;">CASH COLLECTION</div>
-                            <div class="metric-value text-success my-1"><?= format_currency($stats['cash_sales']) ?></div>
-                        </div>
-                        <span style="font-size: 1.8rem;">💵</span>
-                    </div>
-                    <small class="text-muted d-block mt-2">Direct physical cash receipts</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-md-4">
-            <div class="card metric-card-upi h-100">
-                <div class="card-body p-3 p-md-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="text-warning text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.8px;">ONLINE / UPI COLLECTION</div>
-                            <div class="metric-value text-warning my-1"><?= format_currency($stats['online_sales']) ?></div>
-                        </div>
-                        <span style="font-size: 1.8rem;">📱</span>
-                    </div>
-                    <small class="text-muted d-block mt-2">QR codes, UPI apps & digital transfers</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Navigation Cards Grid -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <a href="<?= url('manager/orders') ?>" class="card h-100 text-decoration-none border-0 shadow-sm p-3 text-center transition-card" style="border-radius: 1rem; background: #ffffff;">
-                <div class="fs-2 mb-1">📜</div>
-                <div class="fw-bold text-dark fs-6">Order History</div>
-                <small class="text-muted">View all & edit orders</small>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a href="<?= url('manager/items') ?>" class="card h-100 text-decoration-none border-0 shadow-sm p-3 text-center transition-card" style="border-radius: 1rem; background: #ffffff;">
-                <div class="fs-2 mb-1">🍗</div>
-                <div class="fw-bold text-dark fs-6">Menu & Pricing</div>
-                <small class="text-muted">Portions & items</small>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a href="<?= url('manager/reports') ?>" class="card h-100 text-decoration-none border-0 shadow-sm p-3 text-center transition-card" style="border-radius: 1rem; background: #ffffff;">
-                <div class="fs-2 mb-1">📊</div>
-                <div class="fw-bold text-dark fs-6">Financial Reports</div>
-                <small class="text-muted">Periodic sales analytics</small>
-            </a>
-        </div>
-        <div class="col-6 col-md-3">
-            <a href="<?= url('manager/users') ?>" class="card h-100 text-decoration-none border-0 shadow-sm p-3 text-center transition-card" style="border-radius: 1rem; background: #ffffff;">
-                <div class="fs-2 mb-1">👥</div>
-                <div class="fw-bold text-dark fs-6">Staff Accounts</div>
-                <small class="text-muted">Cashiers & Managers</small>
-            </a>
-        </div>
-    </div>
-
-    <!-- Recent Orders Section -->
-    <div class="card shadow-sm border-0 mb-4" style="border-radius: 1.15rem; overflow: hidden;">
-        <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold m-0" style="color: #0f172a;">Recent Orders Today</h5>
-            <a href="<?= url('manager/orders') ?>" class="btn btn-sm btn-outline-dark fw-bold px-3" style="border-radius: 0.5rem;">View All Orders</a>
-        </div>
-        <div class="card-body p-0">
-            <?php if (empty($recentOrders)): ?>
-                <div class="text-center py-5 text-muted">
-                    <div class="fs-3 mb-2">🍽️</div>
-                    <div>No orders recorded yet today.</div>
-                </div>
-            <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="py-3 px-3">ORDER #</th>
-                                <th class="py-3">TIME</th>
-                                <th class="py-3">CUSTOMER</th>
-                                <th class="py-3">ITEMS</th>
-                                <th class="py-3">TOTAL</th>
-                                <th class="py-3">PAYMENT</th>
-                                <th class="py-3">BILLED BY</th>
-                                <th class="py-3 text-end px-3">ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($recentOrders as $order): ?>
-                                <tr>
-                                    <td class="px-3">
-                                        <span class="badge bg-dark rounded-pill px-3 py-2 fs-6">#<?= (int)$order['order_number'] ?></span>
-                                    </td>
-                                    <td>
-                                        <div class="fw-semibold text-dark"><?= date('h:i A', strtotime($order['created_at'])) ?></div>
-                                        <small class="text-muted"><?= date('d M Y', strtotime($order['created_at'])) ?></small>
-                                    </td>
-                                    <td>
-                                        <div class="fw-semibold text-dark"><?= e($order['customer_name'] ?? 'Walk-in') ?></div>
-                                        <?php if (!empty($order['customer_phone'])): ?>
-                                            <small class="text-muted"><?= e($order['customer_phone']) ?></small>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark border"><?= (int)($order['items_count'] ?? 1) ?> item(s)</span>
-                                    </td>
-                                    <td>
-                                        <span class="fw-bold fs-6" style="color: #0f172a;"><?= format_currency((float)$order['total']) ?></span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-<?= $order['payment_method'] === 'Cash' ? 'success' : 'warning text-dark' ?>">
-                                            <?= e($order['payment_method']) ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted"><?= e($order['created_by_username'] ?? 'Staff') ?></small>
-                                    </td>
-                                    <td class="text-end px-3">
-                                        <div class="d-inline-flex gap-1">
-                                            <a href="<?= url('orders/view?id=' . $order['id']) ?>" class="btn btn-sm btn-light border fw-semibold">View</a>
-                                            <a href="<?= url('manager/orders/edit?id=' . $order['id']) ?>" class="btn btn-sm btn-outline-secondary fw-semibold">Edit</a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger fw-semibold" onclick="confirmDelete(<?= (int)$order['id'] ?>, <?= (int)$order['order_number'] ?>)">Delete</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-
-<!-- Manager Soft-Delete Modal -->
-<div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-hidden="true">
+<!-- QR Receipt Lookup Modal -->
+<div class="modal fade" id="qrLookupModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow border-0" style="border-radius: 1.25rem;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-danger">⚠️ Soft-Delete Order</h5>
+        <div class="modal-content modal-content-android">
+            <div class="modal-header modal-header-android">
+                <h5 class="modal-title modal-title-android">🔍 Receipt QR Lookup</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="<?= url('manager/orders/delete') ?>" method="POST">
-                <?= csrf_field() ?>
-                <input type="hidden" name="id" id="deleteOrderId">
-                <div class="modal-body">
-                    <p>Are you sure you want to soft-delete <strong id="deleteOrderNum"></strong>?</p>
-                    <p class="text-muted small mb-0">The order will be hidden from reports and cashier views, but an immutable audit trail entry will be permanently recorded.</p>
+            <div class="modal-body p-3">
+                <p class="text-secondary small mb-2">Scan QR with camera or enter the receipt token / order number below:</p>
+                <div class="mb-3">
+                    <input type="text" id="qrLookupInput" class="form-control" placeholder="Enter Token / Order #" style="border-radius: 12px;">
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger px-4 fw-bold">Confirm Delete</button>
-                </div>
-            </form>
+                <button type="button" class="btn w-100 fw-bold text-white py-2" style="background: var(--brand-orange); border-radius: 12px;" onclick="lookupReceipt()">
+                    Lookup Receipt
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-function confirmDelete(id, num) {
-    document.getElementById('deleteOrderId').value = id;
-    document.getElementById('deleteOrderNum').textContent = 'Order #' + num;
-    new bootstrap.Modal(document.getElementById('deleteOrderModal')).show();
+function openQrLookupModal() {
+    new bootstrap.Modal(document.getElementById('qrLookupModal')).show();
+}
+
+function lookupReceipt() {
+    const val = document.getElementById('qrLookupInput').value.trim();
+    if (!val) return;
+    if (val.length > 20) {
+        window.location.href = '<?= url('receipt/') ?>' + encodeURIComponent(val);
+    } else {
+        window.location.href = '<?= url('manager/orders?search=') ?>' + encodeURIComponent(val);
+    }
 }
 </script>

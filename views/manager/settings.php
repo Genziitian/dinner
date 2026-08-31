@@ -1,187 +1,201 @@
 <?php
 /**
- * Manager Restaurant Settings & Profile View Template (Mobile-Redesigned)
- * Restaurant Billing & Order Management System
+ * My Profile & Outlet Details View Template
+ * Matches Android Native App UI 1:1 (Dynamic Data)
  */
 declare(strict_types=1);
 $currentUser = current_user();
+$role = strtolower($currentUser['role'] ?? 'manager');
+
+$roleDetails = match($role) {
+    'superadmin' => ['title' => 'Master Super Administrator', 'icon' => '👑', 'badgeColor' => '#f59e0b'],
+    'manager' => ['title' => 'Restaurant General Manager', 'icon' => '👔', 'badgeColor' => '#2563eb'],
+    'cashier' => ['title' => 'POS Billing Operator & Cashier', 'icon' => '🛒', 'badgeColor' => '#10b981'],
+    default => ['title' => 'Staff Member', 'icon' => '👤', 'badgeColor' => '#64748b']
+};
 ?>
 
-<!-- Mobile Settings & Profile View (< 768px) -->
-<div class="d-md-none mb-5">
-    <!-- Profile Card Header (Horizontally aligned) -->
-    <div class="card shadow-sm border-0 mb-3" style="border-radius: 1.15rem; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); overflow: hidden;">
-        <div class="card-body p-3 d-flex align-items-center gap-3">
-            <!-- Left: Avatar Circle -->
-            <div class="d-flex align-items-center justify-content-center rounded-circle bg-white text-dark fw-bold shadow-sm" style="width: 54px; height: 54px; font-size: 1.4rem; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.3);">
-                <?= strtoupper(substr($currentUser['username'] ?? 'M', 0, 1)) ?>
-            </div>
-            <!-- Right: Details -->
-            <div class="text-start">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="fw-bold text-white fs-5" style="letter-spacing: -0.3px;"><?= e($currentUser['username']) ?></span>
-                    <span class="badge" style="background: rgba(255, 255, 255, 0.18); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); font-size: 0.65rem; padding: 0.2rem 0.5rem; font-weight: 700; border-radius: 0.5rem;">MANAGER</span>
-                </div>
-                <div class="small text-white-50 mt-1" style="font-size: 0.78rem;">🏢 <?= e($restaurant['name']) ?></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Android-style List Menu Group -->
-    <div class="card shadow-sm border-0 mb-3" style="border-radius: 1rem; overflow: hidden; border: 1px solid #e2e8f0 !important;">
-        <div class="list-group list-group-flush">
-            <!-- Restaurant Info (Editable Section) -->
-            <div class="list-group-item p-3">
-                <div class="fw-bold text-dark mb-3 d-flex align-items-center gap-2" style="font-size: 0.95rem;">
-                    <span>🏢</span> Restaurant Details
-                </div>
-                <form method="POST" action="<?= url('manager/settings') ?>">
-                    <?= csrf_field() ?>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">Restaurant Name</label>
-                        <input type="text" name="name" class="form-control form-control-sm py-2" value="<?= e($restaurant['name'] ?? '') ?>" required style="border-radius: 0.5rem;">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">Phone Number</label>
-                        <input type="tel" name="phone" class="form-control form-control-sm py-2" value="<?= e($restaurant['phone'] ?? '') ?>" placeholder="e.g. +91 98765 43210" style="border-radius: 0.5rem;">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">Receipt Address</label>
-                        <textarea name="address" class="form-control form-control-sm" rows="2" placeholder="e.g. 102 Main Street, Central Plaza" style="border-radius: 0.5rem; font-size: 0.85rem;"><?= e($restaurant['address'] ?? '') ?></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">System Timezone</label>
-                        <select name="timezone" class="form-select form-select-sm py-2" required style="border-radius: 0.5rem;">
-                            <option value="Asia/Kolkata" <?= ($restaurant['timezone'] ?? '') === 'Asia/Kolkata' ? 'selected' : '' ?>>Asia/Kolkata (IST - India)</option>
-                            <option value="Asia/Dubai" <?= ($restaurant['timezone'] ?? '') === 'Asia/Dubai' ? 'selected' : '' ?>>Asia/Dubai (GST - UAE)</option>
-                            <option value="Asia/Singapore" <?= ($restaurant['timezone'] ?? '') === 'Asia/Singapore' ? 'selected' : '' ?>>Asia/Singapore (SGT)</option>
-                            <option value="Europe/London" <?= ($restaurant['timezone'] ?? '') === 'Europe/London' ? 'selected' : '' ?>>Europe/London (GMT/BST)</option>
-                            <option value="America/New_York" <?= ($restaurant['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>America/New_York (EST/EDT)</option>
-                            <option value="UTC" <?= ($restaurant['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-bold" style="border-radius: 0.5rem;">
-                        Save Details
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Management Quick Links -->
-    <div class="card shadow-sm border-0 mb-3" style="border-radius: 1rem; overflow: hidden; border: 1px solid #e2e8f0 !important;">
-        <div class="list-group list-group-flush">
-            <a href="<?= url('manager/users') ?>" class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <span style="font-size: 1.2rem;">👥</span>
-                    <div>
-                        <div class="fw-semibold text-dark" style="font-size: 0.9rem;">Staff Accounts</div>
-                        <small class="text-muted" style="font-size: 0.75rem;">Manage cashiers and manager accounts</small>
-                    </div>
-                </div>
-                <span class="text-muted">➔</span>
-            </a>
-            
-            <a href="<?= url('manager/reports') ?>" class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <span style="font-size: 1.2rem;">📊</span>
-                    <div>
-                        <div class="fw-semibold text-dark" style="font-size: 0.9rem;">Financial Reports</div>
-                        <small class="text-muted" style="font-size: 0.75rem;">Analyze sales statistics & payment methods</small>
-                    </div>
-                </div>
-                <span class="text-muted">➔</span>
-            </a>
-
-            <a href="<?= url('manager/exports') ?>" class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <span style="font-size: 1.2rem;">📥</span>
-                    <div>
-                        <div class="fw-semibold text-dark" style="font-size: 0.9rem;">Export CSV Reports</div>
-                        <small class="text-muted" style="font-size: 0.75rem;">Download raw order reports in Excel format</small>
-                    </div>
-                </div>
-                <span class="text-muted">➔</span>
-            </a>
-
-            <a href="<?= url('manager/audit') ?>" class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <span style="font-size: 1.2rem;">🔍</span>
-                    <div>
-                        <div class="fw-semibold text-dark" style="font-size: 0.9rem;">System Audit Trail</div>
-                        <small class="text-muted" style="font-size: 0.75rem;">Immutable history of all system activities</small>
-                    </div>
-                </div>
-                <span class="text-muted">➔</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Logout Option -->
-    <div class="card shadow-sm border-0 mb-4" style="border-radius: 1rem; overflow: hidden; border: 1px solid #e2e8f0 !important;">
-        <div class="list-group list-group-flush">
-            <a href="<?= url('logout') ?>" class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center bg-light text-danger">
-                <div class="d-flex align-items-center gap-3">
-                    <span style="font-size: 1.2rem;">🚪</span>
-                    <span class="fw-bold" style="font-size: 0.9rem;">Logout Account</span>
-                </div>
-                <span class="fw-bold">➔</span>
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Desktop Restaurant Settings View (>= 768px) -->
-<div class="d-none d-md-block">
+<div class="app-container">
+    <!-- Top App Bar Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="fw-bold m-0">Restaurant Settings</h4>
-            <small class="text-muted">Configure restaurant details, timezone, and receipt header info</small>
+        <div class="d-flex align-items-center gap-2">
+            <a href="<?= url($role === 'cashier' ? 'cashier/order' : 'manager/dashboard') ?>" class="top-bar-back-btn" title="Back">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <h4 class="top-bar-title m-0">My Profile</h4>
+        </div>
+        <div class="top-bar-actions">
+            <a href="<?= url('logout') ?>" class="top-bar-icon-btn red" title="Logout">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            </a>
         </div>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8">
-            <div class="card shadow-sm border-0" style="border-radius: 1rem; border: 1px solid #e2e8f0 !important;">
-                <div class="card-body p-4">
-                    <form method="POST" action="<?= url('manager/settings') ?>">
-                        <?= csrf_field() ?>
+    <!-- 1. User Header & Role Designation Card (Screenshot 5) -->
+    <div class="profile-hero-card">
+        <div class="profile-avatar-circle">
+            <?= $roleDetails['icon'] ?>
+        </div>
+        <div class="profile-username"><?= e($currentUser['username']) ?></div>
+        
+        <div class="profile-role-pill">
+            <span><?= $roleDetails['icon'] ?></span>
+            <span><?= e($roleDetails['title']) ?></span>
+        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Restaurant Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" value="<?= e($restaurant['name'] ?? '') ?>" required>
-                        </div>
+        <!-- 3-Column Stats Row -->
+        <div class="profile-stats-row">
+            <div class="profile-stat-col">
+                <div class="profile-stat-label">User ID</div>
+                <div class="profile-stat-val">#<?= (int)$currentUser['id'] ?></div>
+            </div>
+            <div class="profile-stat-col">
+                <div class="profile-stat-label">Account Status</div>
+                <div class="profile-stat-val active-green">🟢 Active</div>
+            </div>
+            <div class="profile-stat-col">
+                <div class="profile-stat-label">Security</div>
+                <div class="profile-stat-val">🔒 Encrypted</div>
+            </div>
+        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Contact Phone Number</label>
-                            <input type="tel" name="phone" class="form-control" value="<?= e($restaurant['phone'] ?? '') ?>" placeholder="e.g. +91 98765 43210">
-                        </div>
+        <!-- Authority Notice -->
+        <div class="profile-lock-notice">
+            <span style="font-size: 1rem;">🔒</span>
+            <span>
+                <?= $role === 'manager' 
+                    ? 'Account & credentials managed by Super Administrator.' 
+                    : ($role === 'cashier' ? 'Account & credentials managed by Restaurant Manager.' : 'Platform-wide master access privileges.') ?>
+            </span>
+        </div>
+    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Physical Address</label>
-                            <textarea name="address" class="form-control" rows="2" placeholder="e.g. 102 Main Street, Central Plaza"><?= e($restaurant['address'] ?? '') ?></textarea>
-                            <div class="text-muted small">This address will appear at the top of customer print receipts.</div>
-                        </div>
+    <!-- 2. Restaurant Outlet Details Card (Screenshot 5) -->
+    <div class="outlet-details-card">
+        <div class="outlet-card-header">
+            <h6 class="outlet-card-title">
+                <span>🏢</span>
+                <span>Restaurant Outlet Details</span>
+            </h6>
+            <span class="read-only-pill">🔒 Read-Only</span>
+        </div>
 
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold">Timezone <span class="text-danger">*</span></label>
-                            <select name="timezone" class="form-select" required>
-                                <option value="Asia/Kolkata" <?= ($restaurant['timezone'] ?? '') === 'Asia/Kolkata' ? 'selected' : '' ?>>Asia/Kolkata (IST - Indian Standard Time)</option>
-                                <option value="Asia/Dubai" <?= ($restaurant['timezone'] ?? '') === 'Asia/Dubai' ? 'selected' : '' ?>>Asia/Dubai (GST)</option>
-                                <option value="Asia/Singapore" <?= ($restaurant['timezone'] ?? '') === 'Asia/Singapore' ? 'selected' : '' ?>>Asia/Singapore (SGT)</option>
-                                <option value="Europe/London" <?= ($restaurant['timezone'] ?? '') === 'Europe/London' ? 'selected' : '' ?>>Europe/London (GMT/BST)</option>
-                                <option value="America/New_York" <?= ($restaurant['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>America/New_York (EST/EDT)</option>
-                                <option value="UTC" <?= ($restaurant['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC (Coordinated Universal Time)</option>
-                            </select>
-                            <div class="text-muted small">Controls the daily order number midnight reset and report timeframes.</div>
-                        </div>
+        <div class="outlet-info-list">
+            <div class="outlet-info-item">
+                <span class="outlet-info-icon">🏪</span>
+                <div>
+                    <div class="outlet-info-label">Restaurant Name</div>
+                    <div class="outlet-info-value"><?= e($restaurant['name'] ?? 'Main Outlet') ?></div>
+                </div>
+            </div>
 
-                        <button type="submit" class="btn btn-primary px-4 py-2 fw-bold">
-                            Save Restaurant Settings
-                        </button>
-                    </form>
+            <div class="outlet-info-item">
+                <span class="outlet-info-icon">📍</span>
+                <div>
+                    <div class="outlet-info-label">Outlet Address</div>
+                    <div class="outlet-info-value"><?= e(!empty($restaurant['address']) ? $restaurant['address'] : 'Address configured by Admin') ?></div>
+                </div>
+            </div>
+
+            <div class="outlet-info-item">
+                <span class="outlet-info-icon">📞</span>
+                <div>
+                    <div class="outlet-info-label">Contact Phone</div>
+                    <div class="outlet-info-value"><?= e(!empty($restaurant['phone']) ? $restaurant['phone'] : 'Not provided') ?></div>
                 </div>
             </div>
         </div>
+
+        <div class="outlet-footer-note">
+            💡 Branch details & locations can only be modified by Super Administrator.
+        </div>
     </div>
+
+    <!-- 3. Manager Exclusive Tools -->
+    <?php if ($role === 'manager'): ?>
+        <div class="mb-3">
+            <div class="section-header">
+                <h6 class="section-title">👔 RESTAURANT MANAGER TOOLS</h6>
+            </div>
+
+            <a href="<?= url('manager/users') ?>" class="profile-action-card">
+                <div class="profile-action-left">
+                    <span class="profile-action-icon">👥</span>
+                    <div>
+                        <div class="profile-action-title">Staff Management (Cashiers)</div>
+                        <div class="profile-action-sub">Create & manage cashier operator staff</div>
+                    </div>
+                </div>
+                <span class="text-secondary fw-bold">›</span>
+            </a>
+
+            <a href="<?= url('manager/exports') ?>" class="profile-action-card">
+                <div class="profile-action-left">
+                    <span class="profile-action-icon">📥</span>
+                    <div>
+                        <div class="profile-action-title">Export Sales Reports (CSV)</div>
+                        <div class="profile-action-sub">Download Excel/CSV reports for any date range</div>
+                    </div>
+                </div>
+                <span class="text-secondary fw-bold">›</span>
+            </a>
+
+            <a href="<?= url('manager/reports') ?>" class="profile-action-card">
+                <div class="profile-action-left">
+                    <span class="profile-action-icon">📊</span>
+                    <div>
+                        <div class="profile-action-title">Financial Reports</div>
+                        <div class="profile-action-sub">Analyze periodic revenue and cash vs online breakdown</div>
+                    </div>
+                </div>
+                <span class="text-secondary fw-bold">›</span>
+            </a>
+
+            <a href="<?= url('manager/audit') ?>" class="profile-action-card">
+                <div class="profile-action-left">
+                    <span class="profile-action-icon">🛡️</span>
+                    <div>
+                        <div class="profile-action-title">System Audit Trail</div>
+                        <div class="profile-action-sub">Immutable records of all order edits and user actions</div>
+                    </div>
+                </div>
+                <span class="text-secondary fw-bold">›</span>
+            </a>
+        </div>
+    <?php endif; ?>
+
+    <!-- 4. Legal & Privacy Links -->
+    <div class="mb-3">
+        <div class="section-header">
+            <h6 class="section-title">ℹ️ LEGAL & SYSTEM</h6>
+        </div>
+
+        <a href="<?= url('privacy-policy') ?>" class="profile-action-card" target="_blank">
+            <div class="profile-action-left">
+                <span class="profile-action-icon">🛡️</span>
+                <div>
+                    <div class="profile-action-title">Privacy Policy</div>
+                    <div class="profile-action-sub">Read data handling & security standards</div>
+                </div>
+            </div>
+            <span class="text-secondary fw-bold">›</span>
+        </a>
+
+        <a href="<?= url('terms-and-conditions') ?>" class="profile-action-card" target="_blank">
+            <div class="profile-action-left">
+                <span class="profile-action-icon">📄</span>
+                <div>
+                    <div class="profile-action-title">Terms and Conditions</div>
+                    <div class="profile-action-sub">Software usage terms & conditions</div>
+                </div>
+            </div>
+            <span class="text-secondary fw-bold">›</span>
+        </a>
+    </div>
+
+    <!-- 5. Sign Out Button -->
+    <a href="<?= url('logout') ?>" class="sign-out-btn-card">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        <span>Sign Out Account</span>
+    </a>
 </div>

@@ -319,10 +319,10 @@ class ManagerController extends BaseController {
     }
 
     /**
-     * Update Restaurant Settings
+     * Update Restaurant Settings (Super Admin Only)
      */
     public function updateSettings(): void {
-        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole(User::ROLE_SUPERADMIN);
         $this->validateCsrf();
         $restaurantId = $this->requireRestaurantId();
 

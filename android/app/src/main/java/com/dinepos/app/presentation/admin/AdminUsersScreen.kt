@@ -45,6 +45,7 @@ fun AdminUsersScreen() {
     var selectedRoleFilter by remember { mutableStateOf("all") }
 
     var showCreateDialog by remember { mutableStateOf(false) }
+    var editingUser by remember { mutableStateOf<AdminUserDto?>(null) }
     var isSubmitting by remember { mutableStateOf(false) }
 
     fun loadData() {
@@ -100,7 +101,7 @@ fun AdminUsersScreen() {
                             color = BrandDark
                         )
                         Text(
-                            text = "Create and assign managers & cashiers",
+                            text = "Create, assign & reset passwords for managers & staff",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             fontSize = 11.sp
@@ -184,7 +185,7 @@ fun AdminUsersScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Staff Accounts (${filteredUsers.size})",
+                    text = "Staff & Manager Accounts (${filteredUsers.size})",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = BrandDark
@@ -217,7 +218,7 @@ fun AdminUsersScreen() {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Tap the '+' button below to create a new Manager or Cashier user.",
+                            text = "Tap '+ New User' to create a new Restaurant Manager or Cashier user.",
                             fontSize = 12.sp,
                             color = TextSecondary,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -233,6 +234,7 @@ fun AdminUsersScreen() {
                         UserManagementCard(
                             userItem = userItem,
                             currentUserId = sessionManager.getUserId(),
+                            onEdit = { editingUser = userItem },
                             onToggleStatus = {
                                 scope.launch {
                                     when (val res = managerRepository.toggleAdminUser(userItem.id)) {
@@ -257,7 +259,7 @@ fun AdminUsersScreen() {
         }
     }
 
-    // Create User Dialog
+    // Create User Dialog (Super Admin)
     if (showCreateDialog) {
         CreateUserDialog(
             restaurants = restaurants,
@@ -285,12 +287,44 @@ fun AdminUsersScreen() {
             }
         )
     }
+
+    // Edit User Dialog (Super Admin)
+    if (editingUser != null) {
+        val userToEdit = editingUser!!
+        EditUserDialog(
+            user = userToEdit,
+            restaurants = restaurants,
+            isSubmitting = isSubmitting,
+            onDismiss = { editingUser = null },
+            onConfirm = { username, password, role, restaurantId, status ->
+                scope.launch {
+                    isSubmitting = true
+                    when (val res = managerRepository.updateAdminUser(userToEdit.id, username, password, role, restaurantId, status)) {
+                        is Resource.Success -> {
+                            isSubmitting = false
+                            editingUser = null
+                            Toast.makeText(context, "User '${res.data.username}' updated successfully!", Toast.LENGTH_SHORT).show()
+                            loadData()
+                        }
+                        is Resource.Error -> {
+                            isSubmitting = false
+                            Toast.makeText(context, res.message, Toast.LENGTH_LONG).show()
+                        }
+                        else -> {
+                            isSubmitting = false
+                        }
+                    }
+                }
+            }
+        )
+    }
 }
 
 @Composable
 private fun UserManagementCard(
     userItem: AdminUserDto,
     currentUserId: Int,
+    onEdit: () -> Unit,
     onToggleStatus: () -> Unit
 ) {
     val isActive = userItem.status == "active"
@@ -370,22 +404,39 @@ private fun UserManagementCard(
                 )
             }
 
-            if (userItem.id != currentUserId) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Button(
-                    onClick = onToggleStatus,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isActive) StatusError.copy(alpha = 0.1f) else StatusSuccess.copy(alpha = 0.1f)
-                    ),
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onEdit,
                     shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth().height(38.dp)
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = if (isActive) "Deactivate User Account" else "Activate User Account",
-                        fontSize = 12.sp,
-                        color = if (isActive) StatusError else StatusSuccess,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(15.dp), tint = BrandDark)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Edit / Reset", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                }
+
+                if (userItem.id != currentUserId) {
+                    Button(
+                        onClick = onToggleStatus,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isActive) StatusError.copy(alpha = 0.12f) else StatusSuccess.copy(alpha = 0.12f)
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = if (isActive) "Deactivate" else "Activate",
+                            fontSize = 12.sp,
+                            color = if (isActive) StatusError else StatusSuccess,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }
@@ -402,15 +453,17 @@ private fun CreateUserDialog(
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf("manager") }
     var selectedRestaurantId by remember { mutableStateOf(restaurants.firstOrNull()?.id) }
     var restaurantDropdownExpanded by remember { mutableStateOf(false) }
 
     val selectedRestaurantName = restaurants.find { it.id == selectedRestaurantId }?.name ?: "Select Restaurant"
+    val passwordsMatch = password.isNotEmpty() && password == confirmPassword
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Create New Staff User", fontWeight = FontWeight.Bold) },
+        title = { Text(text = "Create New User (Super Admin)", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
@@ -430,8 +483,24 @@ private fun CreateUserDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Confirm Password *") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    isError = confirmPassword.isNotEmpty() && !passwordsMatch,
+                    supportingText = {
+                        if (confirmPassword.isNotEmpty()) {
+                            if (passwordsMatch) Text("🟢 Passwords match", color = StatusSuccess, fontSize = 11.sp)
+                            else Text("❌ Passwords do not match", color = StatusError, fontSize = 11.sp)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 // Role Radio Selection
-                Text(text = "Select User Role:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                Text(text = "Assign Role:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -462,30 +531,32 @@ private fun CreateUserDialog(
                 }
 
                 // Assigned Restaurant Selector
-                Text(text = "Assign to Restaurant Outlet:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
-                ExposedDropdownMenuBox(
-                    expanded = restaurantDropdownExpanded,
-                    onExpandedChange = { restaurantDropdownExpanded = !restaurantDropdownExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedRestaurantName,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = restaurantDropdownExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
+                if (selectedRole != "superadmin") {
+                    Text(text = "Assign to Restaurant Outlet:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                    ExposedDropdownMenuBox(
                         expanded = restaurantDropdownExpanded,
-                        onDismissRequest = { restaurantDropdownExpanded = false }
+                        onExpandedChange = { restaurantDropdownExpanded = !restaurantDropdownExpanded }
                     ) {
-                        restaurants.forEach { rest ->
-                            DropdownMenuItem(
-                                text = { Text(rest.name) },
-                                onClick = {
-                                    selectedRestaurantId = rest.id
-                                    restaurantDropdownExpanded = false
-                                }
-                            )
+                        OutlinedTextField(
+                            value = selectedRestaurantName,
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = restaurantDropdownExpanded) },
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = restaurantDropdownExpanded,
+                            onDismissRequest = { restaurantDropdownExpanded = false }
+                        ) {
+                            restaurants.forEach { rest ->
+                                DropdownMenuItem(
+                                    text = { Text(rest.name) },
+                                    onClick = {
+                                        selectedRestaurantId = rest.id
+                                        restaurantDropdownExpanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -494,17 +565,128 @@ private fun CreateUserDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (username.isNotBlank() && password.isNotBlank()) {
+                    if (username.isNotBlank() && passwordsMatch) {
                         onConfirm(username, password, selectedRole, selectedRestaurantId)
                     }
                 },
-                enabled = username.isNotBlank() && password.length >= 8 && selectedRestaurantId != null && !isSubmitting,
+                enabled = username.isNotBlank() && passwordsMatch && password.length >= 8 && !isSubmitting,
                 colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
                 } else {
                     Text("Create User")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditUserDialog(
+    user: AdminUserDto,
+    restaurants: List<AdminRestaurantDto>,
+    isSubmitting: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (username: String, password: String, role: String, restaurantId: Int?, status: String) -> Unit
+) {
+    var username by remember { mutableStateOf(user.username) }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var selectedRole by remember { mutableStateOf(user.role) }
+    var selectedRestaurantId by remember { mutableStateOf(user.restaurantId ?: restaurants.firstOrNull()?.id) }
+    var restaurantDropdownExpanded by remember { mutableStateOf(false) }
+
+    val selectedRestaurantName = restaurants.find { it.id == selectedRestaurantId }?.name ?: "Select Restaurant"
+    val passwordsValid = password.isEmpty() || (password == confirmPassword && password.length >= 8)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Edit User: ${user.username}", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = { username = it.lowercase().trim() },
+                    label = { Text("Username *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(text = "Reset Password (leave blank to keep existing):", fontSize = 11.5.sp, color = TextMuted)
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("New Password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (password.isNotEmpty()) {
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirm New Password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = password != confirmPassword,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // Assigned Restaurant Selector
+                if (selectedRole != "superadmin") {
+                    Text(text = "Assigned Restaurant Outlet:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                    ExposedDropdownMenuBox(
+                        expanded = restaurantDropdownExpanded,
+                        onExpandedChange = { restaurantDropdownExpanded = !restaurantDropdownExpanded }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedRestaurantName,
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = restaurantDropdownExpanded) },
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = restaurantDropdownExpanded,
+                            onDismissRequest = { restaurantDropdownExpanded = false }
+                        ) {
+                            restaurants.forEach { rest ->
+                                DropdownMenuItem(
+                                    text = { Text(rest.name) },
+                                    onClick = {
+                                        selectedRestaurantId = rest.id
+                                        restaurantDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (username.isNotBlank() && passwordsValid) {
+                        onConfirm(username, password, selectedRole, selectedRestaurantId, user.status)
+                    }
+                },
+                enabled = username.isNotBlank() && passwordsValid && !isSubmitting,
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+            ) {
+                if (isSubmitting) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                } else {
+                    Text("Save Changes")
                 }
             }
         },

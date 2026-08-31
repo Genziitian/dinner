@@ -147,6 +147,27 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
         }
     }
 
+    override suspend fun updateAdminUser(
+        id: Int,
+        username: String,
+        password: String,
+        role: String,
+        restaurantId: Int?,
+        status: String
+    ): Resource<com.dinepos.app.data.dto.AdminUserDto> {
+        return try {
+            val req = com.dinepos.app.data.dto.CreateAdminUserRequestDto(username, password, role, restaurantId, status)
+            val response = apiService.updateAdminUser(id, req)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to update user.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
     override suspend fun toggleAdminUser(id: Int): Resource<com.dinepos.app.data.dto.AdminUserDto> {
         return try {
             val response = apiService.toggleAdminUser(id)
@@ -154,6 +175,88 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
                 Resource.Success(response.body()!!.data!!)
             } else {
                 Resource.Error(response.body()?.message ?: "Failed to toggle user status.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun getManagerStaff(): Resource<List<com.dinepos.app.data.dto.AdminUserDto>> {
+        return try {
+            val response = apiService.getManagerStaff()
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!.staff)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to load staff list.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun createCashierStaff(
+        username: String,
+        password: String,
+        confirmPassword: String
+    ): Resource<com.dinepos.app.data.dto.AdminUserDto> {
+        return try {
+            val req = com.dinepos.app.data.dto.CreateCashierRequestDto(username, password, confirmPassword)
+            val response = apiService.createManagerStaff(req)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to create cashier staff.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun updateManagerStaff(
+        id: Int,
+        username: String,
+        password: String,
+        confirmPassword: String
+    ): Resource<com.dinepos.app.data.dto.AdminUserDto> {
+        return try {
+            val req = com.dinepos.app.data.dto.CreateCashierRequestDto(username, password, confirmPassword)
+            val response = apiService.updateManagerStaff(id, req)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to update cashier staff.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun toggleManagerStaff(id: Int): Resource<com.dinepos.app.data.dto.AdminUserDto> {
+        return try {
+            val response = apiService.toggleManagerStaff(id)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to toggle staff status.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun getExportData(
+        type: String,
+        date: String?,
+        month: String?,
+        startDate: String?,
+        endDate: String?
+    ): Resource<com.dinepos.app.data.dto.ExportDataResponseDto> {
+        return try {
+            val response = apiService.getExportData(type, date, month, startDate, endDate)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to fetch export data.")
             }
         } catch (e: Exception) {
             Resource.Error("Network error: ${e.localizedMessage}")

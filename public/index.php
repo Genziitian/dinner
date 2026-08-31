@@ -78,6 +78,8 @@ try {
             $api->getManagerStaff();
         } elseif ($path === '/api/v1/manager/staff' && $method === 'POST') {
             $api->createManagerStaff();
+        } elseif (preg_match('#^/api/v1/manager/staff/(\d+)$#', $path, $m) && $method === 'POST') {
+            $api->updateManagerStaff((int)$m[1]);
         } elseif (preg_match('#^/api/v1/manager/staff/(\d+)/toggle$#', $path, $m) && $method === 'POST') {
             $api->toggleManagerStaff((int)$m[1]);
         } elseif ($path === '/api/v1/manager/export/data' && $method === 'GET') {
@@ -92,6 +94,8 @@ try {
             $api->toggleRestaurant((int)$m[1]);
         } elseif ($path === '/api/v1/admin/users' && $method === 'POST') {
             $api->createUser();
+        } elseif (preg_match('#^/api/v1/admin/users/(\d+)$#', $path, $m) && $method === 'POST') {
+            $api->updateAdminUser((int)$m[1]);
         } elseif (preg_match('#^/api/v1/admin/users/(\d+)/toggle$#', $path, $m) && $method === 'POST') {
             $api->toggleUser((int)$m[1]);
         } elseif (preg_match('#^/api/v1/receipt/([a-zA-Z0-9_-]+)$#', $path, $m) && $method === 'GET') {
@@ -289,7 +293,7 @@ try {
         exit;
     }
 
-    if ($path === '/manager/settings') {
+    if ($path === '/manager/settings' || $path === '/profile') {
         $c = new ManagerController();
         if ($method === 'POST') {
             $c->updateSettings();

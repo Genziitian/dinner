@@ -1,181 +1,110 @@
 <?php
 /**
- * Modern Vibrant Manager Menu Items List View Template (Mobile-Redesigned)
- * Restaurant Billing & Order Management System
+ * Menu Items Catalog View Template
+ * Matches Android Native App UI 1:1 (Dynamic Data)
  */
 declare(strict_types=1);
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <div>
-        <h4 class="fw-bold m-0" style="color: #0f172a; letter-spacing: -0.5px;">Menu & Pricing Management</h4>
-        <small class="text-muted d-none d-sm-inline">Configure portions (Full/Half/Quarter), per-piece, and weight rates</small>
+<div class="app-container" style="padding-bottom: calc(var(--bottom-nav-height) + 5rem);">
+    <!-- Top App Bar Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <a href="<?= url('manager/dashboard') ?>" class="top-bar-back-btn" title="Back to Dashboard">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <h4 class="top-bar-title m-0">Menu Items Catalog</h4>
+        </div>
+        <div class="top-bar-actions">
+            <a href="<?= url('manager/items') ?>" class="top-bar-icon-btn" title="Refresh">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </a>
+        </div>
     </div>
-    <a href="<?= url('manager/items/create') ?>" class="btn btn-primary btn-sm px-3 fw-bold" style="border-radius: 0.6rem;">
-        <span>+ Add New Item</span>
+
+    <!-- Items Catalog List (Screenshot 4) -->
+    <?php if (empty($items)): ?>
+        <div class="card border-0 p-5 text-center my-3" style="border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0 !important;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍗</div>
+            <div class="fw-bold text-dark fs-6 mb-1">No items found</div>
+            <div class="text-secondary small">Tap the orange '+' button below to create your first item.</div>
+        </div>
+    <?php else: ?>
+        <div class="catalog-list-wrap">
+            <?php foreach ($items as $item): ?>
+                <?php
+                    $itemType = $item['item_type'] ?? 'piece';
+                    $emoji = match($itemType) {
+                        'portion' => '🍗',
+                        'piece' => '🥚',
+                        'weight' => ($item['base_unit'] === 'l' || $item['base_unit'] === 'ml') ? '🥤' : '🌾',
+                        default => '🍴'
+                    };
+                    $displayPrice = $item['display_price'] ?? '';
+                    if (empty($displayPrice) && !empty($item['variants'])) {
+                        $minPrice = min(array_column($item['variants'], 'price'));
+                        $displayPrice = $itemType === 'portion' ? 'From ₹' . (float)$minPrice : '₹' . (float)$minPrice . ' / ' . $item['base_unit'];
+                    }
+                    $isActive = !empty($item['active']);
+                ?>
+                <div class="catalog-item-card">
+                    <a href="<?= url('manager/items/edit?id=' . (int)$item['id']) ?>" class="catalog-item-left text-decoration-none" title="Edit Item & Rates">
+                        <span class="catalog-item-emoji"><?= $emoji ?></span>
+                        <div>
+                            <div class="catalog-item-name"><?= e($item['name']) ?></div>
+                            <div class="catalog-item-meta">
+                                <?= strtoupper(e($itemType)) ?> · <?= e($displayPrice) ?>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Material 3 Active Toggle Switch -->
+                    <label class="m3-switch" title="Toggle Active/Inactive">
+                        <input 
+                            type="checkbox" 
+                            <?= $isActive ? 'checked' : '' ?> 
+                            onchange="toggleItemStatus(<?= (int)$item['id'] ?>, this)"
+                        >
+                        <span class="m3-switch-slider"></span>
+                    </label>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Floating Action Button (FAB) Bottom Right '+' -->
+    <a href="<?= url('manager/items/create') ?>" class="fab-add-btn" title="Add Menu Item">
+        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
     </a>
 </div>
 
-<!-- Desktop Table View (>= 768px) -->
-<div class="card shadow-sm border-0 mb-5 d-none d-md-block" style="border-radius: 1.15rem; overflow: hidden; border: 1px solid #e2e8f0 !important;">
-    <div class="card-body p-0">
-        <?php if (empty($items)): ?>
-            <div class="text-center py-5 text-muted">
-                <div class="fs-2 mb-2">🍽️</div>
-                <p class="mb-0">No menu items found. Click "+ Add New Item" to create your first dish.</p>
-            </div>
-        <?php else: ?>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="py-3 px-3">ITEM NAME</th>
-                            <th class="py-3">PRICING MODEL</th>
-                            <th class="py-3">VARIANTS & PRICING</th>
-                            <th class="py-3">STATUS</th>
-                            <th class="py-3 text-end px-3">ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($items as $it): ?>
-                            <?php
-                                $badgeClass = match($it['item_type']) {
-                                    'portion' => 'badge-portion',
-                                    'piece' => 'badge-piece',
-                                    'weight' => 'badge-weight',
-                                    default => 'badge-piece'
-                                };
-                                $emoji = match($it['item_type']) {
-                                    'portion' => '🍗',
-                                    'piece' => '🥚',
-                                    'weight' => ($it['base_unit'] === 'l' || $it['base_unit'] === 'ml') ? '🥤' : '🌾',
-                                    default => '🍴'
-                                };
-                            ?>
-                            <tr>
-                                <td class="px-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span style="font-size: 1.35rem;"><?= $emoji ?></span>
-                                        <div>
-                                            <div class="fw-bold text-dark fs-6"><?= e($it['name']) ?></div>
-                                            <small class="text-muted">Base unit: <?= e($it['base_unit']) ?></small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="<?= $badgeClass ?>"><?= ucfirst(e($it['item_type'])) ?> Based</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-wrap gap-1">
-                                        <?php foreach ($it['variants'] as $v): ?>
-                                            <span class="variant-chip">
-                                                <strong><?= e($v['variant_name']) ?>:</strong> <?= format_currency($v['price']) ?>
-                                            </span>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-<?= $it['active'] ? 'success' : 'danger' ?>">
-                                        <?= $it['active'] ? 'Active' : 'Inactive' ?>
-                                    </span>
-                                </td>
-                                <td class="text-end px-3">
-                                    <div class="d-inline-flex gap-1">
-                                        <a href="<?= url('manager/items/edit?id=' . $it['id']) ?>" class="btn btn-sm btn-light border fw-semibold">Edit</a>
-                                        <form action="<?= url('manager/items/toggle') ?>" method="POST" class="d-inline">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="id" value="<?= (int)$it['id'] ?>">
-                                            <button type="submit" class="btn btn-sm <?= $it['active'] ? 'btn-outline-danger' : 'btn-outline-success' ?> fw-semibold">
-                                                <?= $it['active'] ? 'Deactivate' : 'Activate' ?>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
+<script>
+async function toggleItemStatus(itemId, checkbox) {
+    const originalChecked = !checkbox.checked;
+    try {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const token = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
-<!-- Mobile App-style List View (< 768px) -->
-<?php if (!empty($items)): ?>
-    <div class="card shadow-sm border-0 mb-5 d-md-none" style="border-radius: 1rem; overflow: hidden; border: 1px solid #e2e8f0 !important;">
-        <div class="card-body p-0">
-            <div class="d-flex flex-column divide-y">
-                <?php foreach ($items as $it): ?>
-                    <?php
-                        $emoji = match($it['item_type']) {
-                            'portion' => '🍗',
-                            'piece' => '🥚',
-                            'weight' => ($it['base_unit'] === 'l' || $it['base_unit'] === 'ml') ? '🥤' : '🌾',
-                            default => '🍴'
-                        };
-                        $badgeColor = match($it['item_type']) {
-                            'portion' => '#ea580c',
-                            'piece' => '#eab308',
-                            'weight' => '#10b981',
-                            default => '#64748b'
-                        };
-                    ?>
-                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom bg-white" style="transition: background-color 0.15s ease;">
-                        <div class="d-flex align-items-center gap-3" style="min-width: 0; flex: 1;">
-                            <!-- Circular Avatar/Emoji Box -->
-                            <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 44px; height: 44px; background-color: #f1f5f9; font-size: 1.3rem; flex-shrink: 0; border: 1px solid #e2e8f0;">
-                                <?= $emoji ?>
-                            </div>
-                            <div style="min-width: 0; flex: 1;">
-                                <!-- Name + Type Badge -->
-                                <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <span class="fw-bold text-dark fs-6" style="letter-spacing: -0.3px;"><?= e($it['name']) ?></span>
-                                    <span class="badge" style="background-color: <?= $badgeColor ?>18; color: <?= $badgeColor ?>; font-size: 0.65rem; font-weight: 700; border: 1px solid <?= $badgeColor ?>30;">
-                                        <?= strtoupper(e($it['item_type'])) ?>
-                                    </span>
-                                </div>
-                                
-                                <!-- Mini Variant Rates List -->
-                                <div class="d-flex flex-wrap align-items-center gap-1.5 mt-1 text-muted" style="font-size: 0.75rem;">
-                                    <?php $first = true; foreach ($it['variants'] as $v): ?>
-                                        <?php if (!$first): ?><span class="text-muted-50">•</span><?php endif; ?>
-                                        <span>
-                                            <span class="fw-semibold text-secondary"><?= e($v['variant_name']) ?></span>: 
-                                            <strong class="text-dark"><?= format_currency($v['price']) ?></strong>
-                                        </span>
-                                        <?php $first = false; ?>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Sleek App-style Action Buttons -->
-                        <div class="d-flex align-items-center gap-1 ms-2" style="flex-shrink: 0;">
-                            <a href="<?= url('manager/items/edit?id=' . $it['id']) ?>" class="btn btn-light border btn-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 0.5rem; padding: 0;" title="Edit Item">
-                                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #475569;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            </a>
-                            <form action="<?= url('manager/items/toggle') ?>" method="POST" class="m-0">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="id" value="<?= (int)$it['id'] ?>">
-                                <button type="submit" class="btn btn-light border btn-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-radius: 0.5rem; padding: 0;" title="<?= $it['active'] ? 'Deactivate' : 'Activate' ?>">
-                                    <?php if ($it['active']): ?>
-                                        <!-- Eye/Active (Green) -> Click to hide -->
-                                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #10b981;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                    <?php else: ?>
-                                        <!-- Eye-Slash/Inactive (Red) -> Click to show -->
-                                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #ef4444;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
-                                    <?php endif; ?>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-<?php else: ?>
-    <div class="text-center py-5 text-muted bg-white border rounded-3 mb-5 d-md-none">
-        <div class="fs-2 mb-2">🍽️</div>
-        <p class="mb-0">No menu items found. Click "+ Add New Item" to create your first dish.</p>
-    </div>
-<?php endif; ?>
+        const formData = new FormData();
+        formData.append('id', itemId);
+        formData.append('csrf_token', token);
+
+        const response = await fetch('<?= url('manager/items/toggle') ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            checkbox.checked = originalChecked;
+            alert('Failed to update status. Please try again.');
+        }
+    } catch (e) {
+        console.error('Toggle error:', e);
+        checkbox.checked = originalChecked;
+        alert('Network error while updating item status.');
+    }
+}
+</script>

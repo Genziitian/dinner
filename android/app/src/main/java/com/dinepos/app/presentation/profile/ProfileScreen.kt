@@ -7,6 +7,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -25,11 +28,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dinepos.app.DinePosApp
 import com.dinepos.app.core.theme.*
+import com.dinepos.app.core.utils.Resource
+import com.dinepos.app.data.dto.AdminUserDto
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +55,8 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val sessionManager = DinePosApp.instance.sessionManager
+    val managerRepository = DinePosApp.instance.managerRepository
+    val scope = rememberCoroutineScope()
 
     val username = remember { sessionManager.getUsername().ifBlank { "User" } }
     val role = remember { sessionManager.getUserRole().lowercase() }
@@ -55,8 +66,9 @@ fun ProfileScreen(
     val restaurantPhone = remember { sessionManager.getRestaurantPhone() }
     var currentBaseUrl by remember { mutableStateOf(sessionManager.getBaseUrl()) }
 
-    var showServerConfigDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showStaffManagementDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
 
     // Role specific badge and title
     val (roleTitle, roleBadgeColor, roleIcon) = when (role) {
@@ -154,51 +166,90 @@ fun ProfileScreen(
                         border = BorderStroke(1.dp, roleBadgeColor.copy(alpha = 0.3f))
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Text(text = roleIcon, fontSize = 13.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = roleTitle,
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = roleBadgeColor
+                                color = roleBadgeColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = BrandBorder.copy(alpha = 0.5f))
-                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = BrandBorder.copy(alpha = 0.6f))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Account Stats Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "User ID", fontSize = 11.sp, color = TextMuted, fontWeight = FontWeight.Medium)
-                            Text(text = "#$userId", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = BrandDark)
-                        }
-                        Box(modifier = Modifier.height(28.dp).width(1.dp).background(BrandBorder))
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Account Status", fontSize = 11.sp, color = TextMuted, fontWeight = FontWeight.Medium)
-                            Text(text = "🟢 Active", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = StatusSuccess)
-                        }
-                        Box(modifier = Modifier.height(28.dp).width(1.dp).background(BrandBorder))
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Access Scope", fontSize = 11.sp, color = TextMuted, fontWeight = FontWeight.Medium)
+                            Text(text = "User ID", fontSize = 11.sp, color = TextMuted)
                             Text(
-                                text = if (role == "superadmin") "Global" else "Single Outlet",
+                                text = if (userId > 0) "#$userId" else "--",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandDark
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "Account Status", fontSize = 11.sp, color = TextMuted)
+                            Text(
+                                text = "🟢 Active",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = StatusSuccess
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = "Security", fontSize = 11.sp, color = TextMuted)
+                            Text(
+                                text = "🔒 Encrypted",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BrandDark
                             )
                         }
                     }
+
+                    // Security Authority Notice
+                    if (role != "superadmin") {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Surface(
+                            color = BrandBackground,
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, BrandBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "🔒", fontSize = 12.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (role == "manager")
+                                        "Account & credentials managed by Super Administrator."
+                                    else
+                                        "Account & credentials managed by Restaurant Manager.",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary,
+                                    lineHeight = 14.sp
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            // 2. Organization / Restaurant Outlet Details Card
+            // 2. Organization / Restaurant Outlet Details Card (Strictly Read-Only for Manager & Cashier)
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -211,34 +262,54 @@ fun ProfileScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = "🏢 Organization & Outlet",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandDark
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🏢 Restaurant Outlet Details",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandDark
+                        )
+                        if (role != "superadmin") {
+                            Surface(
+                                color = Color(0xFFF1F5F9),
+                                shape = RoundedCornerShape(50)
+                            ) {
+                                Text(
+                                    text = "🔒 Read-Only",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextMuted,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
 
                     if (role == "superadmin") {
                         InfoRow(
-                            icon = Icons.Outlined.AdminPanelSettings,
+                            icon = Icons.Outlined.Business,
                             label = "System Scope",
-                            value = "Master Super Administrator (All Multi-Tenant Outlets)"
+                            value = "Master Multi-Tenant Console (Global Access)"
                         )
                         InfoRow(
-                            icon = Icons.Outlined.Security,
-                            label = "Security Guard",
-                            value = "Strict Multi-Tenant Database Scoped Isolation"
+                            icon = Icons.Outlined.AdminPanelSettings,
+                            label = "Privileges",
+                            value = "Full Platform Administration & Restaurant Provisioning"
                         )
                     } else {
                         InfoRow(
                             icon = Icons.Outlined.Storefront,
-                            label = "Restaurant Outlet",
-                            value = restaurantName.ifBlank { "Assigned Outlet" }
+                            label = "Restaurant Name",
+                            value = restaurantName.ifBlank { "Main Restaurant Branch" }
                         )
                         if (restaurantAddress.isNotBlank()) {
                             InfoRow(
                                 icon = Icons.Outlined.LocationOn,
-                                label = "Location",
+                                label = "Outlet Address",
                                 value = restaurantAddress
                             )
                         }
@@ -249,156 +320,93 @@ fun ProfileScreen(
                                 value = restaurantPhone
                             )
                         }
+                        Text(
+                            text = "💡 Branch details & locations can only be modified by Super Administrator.",
+                            fontSize = 11.sp,
+                            color = TextMuted,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
                     }
                 }
             }
 
-            // 3. Server & Network Connection Card
-            Card(
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+            // 3. Manager Exclusive Tools: Staff Management (Cashier creation & reset) & CSV Exports
+            if (role == "manager") {
+                Card(
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "🌐 Connected Server",
+                            text = "👔 Restaurant Manager Tools",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark
                         )
-                        TextButton(
-                            onClick = { showServerConfigDialog = true },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text("Switch Server", fontSize = 12.sp, color = BrandOrange, fontWeight = FontWeight.Bold)
-                        }
-                    }
 
-                    Surface(
-                        color = BrandBackground,
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(1.dp, BrandBorder)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDone,
-                                contentDescription = null,
-                                tint = StatusSuccess,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "Main Production Server",
-                                    fontSize = 11.sp,
-                                    color = TextMuted,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = currentBaseUrl,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = BrandDark
-                                )
-                            }
-                        }
+                        // 1. Staff Management (Cashier creation & password reset with double confirmation)
+                        ProfileNavOption(
+                            icon = Icons.Outlined.People,
+                            title = "Staff Management (Cashiers)",
+                            subtitle = "Create & reset passwords for cashier staff (double confirmation)",
+                            onClick = { showStaffManagementDialog = true }
+                        )
+
+                        // 2. CSV Exports (Sales data downloads)
+                        ProfileNavOption(
+                            icon = Icons.Outlined.FileDownload,
+                            title = "Export Sales Reports (CSV)",
+                            subtitle = "Download Excel/CSV reports for today, monthly or custom range",
+                            onClick = { showExportDialog = true }
+                        )
                     }
                 }
             }
 
-            // 4. Role-Specific Action Shortcuts
-            Card(
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+
+
+            // 5. System Shortcuts (For Superadmin only)
+            if (role == "superadmin") {
+                Card(
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "⚡ Quick Shortcuts",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandDark
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = "⚡ System Shortcuts",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandDark
+                        )
 
-                    when (role) {
-                        "superadmin" -> {
-                            ProfileNavOption(
-                                icon = Icons.Outlined.Assessment,
-                                title = "Financial Reports & Analytics",
-                                subtitle = "View daily, monthly & benchmark sales",
-                                onClick = onNavigateToReports
-                            )
-                            ProfileNavOption(
-                                icon = Icons.Outlined.Language,
-                                title = "Open Web Super Admin Portal",
-                                subtitle = "Manage restaurants, multi-tenancy & users",
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("${currentBaseUrl}admin/dashboard"))
-                                    context.startActivity(intent)
-                                }
-                            )
-                        }
-                        "manager" -> {
-                            ProfileNavOption(
-                                icon = Icons.Outlined.Assessment,
-                                title = "Financial Reports & Analytics",
-                                subtitle = "View daily, monthly, and yearly sales",
-                                onClick = onNavigateToReports
-                            )
-                            ProfileNavOption(
-                                icon = Icons.Outlined.Receipt,
-                                title = "Order History & Logs",
-                                subtitle = "Search, filter & review orders",
-                                onClick = onNavigateToOrders
-                            )
-                            ProfileNavOption(
-                                icon = Icons.Outlined.RestaurantMenu,
-                                title = "Manage Menu & Pricing",
-                                subtitle = "Add dishes, portions & weight items",
-                                onClick = onNavigateToItems
-                            )
-                        }
-                        "cashier" -> {
-                            ProfileNavOption(
-                                icon = Icons.Outlined.ShoppingCart,
-                                title = "POS Touch Billing Screen",
-                                subtitle = "Take new order & print receipts",
-                                onClick = onNavigateToBilling
-                            )
-                            ProfileNavOption(
-                                icon = Icons.Outlined.Summarize,
-                                title = "Today's Shift Summary",
-                                subtitle = "Cash sales & total collected today",
-                                onClick = onNavigateToSummary
-                            )
-                        }
+                        ProfileNavOption(
+                            icon = Icons.Outlined.Language,
+                            title = "Open Web Super Admin Portal",
+                            subtitle = "Manage restaurants, multi-tenancy & database",
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("${currentBaseUrl}admin/dashboard"))
+                                context.startActivity(intent)
+                            }
+                        )
                     }
                 }
             }
 
-            // 5. Legal & App Information
+            // 6. Legal & App Information
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -442,7 +450,7 @@ fun ProfileScreen(
                 }
             }
 
-            // 6. Sign Out Button
+            // 7. Sign Out Button
             Button(
                 onClick = { showLogoutDialog = true },
                 colors = ButtonDefaults.buttonColors(containerColor = StatusError.copy(alpha = 0.1f)),
@@ -471,16 +479,27 @@ fun ProfileScreen(
         }
     }
 
+    // Manager Staff Management Dialog
+    if (showStaffManagementDialog) {
+        ManagerStaffDialog(
+            onDismiss = { showStaffManagementDialog = false }
+        )
+    }
+
+    // Manager CSV Export Dialog
+    if (showExportDialog) {
+        ManagerExportDialog(
+            baseUrl = currentBaseUrl,
+            onDismiss = { showExportDialog = false }
+        )
+    }
+
     // Logout Confirmation Dialog
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = {
-                Text(text = "Sign Out", fontWeight = FontWeight.Bold)
-            },
-            text = {
-                Text("Are you sure you want to sign out of your account on this device?")
-            },
+            title = { Text(text = "Sign Out", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to sign out of your account on this device?") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -501,28 +520,253 @@ fun ProfileScreen(
         )
     }
 
-    // Server Config Dialog
-    if (showServerConfigDialog) {
-        var tempUrl by remember { mutableStateOf(currentBaseUrl) }
+}
+
+/**
+ * Manager Staff Dialog (View cashiers, Add cashier & Edit/Reset Cashier with double password confirmation)
+ */
+@Composable
+private fun ManagerStaffDialog(
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val managerRepository = DinePosApp.instance.managerRepository
+    val scope = rememberCoroutineScope()
+
+    var staffList by remember { mutableStateOf<List<AdminUserDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var showAddCashierDialog by remember { mutableStateOf(false) }
+    var editingCashier by remember { mutableStateOf<AdminUserDto?>(null) }
+
+    fun loadStaff() {
+        scope.launch {
+            isLoading = true
+            when (val res = managerRepository.getManagerStaff()) {
+                is Resource.Success -> {
+                    staffList = res.data
+                    isLoading = false
+                }
+                is Resource.Error -> {
+                    isLoading = false
+                    Toast.makeText(context, res.message, Toast.LENGTH_SHORT).show()
+                }
+                else -> {
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        loadStaff()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Staff Management", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Cashier accounts for this outlet", fontSize = 11.sp, color = TextSecondary)
+                }
+                IconButton(onClick = { showAddCashierDialog = true }) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = "Add Cashier", tint = BrandOrange)
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+            ) {
+                Button(
+                    onClick = { showAddCashierDialog = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("+ Add Cashier Staff", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (isLoading) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BrandOrange)
+                    }
+                } else if (staffList.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        Text(text = "No Cashier Staff registered yet.\nTap '+ Add Cashier Staff' above.", fontSize = 12.sp, color = TextSecondary, textAlign = TextAlign.Center)
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(staffList, key = { it.id }) { staff ->
+                            val isCashier = staff.role == "cashier"
+                            val isActive = staff.status == "active"
+
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, BrandBorder),
+                                color = BrandBackground,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isCashier) Color(0xFF10B981).copy(alpha = 0.15f) else BrandOrange.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = if (isCashier) "🛒" else "👔", fontSize = 16.sp)
+                                    }
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = staff.username,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = BrandDark
+                                        )
+                                        Text(
+                                            text = if (isCashier) "Cashier Operator" else "Manager (You)",
+                                            fontSize = 11.sp,
+                                            color = if (isCashier) Color(0xFF10B981) else BrandDark
+                                        )
+                                    }
+
+                                    if (isCashier) {
+                                        IconButton(
+                                            onClick = { editingCashier = staff },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(Icons.Default.Edit, contentDescription = "Edit / Reset Password", tint = BrandDark, modifier = Modifier.size(16.dp))
+                                        }
+
+                                        TextButton(
+                                            onClick = {
+                                                scope.launch {
+                                                    when (val toggleRes = managerRepository.toggleManagerStaff(staff.id)) {
+                                                        is Resource.Success -> {
+                                                            Toast.makeText(context, "Status updated!", Toast.LENGTH_SHORT).show()
+                                                            loadStaff()
+                                                        }
+                                                        is Resource.Error -> {
+                                                            Toast.makeText(context, toggleRes.message, Toast.LENGTH_SHORT).show()
+                                                        }
+                                                        else -> {}
+                                                    }
+                                                }
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = if (isActive) "🟢 Active" else "🔴 Inactive",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isActive) StatusSuccess else StatusError
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+
+    // Add Cashier Dialog with DOUBLE PASSWORD CONFIRMATION
+    if (showAddCashierDialog) {
+        var cashierUsername by remember { mutableStateOf("") }
+        var cashierPassword by remember { mutableStateOf("") }
+        var confirmPassword by remember { mutableStateOf("") }
+        var isSubmitting by remember { mutableStateOf(false) }
+
+        val passwordsMatch = cashierPassword.isNotEmpty() && cashierPassword == confirmPassword
+        val hasMinLength = cashierPassword.length >= 8
 
         AlertDialog(
-            onDismissRequest = { showServerConfigDialog = false },
+            onDismissRequest = { showAddCashierDialog = false },
             title = {
-                Text(text = "Server Configuration", fontWeight = FontWeight.Bold)
+                Column {
+                    Text("Add Cashier Staff", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Managers can create Cashier accounts only", fontSize = 11.sp, color = TextSecondary)
+                }
             },
             text = {
-                Column {
-                    Text(
-                        text = "Enter DinePOS Backend Server URL:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Double confirmation alert notice
+                    Surface(
+                        color = Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFFBFDBFE))
+                    ) {
+                        Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "🛡️", fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Double confirmation required: verify password before saving.",
+                                fontSize = 11.sp,
+                                color = Color(0xFF1E40AF),
+                                lineHeight = 14.sp
+                            )
+                        }
+                    }
+
                     OutlinedTextField(
-                        value = tempUrl,
-                        onValueChange = { tempUrl = it },
+                        value = cashierUsername,
+                        onValueChange = { cashierUsername = it.lowercase().trim() },
+                        label = { Text("Cashier Username (3-10 chars) *") },
                         singleLine = true,
-                        label = { Text("Base URL") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = cashierPassword,
+                        onValueChange = { cashierPassword = it },
+                        label = { Text("Password (min 8 chars) *") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirm Password *") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = confirmPassword.isNotEmpty() && !passwordsMatch,
+                        supportingText = {
+                            if (confirmPassword.isNotEmpty()) {
+                                if (passwordsMatch) {
+                                    Text("🟢 Passwords match perfectly", color = StatusSuccess, fontSize = 11.sp)
+                                } else {
+                                    Text("❌ Passwords do not match", color = StatusError, fontSize = 11.sp)
+                                }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -530,26 +774,341 @@ fun ProfileScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (tempUrl.isNotBlank()) {
-                            sessionManager.setBaseUrl(tempUrl)
-                            DinePosApp.instance.initRepositories()
-                            currentBaseUrl = sessionManager.getBaseUrl()
-                            showServerConfigDialog = false
-                            Toast.makeText(context, "Server URL updated!", Toast.LENGTH_SHORT).show()
+                        if (cashierUsername.isNotBlank() && passwordsMatch && hasMinLength) {
+                            scope.launch {
+                                isSubmitting = true
+                                when (val res = managerRepository.createCashierStaff(cashierUsername, cashierPassword, confirmPassword)) {
+                                    is Resource.Success -> {
+                                        isSubmitting = false
+                                        showAddCashierDialog = false
+                                        Toast.makeText(context, "Cashier '${res.data.username}' created successfully!", Toast.LENGTH_SHORT).show()
+                                        loadStaff()
+                                    }
+                                    is Resource.Error -> {
+                                        isSubmitting = false
+                                        Toast.makeText(context, res.message, Toast.LENGTH_LONG).show()
+                                    }
+                                    else -> {
+                                        isSubmitting = false
+                                    }
+                                }
+                            }
                         }
                     },
+                    enabled = cashierUsername.isNotBlank() && passwordsMatch && hasMinLength && !isSubmitting,
                     colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
                 ) {
-                    Text("Save & Reconnect")
+                    if (isSubmitting) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                    } else {
+                        Text("Create Cashier")
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showServerConfigDialog = false }) {
+                TextButton(onClick = { showAddCashierDialog = false }) {
                     Text("Cancel")
                 }
             }
         )
     }
+
+    // Edit Cashier & Reset Password Dialog (Manager only)
+    if (editingCashier != null) {
+        val cashier = editingCashier!!
+        var usernameVal by remember { mutableStateOf(cashier.username) }
+        var newPass by remember { mutableStateOf("") }
+        var confirmNewPass by remember { mutableStateOf("") }
+        var isSubmitting by remember { mutableStateOf(false) }
+
+        val passwordsMatch = newPass.isEmpty() || (newPass == confirmNewPass && newPass.length >= 8)
+
+        AlertDialog(
+            onDismissRequest = { editingCashier = null },
+            title = {
+                Column {
+                    Text("Edit Cashier / Reset Password", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Cashier: ${cashier.username}", fontSize = 11.sp, color = TextSecondary)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Surface(
+                        color = Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFFBFDBFE))
+                    ) {
+                        Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "🛡️", fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Only Restaurant Manager can modify cashier credentials.",
+                                fontSize = 11.sp,
+                                color = Color(0xFF1E40AF),
+                                lineHeight = 14.sp
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = usernameVal,
+                        onValueChange = { usernameVal = it.lowercase().trim() },
+                        label = { Text("Username *") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text(text = "Reset Password (leave blank to keep existing):", fontSize = 11.5.sp, color = TextMuted)
+
+                    OutlinedTextField(
+                        value = newPass,
+                        onValueChange = { newPass = it },
+                        label = { Text("New Password (min 8 chars)") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (newPass.isNotEmpty()) {
+                        OutlinedTextField(
+                            value = confirmNewPass,
+                            onValueChange = { confirmNewPass = it },
+                            label = { Text("Confirm New Password *") },
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            isError = newPass != confirmNewPass,
+                            supportingText = {
+                                if (confirmNewPass.isNotEmpty()) {
+                                    if (newPass == confirmNewPass) Text("🟢 Passwords match", color = StatusSuccess, fontSize = 11.sp)
+                                    else Text("❌ Passwords do not match", color = StatusError, fontSize = 11.sp)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (usernameVal.isNotBlank() && passwordsMatch) {
+                            scope.launch {
+                                isSubmitting = true
+                                when (val res = managerRepository.updateManagerStaff(cashier.id, usernameVal, newPass, confirmNewPass)) {
+                                    is Resource.Success -> {
+                                        isSubmitting = false
+                                        editingCashier = null
+                                        Toast.makeText(context, "Cashier staff updated successfully!", Toast.LENGTH_SHORT).show()
+                                        loadStaff()
+                                    }
+                                    is Resource.Error -> {
+                                        isSubmitting = false
+                                        Toast.makeText(context, res.message, Toast.LENGTH_LONG).show()
+                                    }
+                                    else -> {
+                                        isSubmitting = false
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    enabled = usernameVal.isNotBlank() && passwordsMatch && !isSubmitting,
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                ) {
+                    if (isSubmitting) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                    } else {
+                        Text("Save Cashier")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingCashier = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+/**
+ * Manager CSV Export Dialog (Exports daily, monthly, and custom range sales to CSV)
+ */
+@Composable
+private fun ManagerExportDialog(
+    baseUrl: String,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val managerRepository = DinePosApp.instance.managerRepository
+    val scope = rememberCoroutineScope()
+
+    val todayDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
+    val currentMonth = remember { SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date()) }
+
+    var exportType by remember { mutableStateOf("daily") } // "daily", "monthly", "custom"
+    var selectedDate by remember { mutableStateOf(todayDate) }
+    var selectedMonth by remember { mutableStateOf(currentMonth) }
+    var isExporting by remember { mutableStateOf(false) }
+
+    fun triggerExport(shareDirectly: Boolean = true) {
+        scope.launch {
+            isExporting = true
+            when (val res = managerRepository.getExportData(
+                type = exportType,
+                date = if (exportType == "daily") selectedDate else null,
+                month = if (exportType == "monthly") selectedMonth else null
+            )) {
+                is Resource.Success -> {
+                    isExporting = false
+                    val data = res.data
+
+                    if (shareDirectly && data.orders.isNotEmpty()) {
+                        // Generate CSV Content string
+                        val csvBuilder = StringBuilder()
+                        csvBuilder.append("RESTAURANT SALES EXPORT REPORT\n")
+                        csvBuilder.append("Restaurant Name,${data.restaurantName}\n")
+                        csvBuilder.append("Export Range,${data.startDate} to ${data.endDate}\n")
+                        csvBuilder.append("Total Orders,${data.stats?.totalOrders ?: data.orders.size}\n")
+                        csvBuilder.append("Total Revenue (INR),${data.stats?.totalSales ?: 0.0}\n")
+                        csvBuilder.append("Cash Sales (INR),${data.stats?.cashSales ?: 0.0}\n")
+                        csvBuilder.append("Online Sales (INR),${data.stats?.onlineSales ?: 0.0}\n\n")
+
+                        csvBuilder.append("Order #,Date,Time,Customer Name,Phone,Subtotal,Total,Payment Method,Status,Billed By\n")
+                        for (order in data.orders) {
+                            csvBuilder.append("${order.orderNumber},${order.orderDate},${order.orderTime},${order.customerName ?: "Walk-in"},${order.customerPhone ?: ""},${order.subtotal},${order.total},${order.paymentMethod},${order.status},${order.createdByUsername}\n")
+                        }
+
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, csvBuilder.toString())
+                            putExtra(Intent.EXTRA_SUBJECT, "${data.restaurantName} Sales Export (${data.startDate})")
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, "Export Sales Report")
+                        context.startActivity(shareIntent)
+                    } else {
+                        // Open direct web download link in browser
+                        val downloadFullUrl = if (data.downloadUrl.startsWith("http")) data.downloadUrl else "${baseUrl}${data.downloadUrl.removePrefix("/")}"
+                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadFullUrl))
+                        context.startActivity(browserIntent)
+                    }
+                }
+                is Resource.Error -> {
+                    isExporting = false
+                    Toast.makeText(context, res.message, Toast.LENGTH_LONG).show()
+                }
+                else -> {
+                    isExporting = false
+                }
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text("Export Sales Data (CSV)", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Download detailed order spreadsheets for Excel", fontSize = 11.sp, color = TextSecondary)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Info description banner
+                Surface(
+                    color = BrandOrange.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, BrandOrange.copy(alpha = 0.25f))
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text(
+                            text = "📊 What is CSV Export?",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandOrange
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Exports full transaction logs, itemized order rows, revenue sums, and cashier billing logs into an Excel-ready spreadsheet.",
+                            fontSize = 11.sp,
+                            color = TextSecondary,
+                            lineHeight = 14.sp
+                        )
+                    }
+                }
+
+                // Range Selector Buttons
+                Text(text = "Choose Export Period:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { exportType = "daily" },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (exportType == "daily") BrandOrange.copy(alpha = 0.15f) else Color.Transparent
+                        ),
+                        border = BorderStroke(1.dp, if (exportType == "daily") BrandOrange else BrandBorder),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("📅 Today", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = { exportType = "monthly" },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (exportType == "monthly") BrandOrange.copy(alpha = 0.15f) else Color.Transparent
+                        ),
+                        border = BorderStroke(1.dp, if (exportType == "monthly") BrandOrange else BrandBorder),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("📆 This Month", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                if (exportType == "daily") {
+                    OutlinedTextField(
+                        value = selectedDate,
+                        onValueChange = { selectedDate = it },
+                        label = { Text("Date (YYYY-MM-DD)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else if (exportType == "monthly") {
+                    OutlinedTextField(
+                        value = selectedMonth,
+                        onValueChange = { selectedMonth = it },
+                        label = { Text("Month (YYYY-MM)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { triggerExport(shareDirectly = true) },
+                enabled = !isExporting,
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+            ) {
+                if (isExporting) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                } else {
+                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Export & Share CSV")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

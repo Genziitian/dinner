@@ -1,87 +1,87 @@
 <?php
 /**
  * Manager CSV Export View Template
- * Restaurant Billing & Order Management System
+ * Matches Android Native App UI 1:1 (Dynamic Data)
  */
 declare(strict_types=1);
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h4 class="fw-bold m-0">CSV Data Exports</h4>
-        <small class="text-muted">Export detailed order logs with financial summaries to CSV/Excel</small>
+<div class="app-container">
+    <!-- Top App Bar Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <a href="<?= url('manager/dashboard') ?>" class="top-bar-back-btn" title="Back to Dashboard">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <h4 class="top-bar-title m-0">CSV Data Exports</h4>
+        </div>
+        <div class="top-bar-actions">
+            <a href="<?= url('manager/reports') ?>" class="top-bar-icon-btn" title="Reports">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </a>
+        </div>
     </div>
-    <a href="<?= url('manager/reports') ?>" class="btn btn-outline-secondary btn-sm">← View Reports</a>
-</div>
 
-<div class="row g-4 justify-content-center">
-    <!-- Option 1: Daily Export -->
-    <div class="col-12 col-md-6 col-lg-4">
-        <div class="card shadow-sm border-0 h-100" style="border-radius: 1rem;">
-            <div class="card-header bg-white py-3">
-                <h5 class="fw-bold m-0 text-dark">Daily Export</h5>
-            </div>
-            <div class="card-body p-3">
-                <p class="text-muted small">Download all orders and payment breakdown for a single selected date.</p>
+    <div class="row g-3 justify-content-center">
+        <!-- Option 1: Daily Export -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 18px; background: #ffffff; border: 1px solid #e2e8f0 !important;">
+                <div class="fw-bold fs-6 text-dark mb-1 d-flex align-items-center gap-2">
+                    <span>📅</span> Daily Export
+                </div>
+                <p class="text-secondary small mb-3">Download all orders and payment breakdown for a single selected date.</p>
                 <form action="<?= url('manager/exports/download') ?>" method="GET">
                     <input type="hidden" name="type" value="daily">
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Select Date</label>
-                        <input type="date" name="date" class="form-control" value="<?= e($todayDate) ?>" required>
+                        <label class="form-label small fw-bold text-secondary">Select Date</label>
+                        <input type="date" name="date" class="form-control" value="<?= e($todayDate) ?>" required style="border-radius: 12px;">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold" style="min-height: 44px;">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <button type="submit" class="btn w-100 py-2.5 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px;">
                         Download Daily CSV
                     </button>
                 </form>
             </div>
         </div>
-    </div>
 
-    <!-- Option 2: Monthly Export -->
-    <div class="col-12 col-md-6 col-lg-4">
-        <div class="card shadow-sm border-0 h-100" style="border-radius: 1rem;">
-            <div class="card-header bg-white py-3">
-                <h5 class="fw-bold m-0 text-dark">Monthly Export</h5>
-            </div>
-            <div class="card-body p-3">
-                <p class="text-muted small">Download complete monthly sales reports with item-level snapshots.</p>
+        <!-- Option 2: Monthly Export -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 18px; background: #ffffff; border: 1px solid #e2e8f0 !important;">
+                <div class="fw-bold fs-6 text-dark mb-1 d-flex align-items-center gap-2">
+                    <span>📊</span> Monthly Export
+                </div>
+                <p class="text-secondary small mb-3">Download complete monthly sales reports with item-level snapshots.</p>
                 <form action="<?= url('manager/exports/download') ?>" method="GET">
                     <input type="hidden" name="type" value="monthly">
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Select Month</label>
-                        <input type="month" name="month" class="form-control" value="<?= e($currentMonth) ?>" required>
+                        <label class="form-label small fw-bold text-secondary">Select Month</label>
+                        <input type="month" name="month" class="form-control" value="<?= e($currentMonth) ?>" required style="border-radius: 12px;">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold" style="min-height: 44px;">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <button type="submit" class="btn w-100 py-2.5 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px;">
                         Download Monthly CSV
                     </button>
                 </form>
             </div>
         </div>
-    </div>
 
-    <!-- Option 3: Custom Date Range -->
-    <div class="col-12 col-md-6 col-lg-4">
-        <div class="card shadow-sm border-0 h-100" style="border-radius: 1rem;">
-            <div class="card-header bg-white py-3">
-                <h5 class="fw-bold m-0 text-dark">Custom Range Export</h5>
-            </div>
-            <div class="card-body p-3">
-                <p class="text-muted small">Select any custom date range to export customized order data.</p>
+        <!-- Option 3: Custom Date Range -->
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card shadow-sm border-0 h-100 p-3" style="border-radius: 18px; background: #ffffff; border: 1px solid #e2e8f0 !important;">
+                <div class="fw-bold fs-6 text-dark mb-1 d-flex align-items-center gap-2">
+                    <span>🗓️</span> Custom Range Export
+                </div>
+                <p class="text-secondary small mb-3">Select any custom date range to export customized order data.</p>
                 <form action="<?= url('manager/exports/download') ?>" method="GET">
                     <input type="hidden" name="type" value="custom">
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Start Date</label>
-                        <input type="date" name="start_date" class="form-control" value="<?= e($todayDate) ?>" required>
+                        <label class="form-label small fw-bold text-secondary">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" value="<?= e($todayDate) ?>" required style="border-radius: 12px;">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">End Date</label>
-                        <input type="date" name="end_date" class="form-control" value="<?= e($todayDate) ?>" required>
+                        <label class="form-label small fw-bold text-secondary">End Date</label>
+                        <input type="date" name="end_date" class="form-control" value="<?= e($todayDate) ?>" required style="border-radius: 12px;">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Download Range CSV
+                    <button type="submit" class="btn w-100 py-2.5 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px;">
+                        Download Custom CSV
                     </button>
                 </form>
             </div>

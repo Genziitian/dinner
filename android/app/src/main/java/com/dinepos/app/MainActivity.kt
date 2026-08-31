@@ -69,6 +69,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onTakeOrderClick = {
                                     navController.navigate(Screen.CashierBilling.route)
+                                },
+                                onScannerClick = {
+                                    navController.navigate(Screen.QrScanner.route)
                                 }
                             )
                         }

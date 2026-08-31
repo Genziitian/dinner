@@ -81,6 +81,9 @@ interface DinePosApiService {
     @POST("api/v1/admin/users")
     suspend fun createAdminUser(@Body request: com.dinepos.app.data.dto.CreateAdminUserRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
 
+    @POST("api/v1/admin/users/{id}")
+    suspend fun updateAdminUser(@Path("id") id: Int, @Body request: com.dinepos.app.data.dto.CreateAdminUserRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
+
     @POST("api/v1/admin/users/{id}/toggle")
     suspend fun toggleAdminUser(@Path("id") id: Int): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
 
@@ -89,6 +92,9 @@ interface DinePosApiService {
 
     @POST("api/v1/manager/staff")
     suspend fun createManagerStaff(@Body request: com.dinepos.app.data.dto.CreateCashierRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
+
+    @POST("api/v1/manager/staff/{id}")
+    suspend fun updateManagerStaff(@Path("id") id: Int, @Body request: com.dinepos.app.data.dto.CreateCashierRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
 
     @POST("api/v1/manager/staff/{id}/toggle")
     suspend fun toggleManagerStaff(@Path("id") id: Int): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>

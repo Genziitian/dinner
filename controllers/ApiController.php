@@ -838,4 +838,128 @@ class ApiController {
             'download_url' => url("exports/download?type={$exportType}&start_date={$startDate}&end_date={$endDate}&date={$startDate}&month=" . substr($startDate, 0, 7)),
         ]);
     }
+
+    /**
+     * POST /api/v1/admin/users/{id}
+     * Super Admin edits any user (Manager or Cashier), changes role, restaurant assignment, or resets password.
+     */
+    public function updateAdminUser(int $id): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized. Super Admin only.', 403);
+        }
+
+        $targetUser = User::findById($id);
+        if (!$targetUser) {
+            $this->jsonError('User not found.', 404);
+        }
+
+        $input = $this->getJsonInput();
+        $username = strtolower(trim((string)($input['username'] ?? $targetUser['username'])));
+        $role = (string)($input['role'] ?? $targetUser['role']);
+        $restaurantId = !empty($input['restaurant_id']) ? (int)$input['restaurant_id'] : ($targetUser['restaurant_id'] ? (int)$targetUser['restaurant_id'] : null);
+        $status = (string)($input['status'] ?? $targetUser['status']);
+        $password = (string)($input['password'] ?? '');
+
+        if ($role !== User::ROLE_SUPERADMIN && empty($restaurantId)) {
+            $this->jsonError('Restaurant is required for manager and cashier roles.', 422);
+        }
+
+        try {
+            $updateData = [
+                'role' => $role,
+                'status' => $status,
+            ];
+            if (!empty($password)) {
+                $updateData['password'] = $password;
+            }
+
+            // Update user record
+            User::update($id, $updateData);
+
+            // Update username and restaurant_id if changed
+            Database::execute(
+                "UPDATE users SET username = :username, restaurant_id = :restaurant_id WHERE id = :id",
+                [
+                    ':username' => $username,
+                    ':restaurant_id' => $restaurantId,
+                    ':id' => $id,
+                ]
+            );
+
+            AuditLog::log(AuditLog::ACTION_USER_UPDATE, 'user', $id, $restaurantId, $user['id'], [
+                'username' => $username,
+                'role' => $role,
+                'status' => $status,
+                'updated_by' => 'superadmin'
+            ]);
+
+            $updated = User::findById($id);
+            $this->jsonSuccess($updated, "User updated successfully.");
+        } catch (Throwable $e) {
+            $this->jsonError('Failed to update user: ' . $e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * POST /api/v1/manager/staff/{id}
+     * Manager updates Cashier staff (change username or reset cashier password with double confirmation).
+     */
+    public function updateManagerStaff(int $id): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_MANAGER && $user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized. Manager only.', 403);
+        }
+
+        $restaurantId = (int)$user['restaurant_id'];
+        $targetUser = User::findById($id);
+
+        if (!$targetUser || (int)$targetUser['restaurant_id'] !== $restaurantId) {
+            $this->jsonError('Staff user not found in your restaurant.', 404);
+        }
+
+        if ($targetUser['role'] !== User::ROLE_CASHIER) {
+            $this->jsonError('Managers can only modify Cashier accounts.', 403);
+        }
+
+        $input = $this->getJsonInput();
+        $username = strtolower(trim((string)($input['username'] ?? $targetUser['username'])));
+        $password = (string)($input['password'] ?? '');
+        $confirmPassword = (string)($input['confirm_password'] ?? '');
+        $status = (string)($input['status'] ?? $targetUser['status']);
+
+        if (!empty($password)) {
+            if ($password !== $confirmPassword) {
+                $this->jsonError('Password confirmation does not match.', 422);
+            }
+            if (strlen($password) < 8) {
+                $this->jsonError('Password must be at least 8 characters.', 422);
+            }
+        }
+
+        try {
+            $updateData = ['status' => $status];
+            if (!empty($password)) {
+                $updateData['password'] = $password;
+            }
+            User::update($id, $updateData);
+
+            Database::execute(
+                "UPDATE users SET username = :username WHERE id = :id",
+                [':username' => $username, ':id' => $id]
+            );
+
+            AuditLog::log(AuditLog::ACTION_USER_UPDATE, 'user', $id, $restaurantId, $user['id'], [
+                'username' => $username,
+                'status' => $status,
+                'password_reset' => !empty($password),
+                'updated_by_manager' => $user['username']
+            ]);
+
+            $updated = User::findById($id);
+            $this->jsonSuccess($updated, "Cashier staff updated successfully.");
+        } catch (Throwable $e) {
+            $this->jsonError('Failed to update cashier: ' . $e->getMessage(), 400);
+        }
+    }
 }

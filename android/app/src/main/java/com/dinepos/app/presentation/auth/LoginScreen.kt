@@ -292,62 +292,8 @@ fun LoginScreen(
                                 }
                         }
                     )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    TextButton(
-                        onClick = { viewModel.setShowServerConfig(true) }
-                    ) {
-                        Text(
-                            text = "Server: ${uiState.baseUrl}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMuted
-                        )
-                    }
                 }
             }
         }
-    }
-
-    // Server URL Config Dialog
-    if (uiState.showServerConfigDialog) {
-        var tempUrl by remember { mutableStateOf(uiState.baseUrl) }
-
-        AlertDialog(
-            onDismissRequest = { viewModel.setShowServerConfig(false) },
-            title = {
-                Text(text = "Server Configuration", fontWeight = FontWeight.Bold)
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "Enter DinePOS Backend URL (e.g. https://dinner.genziitian.in/ or custom IP):",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = tempUrl,
-                        onValueChange = { tempUrl = it },
-                        singleLine = true,
-                        label = { Text("Base URL") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { viewModel.saveBaseUrl(tempUrl) },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
-                ) {
-                    Text("Save & Connect")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.setShowServerConfig(false) }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }

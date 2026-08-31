@@ -13,9 +13,11 @@ interface ManagerRepository {
     suspend fun updateRestaurant(id: Int, name: String, phone: String?, address: String?, timezone: String = "Asia/Kolkata", status: String = "active"): Resource<com.dinepos.app.data.dto.AdminRestaurantDto>
     suspend fun toggleRestaurant(id: Int): Resource<com.dinepos.app.data.dto.AdminRestaurantDto>
     suspend fun createAdminUser(username: String, password: String, role: String, restaurantId: Int?): Resource<com.dinepos.app.data.dto.AdminUserDto>
+    suspend fun updateAdminUser(id: Int, username: String, password: String, role: String, restaurantId: Int?, status: String): Resource<com.dinepos.app.data.dto.AdminUserDto>
     suspend fun toggleAdminUser(id: Int): Resource<com.dinepos.app.data.dto.AdminUserDto>
     suspend fun getManagerStaff(): Resource<List<com.dinepos.app.data.dto.AdminUserDto>>
     suspend fun createCashierStaff(username: String, password: String, confirmPassword: String): Resource<com.dinepos.app.data.dto.AdminUserDto>
+    suspend fun updateManagerStaff(id: Int, username: String, password: String, confirmPassword: String): Resource<com.dinepos.app.data.dto.AdminUserDto>
     suspend fun toggleManagerStaff(id: Int): Resource<com.dinepos.app.data.dto.AdminUserDto>
     suspend fun getExportData(type: String, date: String? = null, month: String? = null, startDate: String? = null, endDate: String? = null): Resource<com.dinepos.app.data.dto.ExportDataResponseDto>
 }

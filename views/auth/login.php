@@ -1,6 +1,6 @@
 <?php
 /**
- * Modern Minimalist Login View Template
+ * Modern Android Native Login View Template
  * Restaurant Billing & Order Management System
  */
 declare(strict_types=1);
@@ -10,15 +10,15 @@ declare(strict_types=1);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#f8fafc">
     <link rel="manifest" href="<?= url('manifest.json') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
-    <title>Sign In · GI ORDER</title>
+    <title>Sign In · GI ORDER POS</title>
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
     <style>
         body {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            background-color: #f8fafc;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -28,112 +28,92 @@ declare(strict_types=1);
             margin: 0;
             padding: 1.25rem;
         }
-        .login-card {
+        .login-card-android {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 1.25rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             width: 100%;
-            max-width: 400px;
-            padding: 2.25rem;
-            transition: transform 0.2s ease;
+            max-width: 420px;
+            padding: 2.25rem 2rem;
         }
-        .app-logo-badge {
-            width: 52px;
-            height: 52px;
-            background: #0f172a;
+        .app-circle-logo {
+            width: 68px;
+            height: 68px;
+            background: #ea580c;
             color: #ffffff;
-            border-radius: 14px;
+            border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-            margin-bottom: 1rem;
+            box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+            margin-bottom: 1.25rem;
         }
-        .form-control-custom {
+        .input-group-android {
+            position: relative;
+            margin-bottom: 1.15rem;
+        }
+        .input-group-android .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+        }
+        .form-control-android {
             width: 100%;
-            padding: 0.75rem 1rem;
+            padding: 0.85rem 1rem 0.85rem 2.75rem;
             font-size: 0.95rem;
             font-family: inherit;
             color: #0f172a;
             background-color: #ffffff;
             border: 1.5px solid #e2e8f0;
-            border-radius: 0.75rem;
-            transition: all 0.15s ease-in-out;
+            border-radius: 14px;
             outline: none;
-            box-sizing: border-box;
+            transition: all 0.15s ease-in-out;
         }
-        .form-control-custom:focus {
-            border-color: #0f172a;
-            box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
-            background-color: #ffffff;
+        .form-control-android:focus {
+            border-color: #ea580c;
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
         }
-        .btn-submit {
+        .btn-signin-android {
             width: 100%;
-            padding: 0.8rem;
+            padding: 0.9rem;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             color: #ffffff;
-            background-color: #0f172a;
+            background-color: #ea580c;
             border: none;
-            border-radius: 0.75rem;
+            border-radius: 14px;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35);
             transition: all 0.15s ease;
+            height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
         }
-        .btn-submit:hover {
-            background-color: #1e293b;
+        .btn-signin-android:hover {
+            background-color: #c2410c;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+            box-shadow: 0 6px 16px rgba(234, 88, 12, 0.45);
         }
-        .btn-submit:active {
+        .btn-signin-android:active {
             transform: scale(0.98);
-        }
-        /* Flash alert styles */
-        .alert {
-            display: flex;
-            padding: 0.85rem 1rem;
-            border-radius: 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-            border: none;
-        }
-        .alert-danger {
-            background-color: #fef2f2;
-            color: #991b1b;
-            border-left: 4px solid #ef4444;
-        }
-        .alert-warning {
-            background-color: #fffbeb;
-            color: #92400e;
-            border-left: 4px solid #f59e0b;
-        }
-        .alert-success {
-            background-color: #f0fdf4;
-            color: #166534;
-            border-left: 4px solid #22c55e;
-        }
-        .alert-info {
-            background-color: #eff6ff;
-            color: #1e40af;
-            border-left: 4px solid #3b82f6;
         }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <!-- Brand Header -->
-    <div class="text-center mb-4">
-        <div class="app-logo-badge">
-            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+<div class="login-card-android">
+    <!-- Brand Logo Circle -->
+    <div class="text-center">
+        <div class="app-circle-logo">
+            <svg width="34" height="34" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
         </div>
-        <h3 class="fw-bold m-0" style="letter-spacing: -0.5px;">GI ORDER</h3>
-        <p class="text-muted" style="font-size: 0.875rem; margin-top: 0.25rem;">Restaurant Billing & Order Management</p>
+        <h3 class="fw-bold m-0" style="letter-spacing: -0.5px; color: #0f172a; font-size: 1.5rem;">GI ORDER POS</h3>
+        <p class="text-secondary" style="font-size: 0.85rem; margin-top: 0.25rem; margin-bottom: 1.5rem;">Restaurant Billing & Order Management</p>
     </div>
 
     <?php require ROOT_PATH . '/views/layouts/flash.php'; ?>
@@ -141,46 +121,44 @@ declare(strict_types=1);
     <form action="<?= url('login') ?>" method="POST" autocomplete="off">
         <?= csrf_field() ?>
 
-        <div class="mb-3">
-            <label for="username" class="form-label" style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; display: block;">Username / User ID</label>
+        <div class="input-group-android">
+            <svg class="input-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             <input 
                 type="text" 
-                class="form-control-custom" 
+                class="form-control-android" 
                 id="username" 
                 name="username" 
                 maxlength="10" 
                 pattern="[a-zA-Z0-9_]{3,10}"
-                placeholder="Enter username" 
+                placeholder="Username" 
                 required 
                 autofocus
             >
-            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">3 to 10 alphanumeric characters</div>
         </div>
 
-        <div class="mb-4">
-            <label for="password" class="form-label" style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.4rem; display: block;">Password</label>
+        <div class="input-group-android">
+            <svg class="input-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             <input 
                 type="password" 
-                class="form-control-custom" 
+                class="form-control-android" 
                 id="password" 
                 name="password" 
                 minlength="8" 
                 maxlength="72"
-                placeholder="Enter password" 
+                placeholder="Password" 
                 required
             >
         </div>
 
-        <button type="submit" class="btn-submit">
-            <span>Sign In</span>
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        <button type="submit" class="btn-signin-android mt-2">
+            Sign In
         </button>
 
-        <p class="text-center text-muted" style="font-size: 0.78rem; margin-top: 1.25rem; margin-bottom: 0; line-height: 1.5;">
+        <p class="text-center text-secondary" style="font-size: 0.76rem; margin-top: 1.5rem; margin-bottom: 0; line-height: 1.5;">
             By continuing, you agree to our 
-            <a href="<?= url('privacy-policy') ?>" target="_blank" rel="noopener noreferrer" style="color: #0f172a; font-weight: 600; text-decoration: underline;">Privacy Policy</a> 
+            <a href="<?= url('privacy-policy') ?>" target="_blank" rel="noopener noreferrer" style="color: #0f172a; font-weight: 700; text-decoration: underline;">Privacy Policy</a> 
             and 
-            <a href="<?= url('terms-and-conditions') ?>" target="_blank" rel="noopener noreferrer" style="color: #0f172a; font-weight: 600; text-decoration: underline;">Terms and Conditions</a>.
+            <a href="<?= url('terms-and-conditions') ?>" target="_blank" rel="noopener noreferrer" style="color: #0f172a; font-weight: 700; text-decoration: underline;">Terms and Conditions</a>.
         </p>
     </form>
 </div>

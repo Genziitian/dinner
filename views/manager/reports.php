@@ -1,182 +1,100 @@
 <?php
 /**
- * Modern Vibrant Manager Financial & Sales Reports View Template
- * Restaurant Billing & Order Management System
+ * Financial Reports View Template
+ * Matches Android Native App UI 1:1 (Dynamic Data)
  */
 declare(strict_types=1);
+$currentPeriod = $currentPeriod ?? 'today';
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <div>
-        <h4 class="fw-bold m-0" style="color: #0f172a; letter-spacing: -0.5px;">Financial & Sales Reports</h4>
-        <small class="text-muted">Server-side aggregated revenue and payment method breakdown</small>
-    </div>
-    <a href="<?= url('manager/exports') ?>" class="btn btn-outline-secondary btn-sm">Export to CSV</a>
-</div>
-
-<!-- Report Period Tabs / Filters -->
-<div class="card shadow-sm border-0 mb-4" style="border-radius: 1.15rem;">
-    <div class="card-body p-3">
-        <form method="GET" action="<?= url('manager/reports') ?>" class="row g-2 align-items-end">
-            <div class="col-12 col-md-4">
-                <label class="form-label small fw-semibold">Reporting Period</label>
-                <select name="period" class="form-select form-select-sm" onchange="toggleCustomDates(this.value); if(this.value!=='custom') this.form.submit();">
-                    <option value="today" <?= $currentPeriod === 'today' ? 'selected' : '' ?>>Today</option>
-                    <option value="yesterday" <?= $currentPeriod === 'yesterday' ? 'selected' : '' ?>>Yesterday</option>
-                    <option value="7days" <?= $currentPeriod === '7days' ? 'selected' : '' ?>>Last 7 Days</option>
-                    <option value="this_month" <?= $currentPeriod === 'this_month' ? 'selected' : '' ?>>This Month</option>
-                    <option value="last_month" <?= $currentPeriod === 'last_month' ? 'selected' : '' ?>>Last Month</option>
-                    <option value="3months" <?= $currentPeriod === '3months' ? 'selected' : '' ?>>Last 3 Months</option>
-                    <option value="6months" <?= $currentPeriod === '6months' ? 'selected' : '' ?>>Last 6 Months</option>
-                    <option value="year" <?= $currentPeriod === 'year' ? 'selected' : '' ?>>This Year</option>
-                    <option value="custom" <?= $currentPeriod === 'custom' ? 'selected' : '' ?>>Custom Date Range</option>
-                </select>
-            </div>
-
-            <div class="col-6 col-md-3" id="customStartWrap" style="<?= $currentPeriod !== 'custom' ? 'display: none;' : '' ?>">
-                <label class="form-label small">Start Date</label>
-                <input type="date" name="start_date" class="form-control form-control-sm" value="<?= e($customStart ?? '') ?>">
-            </div>
-            <div class="col-6 col-md-3" id="customEndWrap" style="<?= $currentPeriod !== 'custom' ? 'display: none;' : '' ?>">
-                <label class="form-label small">End Date</label>
-                <input type="date" name="end_date" class="form-control form-control-sm" value="<?= e($customEnd ?? '') ?>">
-            </div>
-
-            <div class="col-12 col-md-2">
-                <button type="submit" class="btn btn-save-order btn-sm w-100">Update Report</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Active Period 3 Balanced Metrics -->
-<div class="row g-3 mb-4">
-    <div class="col-12 col-md-4">
-        <div class="card metric-card-primary h-100">
-            <div class="card-body p-3 p-md-4">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-white-50 text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.8px;">TOTAL REVENUE</div>
-                        <div class="metric-value text-white my-1"><?= format_currency($stats['total_sales']) ?></div>
-                    </div>
-                    <span style="font-size: 1.8rem;">💰</span>
-                </div>
-                <small class="text-white-50"><?= (int)$stats['total_orders'] ?> orders in selected period</small>
-            </div>
+<div class="app-container">
+    <!-- Top App Bar Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <a href="<?= url('manager/dashboard') ?>" class="top-bar-back-btn" title="Back to Dashboard">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <h4 class="top-bar-title m-0">Financial Reports</h4>
+        </div>
+        <div class="top-bar-actions">
+            <a href="<?= url('manager/exports') ?>" class="top-bar-icon-btn" title="CSV Exports">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </a>
+            <a href="<?= url('manager/reports') ?>" class="top-bar-icon-btn" title="Refresh">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </a>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-md-4">
-        <div class="card metric-card-cash h-100">
-            <div class="card-body p-3 p-md-4">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-success text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.8px;">CASH SALES</div>
-                        <div class="metric-value text-success my-1"><?= format_currency($stats['cash_sales']) ?></div>
-                    </div>
-                    <span style="font-size: 1.8rem;">💵</span>
-                </div>
-                <small class="text-muted"><?= $stats['total_sales'] > 0 ? round(($stats['cash_sales'] / $stats['total_sales']) * 100, 1) : 0 ?>% of total revenue</small>
-            </div>
+    <!-- Period Filter Chips -->
+    <?php
+    $periods = [
+        'today' => 'Today',
+        'yesterday' => 'Yesterday',
+        '7days' => 'Last 7 Days',
+        'this_month' => 'This Month',
+        'last_month' => 'Last Month',
+        '6months' => '6 Months',
+        'year' => 'Yearly'
+    ];
+    ?>
+    <div class="filter-chips-scroll mb-3">
+        <?php foreach ($periods as $key => $label): ?>
+            <a 
+                href="<?= url('manager/reports?period=' . $key) ?>" 
+                class="filter-chip-btn <?= $currentPeriod === $key ? 'active' : '' ?>"
+            >
+                <?= e($label) ?>
+            </a>
+        <?php endforeach; ?>
+    </div>
+
+    <!-- 1. Dark Revenue Summary Card -->
+    <div class="dark-revenue-card">
+        <div class="card-heading">TOTAL SALES (<?= strtoupper(e($currentPeriod)) ?>)</div>
+        <div class="revenue-amount"><?= format_currency($stats['total_sales'] ?? 0.0) ?></div>
+        <div class="small text-white-50 mb-2">
+            <span style="color: var(--brand-amber); font-weight: 700;"><?= (int)($stats['total_orders'] ?? 0) ?> orders</span> completed in this period
+        </div>
+        <div class="revenue-breakdown">
+            <span class="cash-text">Cash: <?= format_currency($stats['cash_sales'] ?? 0.0) ?></span>
+            <span class="upi-text">UPI: <?= format_currency($stats['online_sales'] ?? 0.0) ?></span>
         </div>
     </div>
 
-    <div class="col-12 col-sm-6 col-md-4">
-        <div class="card metric-card-upi h-100">
-            <div class="card-body p-3 p-md-4">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="text-warning text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.8px;">ONLINE / UPI SALES</div>
-                        <div class="metric-value text-warning my-1"><?= format_currency($stats['online_sales']) ?></div>
-                    </div>
-                    <span style="font-size: 1.8rem;">📱</span>
-                </div>
-                <small class="text-muted"><?= $stats['total_sales'] > 0 ? round(($stats['online_sales'] / $stats['total_sales']) * 100, 1) : 0 ?>% of total revenue</small>
-            </div>
-        </div>
+    <!-- 2. Periodic Overview Comparison Cards -->
+    <div class="section-header">
+        <h6 class="section-title">PERIODIC OVERVIEW</h6>
     </div>
-</div>
 
-<!-- Comparison Summary Table & Mobile Cards -->
-<div class="card shadow-sm border-0 mb-4" style="border-radius: 1.15rem; overflow: hidden;">
-    <div class="card-header bg-white py-3 border-bottom">
-        <h5 class="fw-bold m-0" style="color: #0f172a;">Periodic Comparison Overview</h5>
-    </div>
-    <div class="card-body p-0">
-        <!-- Desktop Table (>= 768px) -->
-        <div class="table-responsive d-none d-md-block">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="py-3 px-3">TIMEFRAME</th>
-                        <th class="py-3 text-center">TOTAL ORDERS</th>
-                        <th class="py-3 text-end">CASH</th>
-                        <th class="py-3 text-end">ONLINE / UPI</th>
-                        <th class="py-3 text-end px-3">TOTAL REVENUE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    $periodsList = [
-                        ['label' => 'Today', 'key' => 'today'],
-                        ['label' => 'Yesterday', 'key' => 'yesterday'],
-                        ['label' => 'This Month', 'key' => 'this_month'],
-                        ['label' => 'Last Month', 'key' => 'last_month'],
-                        ['label' => 'Past 6 Months', 'key' => 'six_months'],
-                        ['label' => 'This Year', 'key' => 'year'],
-                    ];
-                    foreach ($periodsList as $p):
-                        $row = $summary[$p['key']] ?? ['total_orders' => 0, 'cash_sales' => 0, 'online_sales' => 0, 'total_sales' => 0];
-                    ?>
-                    <tr>
-                        <td class="px-3"><strong><?= $p['label'] ?></strong></td>
-                        <td class="text-center"><span class="badge bg-light text-dark border"><?= $row['total_orders'] ?></span></td>
-                        <td class="text-end text-success fw-semibold"><?= format_currency($row['cash_sales']) ?></td>
-                        <td class="text-end text-warning fw-semibold"><?= format_currency($row['online_sales']) ?></td>
-                        <td class="text-end px-3 fw-bold fs-6" style="color: #0f172a;"><?= format_currency($row['total_sales']) ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Mobile Comparison Cards (< 768px, 100% Mobile Optimized) -->
-        <div class="d-md-none p-3">
-            <?php foreach ($periodsList as $p): 
-                $row = $summary[$p['key']] ?? ['total_orders' => 0, 'cash_sales' => 0, 'online_sales' => 0, 'total_sales' => 0];
-            ?>
-                <div class="mobile-card-row">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="orders-list-wrap">
+        <?php 
+        $periodsList = [
+            ['label' => 'Today', 'key' => 'today'],
+            ['label' => 'Yesterday', 'key' => 'yesterday'],
+            ['label' => 'This Month', 'key' => 'this_month'],
+            ['label' => 'Last Month', 'key' => 'last_month'],
+            ['label' => 'Past 6 Months', 'key' => 'six_months'],
+            ['label' => 'This Year', 'key' => 'year'],
+        ];
+        foreach ($periodsList as $p):
+            $row = $summary[$p['key']] ?? ['total_orders' => 0, 'cash_sales' => 0, 'online_sales' => 0, 'total_sales' => 0];
+        ?>
+            <div class="order-card-android">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="d-flex align-items-center gap-2">
                         <span class="fw-bold text-dark fs-6"><?= $p['label'] ?></span>
                         <span class="badge bg-light text-dark border"><?= (int)$row['total_orders'] ?> Orders</span>
                     </div>
-                    <div class="fs-4 fw-bold mb-2" style="color: #0f172a;"><?= format_currency($row['total_sales']) ?></div>
-                    <div class="d-flex justify-content-between pt-2 border-top small" style="border-color: #f1f5f9 !important;">
-                        <div>
-                            <span class="text-muted">Cash:</span>
-                            <strong class="text-success"><?= format_currency($row['cash_sales']) ?></strong>
-                        </div>
-                        <div>
-                            <span class="text-muted">Online/UPI:</span>
-                            <strong class="text-warning"><?= format_currency($row['online_sales']) ?></strong>
-                        </div>
+                    <div class="fw-bold fs-5" style="color: #0f172a;">
+                        <?= format_currency((float)$row['total_sales']) ?>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        </div>
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top small" style="border-color: #f1f5f9 !important;">
+                    <span class="text-success fw-bold">💵 Cash: <?= format_currency((float)$row['cash_sales']) ?></span>
+                    <span class="text-warning fw-bold">📱 UPI: <?= format_currency((float)$row['online_sales']) ?></span>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
-
-<script>
-function toggleCustomDates(val) {
-    const s = document.getElementById('customStartWrap');
-    const e = document.getElementById('customEndWrap');
-    if (val === 'custom') {
-        s.style.display = 'block';
-        e.style.display = 'block';
-    } else {
-        s.style.display = 'none';
-        e.style.display = 'none';
-    }
-}
-</script>

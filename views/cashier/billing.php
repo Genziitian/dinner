@@ -1,141 +1,209 @@
 <?php
 /**
- * Modern Vibrant Cashier Billing Screen View Template
- * Restaurant Billing & Order Management System
+ * POS Billing / Menu Catalog View Template
+ * Matches Android Native App UI 1:1 (Dynamic Data)
  */
 declare(strict_types=1);
+$currentUser = current_user();
+$isManager = $currentUser && $currentUser['role'] === User::ROLE_MANAGER;
+$backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
 ?>
 
-<div class="row g-3">
-    <!-- Left Column: Menu Items Catalog (Responsive split on Tablet & Desktop) -->
-    <div class="col-12 col-md-7 col-lg-8">
-        <!-- Top Action Bar -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="app-container" style="padding-bottom: calc(var(--bottom-nav-height) + 4.5rem);">
+    <!-- Top App Bar Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <a href="<?= $backUrl ?>" class="top-bar-back-btn" title="Back">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
             <div>
-                <h4 class="fw-bold m-0" style="letter-spacing: -0.5px; color: #0f172a;">Menu Catalog</h4>
-                <small class="text-muted"><?= e($restaurant['name']) ?> · <?= count($items) ?> items available</small>
+                <div class="brand-pill-tag mb-1">
+                    <span class="dot"></span>
+                    <span>GI ORDER POS</span>
+                </div>
+                <h4 class="top-bar-title"><?= e($restaurant['name']) ?></h4>
+                <div class="top-bar-subtitle" id="itemCountSub"><?= count($items) ?> items available</div>
             </div>
-            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 bg-dark text-white rounded-pill shadow-sm" style="font-size: 0.88rem; font-weight: 700; border: 1.5px solid #334155;">
-                <span style="color: #f59e0b;">●</span>
+        </div>
+
+        <div class="top-bar-actions">
+            <a href="<?= url('manager/orders') ?>" class="top-bar-icon-btn" title="Today's Orders & History">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </a>
+            <button type="button" class="top-bar-icon-btn orange" onclick="openQrLookupModal()" title="Scan Receipt QR">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+            </button>
+            <div class="next-order-pill">
+                <span class="amber-dot"></span>
                 <span>Order #<?= (int)$previewOrderNumber ?></span>
             </div>
-        </div>
-
-        <!-- Search Bar with Embedded Icon -->
-        <div style="position: relative; margin-bottom: 0.85rem;">
-            <svg style="position: absolute; left: 14px; top: 12px; color: #94a3b8; pointer-events: none;" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input type="text" id="itemSearch" class="form-control" style="padding-left: 2.6rem; border-radius: 0.75rem; border: 1.5px solid #e2e8f0; font-size: 0.95rem;" placeholder="Search menu item (e.g. Curry, Egg, Rice)..." oninput="searchItems(this.value)">
-        </div>
-
-        <!-- Category / Type Filters -->
-        <div class="category-filter">
-            <button type="button" class="active" onclick="filterItems('all', this)">
-                <span>🍽️</span> All Items
-            </button>
-            <button type="button" onclick="filterItems('portion', this)">
-                <span>🍗</span> Portion Meals
-            </button>
-            <button type="button" onclick="filterItems('piece', this)">
-                <span>🥚</span> Per Piece
-            </button>
-            <button type="button" onclick="filterItems('weight', this)">
-                <span>🌾</span> By Weight / Volume
-            </button>
-        </div>
-
-        <!-- Items Grid -->
-        <div class="item-grid" id="itemsGrid">
-            <?php if (empty($items)): ?>
-                <div class="col-12 text-center py-5 text-muted">
-                    <p>No active items found in the menu.</p>
-                </div>
-            <?php else: ?>
-                <?php foreach ($items as $item): ?>
-                    <?php
-                        $badgeClass = match($item['item_type']) {
-                            'portion' => 'badge-portion',
-                            'piece' => 'badge-piece',
-                            'weight' => 'badge-weight',
-                            default => 'badge-piece'
-                        };
-                        $emoji = match($item['item_type']) {
-                            'portion' => '🍗',
-                            'piece' => '🥚',
-                            'weight' => ($item['base_unit'] === 'l' || $item['base_unit'] === 'ml') ? '🥤' : '🌾',
-                            default => '🍴'
-                        };
-                    ?>
-                    <div 
-                        class="item-card" 
-                        data-type="<?= e($item['item_type']) ?>" 
-                        data-name="<?= e(strtolower($item['name'])) ?>"
-                        data-item='<?= json_encode($item, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>'
-                    >
-                        <div>
-                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                <span style="font-size: 1.35rem;"><?= $emoji ?></span>
-                                <span class="<?= $badgeClass ?>"><?= e($item['item_type']) ?></span>
-                            </div>
-                            <div class="item-name"><?= e($item['name']) ?></div>
-                        </div>
-                        <div class="item-meta">
-                            <div class="item-price" style="color: #0f172a;"><?= e($item['display_price']) ?></div>
-                            <span class="d-inline-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 26px; height: 26px; border-radius: 50%; background: #ea580c; color: #ffffff; font-size: 0.95rem;">+</span>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <a href="<?= url('cashier/order') ?>" class="top-bar-icon-btn" title="Refresh Menu">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </a>
         </div>
     </div>
 
-    <!-- Right Column: Current Order / Cart Panel (Side-by-side on Tablets & Desktop) -->
-    <div class="col-12 col-md-5 col-lg-4 d-none d-md-block" id="cartSection">
-        <div class="cart-panel sticky-top" style="top: 75px;">
-            <div class="cart-header">
-                <div>
-                    <h5 class="fw-bold m-0" style="color: #0f172a;">Current Order</h5>
-                    <small class="text-muted">Order #<?= (int)$previewOrderNumber ?></small>
-                </div>
-                <span class="badge bg-dark rounded-pill px-3 py-1 fs-6" id="cartCountBadge">0</span>
-            </div>
+    <!-- Search Input Bar -->
+    <div class="search-input-wrap">
+        <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input 
+            type="text" 
+            id="itemSearch" 
+            class="search-input-custom" 
+            placeholder="Search menu item (e.g. Curry, Egg, Rice)..." 
+            oninput="searchItems(this.value)"
+        >
+    </div>
 
-            <!-- Optional Customer Details -->
-            <div class="p-3 bg-light border-bottom">
-                <div class="row g-2">
-                    <div class="col-6">
-                        <input type="text" id="customerName" class="form-control form-control-sm" placeholder="Customer (Optional)">
+    <!-- Category Filter Chips Row -->
+    <div class="filter-chips-scroll">
+        <button type="button" class="filter-chip-btn active" onclick="filterItems('all', this)">
+            <span>🍽️</span> All Items
+        </button>
+        <button type="button" class="filter-chip-btn" onclick="filterItems('portion', this)">
+            <span>🍗</span> Portion Meals
+        </button>
+        <button type="button" class="filter-chip-btn" onclick="filterItems('piece', this)">
+            <span>🥚</span> Per Piece
+        </button>
+        <button type="button" class="filter-chip-btn" onclick="filterItems('weight', this)">
+            <span>🌾</span> By Weight
+        </button>
+    </div>
+
+    <!-- Menu Items 2-Column Grid -->
+    <div class="pos-items-grid" id="itemsGrid">
+        <?php if (empty($items)): ?>
+            <div class="card border-0 p-5 text-center my-3 w-100" style="grid-column: 1 / -1; border-radius: 16px; background: #ffffff; border: 1px solid #e2e8f0 !important;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍽️</div>
+                <div class="fw-bold text-dark fs-6">No menu items found</div>
+                <div class="text-secondary small">Add items from the Menu catalog to start billing.</div>
+            </div>
+        <?php else: ?>
+            <?php foreach ($items as $item): ?>
+                <?php
+                    $itemType = $item['item_type'] ?? 'piece';
+                    $typeClass = match($itemType) {
+                        'portion' => 'portion',
+                        'piece' => 'piece',
+                        'weight' => 'weight',
+                        default => 'piece'
+                    };
+                    $emoji = match($itemType) {
+                        'portion' => '🍗',
+                        'piece' => '🥚',
+                        'weight' => ($item['base_unit'] === 'l' || $item['base_unit'] === 'ml') ? '🥤' : '🌾',
+                        default => '🍴'
+                    };
+                ?>
+                <div 
+                    class="pos-item-card item-card" 
+                    data-type="<?= e($item['item_type']) ?>" 
+                    data-name="<?= e(strtolower($item['name'])) ?>"
+                    data-item='<?= json_encode($item, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>'
+                >
+                    <div class="pos-item-top-row">
+                        <span class="pos-item-emoji"><?= $emoji ?></span>
+                        <span class="pos-item-type-pill <?= $typeClass ?>"><?= strtoupper(e($item['item_type'])) ?></span>
                     </div>
-                    <div class="col-6">
-                        <input type="tel" id="customerPhone" class="form-control form-control-sm" placeholder="Phone (Optional)">
+                    <div class="pos-item-name"><?= e($item['name']) ?></div>
+                    <div class="pos-item-bottom-row">
+                        <div class="pos-item-price"><?= e($item['display_price']) ?></div>
+                        <button type="button" class="pos-item-add-btn" aria-label="Add item">+</button>
                     </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Floating Bottom Cart Bar (Screenshot 3) -->
+<div class="pos-floating-cart-bar">
+    <div class="pos-cart-bar-surface">
+        <div class="pos-cart-bar-info" onclick="DineBilling.openMobileCart()" style="cursor: pointer;">
+            <span class="pos-cart-bar-icon">🛒</span>
+            <div>
+                <div class="pos-cart-bar-total">Total: <span id="cartTotalText">₹0.00</span></div>
+                <div class="pos-cart-bar-sub" id="cartItemsSub">Cart is empty</div>
+            </div>
+        </div>
+        <button type="button" class="pos-cart-view-btn disabled" id="viewCartActionBtn" onclick="DineBilling.openMobileCart()" disabled>
+            View Cart
+        </button>
+    </div>
+</div>
+
+<!-- Portion & Variant Selection Modal -->
+<div class="modal fade" id="variantModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-android">
+            <div class="modal-header modal-header-android">
+                <h5 class="modal-title modal-title-android" id="variantModalTitle">Select Option</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3" id="variantModalBody">
+                <!-- Dynamically generated by billing.js -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile & Desktop Slide-up Cart Modal / Checkout Drawer -->
+<div class="modal fade" id="mobileCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content modal-content-android">
+            <div class="modal-header modal-header-android">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.3rem;">🛒</span>
+                    <h5 class="modal-title modal-title-android m-0">Current Order Cart</h5>
+                    <span class="order-number-pill">Order #<?= (int)$previewOrderNumber ?></span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-0 d-flex flex-column" style="max-height: 65vh; overflow-y: auto;">
+                <!-- Optional Customer Details -->
+                <div class="p-3 bg-light border-bottom">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="text" id="customerNameMobile" class="form-control form-control-sm py-2" placeholder="Customer (Optional)" style="border-radius: 10px;">
+                        </div>
+                        <div class="col-6">
+                            <input type="tel" id="customerPhoneMobile" class="form-control form-control-sm py-2" placeholder="Phone (Optional)" style="border-radius: 10px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Items List Container -->
+                <div class="p-3 flex-grow-1" id="mobileCartList" style="min-height: 120px;">
+                    <!-- Dynamically populated by billing.js -->
                 </div>
             </div>
 
-            <!-- Cart Items List -->
-            <div class="cart-items-list" id="cartItemsList">
-                <!-- Dynamically populated by billing.js -->
-            </div>
-
-            <!-- Cart Footer & Checkout -->
+            <!-- Cart Drawer Footer -->
             <div class="p-3 border-top bg-white">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-muted fw-bold" style="font-size: 0.85rem;">TOTAL AMOUNT:</span>
-                    <span class="fs-4 fw-bold" style="color: #0f172a;" id="cartTotal">₹0.00</span>
+                    <span class="text-secondary fw-bold" style="font-size: 0.88rem;">TOTAL AMOUNT:</span>
+                    <span class="fs-4 fw-bold" style="color: #0f172a;" id="mobileCartTotalModal">₹0.00</span>
                 </div>
 
-                <!-- Payment Method Selector (Cash vs Online/UPI) -->
-                <label class="form-label text-muted small fw-bold" style="letter-spacing: 0.5px;">SELECT PAYMENT METHOD</label>
-                <div class="payment-methods-grid" style="grid-template-columns: repeat(2, 1fr);">
-                    <button type="button" class="payment-btn active" data-payment="Cash" style="padding: 0.75rem 0.5rem; font-size: 0.95rem;">💵 Cash</button>
-                    <button type="button" class="payment-btn" data-payment="Online / UPI" style="padding: 0.75rem 0.5rem; font-size: 0.95rem;">📱 Online / UPI</button>
+                <!-- Payment Method Toggle Buttons (Cash vs UPI) -->
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn flex-fill py-2 fw-bold text-center border payment-method-choice active" data-method="Cash" style="border-radius: 10px; background: #0f172a; color: #ffffff;" onclick="setPaymentMethod('Cash', this)">
+                        💵 Cash
+                    </button>
+                    <button type="button" class="btn flex-fill py-2 fw-bold text-center border payment-method-choice" data-method="Online / UPI" style="border-radius: 10px; background: #ffffff; color: #0f172a;" onclick="setPaymentMethod('Online / UPI', this)">
+                        📱 Online / UPI
+                    </button>
                 </div>
 
-                <!-- Action Buttons -->
+                <!-- Checkout Actions -->
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-light" id="clearCartBtn" title="Clear Cart" style="border-radius: 0.75rem;">Clear</button>
-                    <button type="button" class="btn btn-save-order flex-grow-1" id="saveOrderBtn" disabled>
-                        <span>Save & Bill Order</span>
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <button type="button" class="btn btn-light py-2 px-3 fw-bold" style="border-radius: 12px; border: 1px solid #e2e8f0;" onclick="DineBilling.clearCart()">
+                        Clear
+                    </button>
+                    <button type="button" class="btn flex-grow-1 py-2 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px; font-size: 1rem;" id="saveOrderBtnMobile" onclick="DineBilling.saveOrder()" disabled>
+                        Save & Bill Order ➔
                     </button>
                 </div>
             </div>
@@ -143,124 +211,85 @@ declare(strict_types=1);
     </div>
 </div>
 
-<!-- Floating Mobile Cart Banner (App style) -->
-<div id="mobileCartBanner" class="fixed-bottom d-md-none bg-dark text-white p-3 shadow-lg" style="bottom: calc(var(--bottom-nav-height) - 1px); z-index: 1025; border-radius: 1rem 1rem 0 0; display: none; border-top: 2px solid var(--brand-orange);">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-            <span style="font-size: 1.25rem;">🛒</span>
-            <div>
-                <span class="fw-bold" id="mobileCartCount" style="font-size: 0.95rem;">0 Items</span>
-                <span class="text-white-50 mx-1">|</span>
-                <span class="fw-bold text-warning" id="mobileCartTotal" style="font-size: 1.05rem;">₹0.00</span>
-            </div>
-        </div>
-        <button type="button" class="btn btn-primary btn-sm px-3.5 py-2 fw-bold" style="border-radius: 0.6rem; font-size: 0.85rem;" onclick="DineBilling.openMobileCart()">
-            View Cart ➔
-        </button>
-    </div>
-</div>
-
-<!-- Mobile Bottom Cart Drawer Modal -->
-<div class="modal fade" id="mobileCartModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
-        <div class="modal-content shadow border-0" style="border-radius: 1.25rem;">
-            <div class="modal-header border-bottom py-3 px-3">
-                <h5 class="modal-title fw-bold" style="color: #0f172a;">🛒 Current Order (Cart)</h5>
+<!-- QR Lookup Modal -->
+<div class="modal fade" id="qrLookupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-android">
+            <div class="modal-header modal-header-android">
+                <h5 class="modal-title modal-title-android">🔍 Receipt QR Lookup</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
-            <div class="modal-body p-0 d-flex flex-column" style="max-height: 70vh; overflow-y: auto;">
-                <!-- Optional Customer Details -->
-                <div class="p-3 bg-light border-bottom">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <input type="text" id="customerNameMobile" class="form-control form-control-sm py-2" placeholder="Customer (Optional)" style="border-radius: 0.5rem;">
-                        </div>
-                        <div class="col-6">
-                            <input type="tel" id="customerPhoneMobile" class="form-control form-control-sm py-2" placeholder="Phone (Optional)" style="border-radius: 0.5rem;">
-                        </div>
-                    </div>
+            <div class="modal-body p-3">
+                <p class="text-secondary small mb-2">Scan QR with camera or enter the receipt token / order number below:</p>
+                <div class="mb-3">
+                    <input type="text" id="qrLookupInput" class="form-control" placeholder="Enter Token / Order #" style="border-radius: 12px;">
                 </div>
-                
-                <!-- Cart Items List (Mobile) -->
-                <div class="cart-items-list p-3" id="cartItemsListMobile">
-                    <!-- Dynamically populated by billing.js -->
-                </div>
-                
-                <!-- Checkout & Payment Method -->
-                <div class="p-3 border-top bg-white">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-muted fw-bold small" style="font-size: 0.8rem;">TOTAL AMOUNT:</span>
-                        <span class="fs-4 fw-bold" style="color: #0f172a;" id="cartTotalMobile">₹0.00</span>
-                    </div>
-                    
-                    <label class="form-label text-muted small fw-bold" style="letter-spacing: 0.5px; font-size: 0.75rem;">SELECT PAYMENT METHOD</label>
-                    <div class="payment-methods-grid" style="grid-template-columns: repeat(2, 1fr); gap: 0.5rem; display: grid;">
-                        <button type="button" class="payment-btn payment-btn-mobile active" data-payment="Cash" style="padding: 0.65rem 0.5rem; font-size: 0.9rem;" onclick="DineBilling.setMobilePayment('Cash', this)">💵 Cash</button>
-                        <button type="button" class="payment-btn payment-btn-mobile" data-payment="Online / UPI" style="padding: 0.65rem 0.5rem; font-size: 0.9rem;" onclick="DineBilling.setMobilePayment('Online / UPI', this)">📱 Online / UPI</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="modal-footer border-top p-3 bg-light d-flex gap-2">
-                <button type="button" class="btn btn-outline-secondary" style="border-radius: 0.6rem; font-size: 0.9rem; padding: 0.5rem 1rem;" onclick="DineBilling.clearMobileCart()">Clear</button>
-                <button type="button" class="btn btn-save-order flex-grow-1" id="saveOrderBtnMobile" style="border-radius: 0.6rem; font-size: 0.95rem; padding: 0.5rem;" onclick="DineBilling.saveMobileOrder()" disabled>
-                    <span>Save & Bill Order</span>
+                <button type="button" class="btn w-100 fw-bold text-white py-2" style="background: var(--brand-orange); border-radius: 12px;" onclick="lookupReceipt()">
+                    Lookup Receipt
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Reusable Variant / Quantity Selection Modal -->
-<div class="modal fade" id="variantModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow border-0" style="border-radius: 1.25rem;">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="variantModalTitle">Select Option</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="variantModalBody">
-                <!-- Injected dynamically by billing.js -->
-            </div>
-        </div>
-    </div>
-</div>
-
+<script src="<?= asset('js/billing.js') ?>"></script>
 <script>
 function filterItems(type, btn) {
-    document.querySelectorAll('.category-filter button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.filter-chip-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
-    const cards = document.querySelectorAll('.item-card');
+    const cards = document.querySelectorAll('.pos-item-card');
+    let visible = 0;
     cards.forEach(card => {
         if (type === 'all' || card.getAttribute('data-type') === type) {
             card.style.display = 'flex';
+            visible++;
         } else {
             card.style.display = 'none';
         }
     });
+    document.getElementById('itemCountSub').textContent = visible + ' items available';
 }
 
 function searchItems(query) {
-    query = query.toLowerCase().trim();
-    const cards = document.querySelectorAll('.item-card');
+    const q = query.toLowerCase().trim();
+    const cards = document.querySelectorAll('.pos-item-card');
+    let visible = 0;
     cards.forEach(card => {
         const name = card.getAttribute('data-name') || '';
-        if (!query || name.includes(query)) {
+        if (!q || name.includes(q)) {
             card.style.display = 'flex';
+            visible++;
         } else {
             card.style.display = 'none';
         }
     });
+    document.getElementById('itemCountSub').textContent = visible + ' items available';
 }
 
-function scrollToCart() {
-    const el = document.getElementById('cartSection');
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function setPaymentMethod(method, btn) {
+    document.querySelectorAll('.payment-method-choice').forEach(b => {
+        b.style.background = '#ffffff';
+        b.style.color = '#0f172a';
+    });
+    btn.style.background = '#0f172a';
+    btn.style.color = '#ffffff';
+    if (window.DineBilling) {
+        window.DineBilling.setPaymentMethod(method);
+    }
+}
+
+function openQrLookupModal() {
+    new bootstrap.Modal(document.getElementById('qrLookupModal')).show();
+}
+
+function lookupReceipt() {
+    const val = document.getElementById('qrLookupInput').value.trim();
+    if (!val) return;
+    if (val.length > 20) {
+        window.location.href = '<?= url('receipt/') ?>' + encodeURIComponent(val);
+    } else {
+        window.location.href = '<?= url('manager/orders?search=') ?>' + encodeURIComponent(val);
     }
 }
 </script>
-
-<script src="<?= asset('js/billing.js?v=' . filemtime(ROOT_PATH . '/public/assets/js/billing.js')) ?>"></script>
