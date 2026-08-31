@@ -156,6 +156,13 @@ try {
         exit;
     }
 
+    if ($path === '/delectac' || $path === '/delete-account' || $path === '/delect-account') {
+        startSecureSession();
+        sendSecurityHeaders();
+        require ROOT_PATH . '/views/legal/delete_account.php';
+        exit;
+    }
+
     // 3. Cashier Routes
     if ($path === '/cashier/order') {
         (new CashierController())->order();
