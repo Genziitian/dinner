@@ -24,10 +24,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("keystore/debug.jks")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+            storeFile = file("keystore/release.jks")
+            storePassword = "giorder_release_pass_2026"
+            keyAlias = "giorder"
+            keyPassword = "giorder_release_pass_2026"
         }
     }
 
