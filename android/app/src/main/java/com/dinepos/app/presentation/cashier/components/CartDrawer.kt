@@ -5,8 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -66,8 +68,10 @@ fun CartBottomSheet(
             isTabletPanel = false,
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
+                .imePadding()
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp)
+                .padding(bottom = 28.dp)
         )
     }
 }
@@ -138,7 +142,11 @@ private fun CartContent(
 ) {
     val subtotal = cartItems.sumOf { it.lineTotal }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.then(
+            if (!isTabletPanel) Modifier.verticalScroll(rememberScrollState()) else Modifier
+        )
+    ) {
         // Header: Title + Preview Order # + Clear Button
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -147,15 +155,17 @@ private fun CartContent(
         ) {
             Column {
                 Text(
-                    text = "Current Order",
-                    style = MaterialTheme.typography.titleLarge,
+                    text = "CURRENT ORDER",
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.ExtraBold,
-                    color = BrandDark
+                    color = TextSecondary,
+                    letterSpacing = 1.sp
                 )
                 Text(
                     text = "Order #$previewOrderNumber",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black,
+                    color = BrandDark
                 )
             }
 
@@ -198,7 +208,7 @@ private fun CartContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(if (isTabletPanel) Modifier.weight(1f) else Modifier.height(140.dp)),
+                    .then(if (isTabletPanel) Modifier.weight(1f) else Modifier.height(120.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -206,106 +216,47 @@ private fun CartContent(
                         imageVector = Icons.Default.ShoppingBag,
                         contentDescription = null,
                         tint = TextMuted,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(text = "Cart is empty", color = TextSecondary, fontWeight = FontWeight.SemiBold)
                     Text(text = "Tap menu items to add to this order", color = TextMuted, fontSize = 11.sp)
                 }
             }
-        } else {
+        } else if (isTabletPanel) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(if (isTabletPanel) Modifier.weight(1f) else Modifier.weight(1f, fill = false).heightIn(max = 240.dp)),
+                    .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 itemsIndexed(cartItems) { index, cartItem ->
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = BrandBackground,
-                        border = BorderStroke(1.dp, BrandBorder),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = cartItem.item.name,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BrandDark,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontSize = 13.sp
-                                )
-                                Text(
-                                    text = "${cartItem.variantName} · ${CurrencyFormatter.formatInr(cartItem.unitPrice)}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
-                                    fontSize = 11.sp
-                                )
-                            }
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                OutlinedIconButton(
-                                    onClick = { onUpdateQuantity(index, -1.0) },
-                                    modifier = Modifier.size(28.dp),
-                                    shape = CircleShape
-                                ) {
-                                    Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(14.dp))
-                                }
-
-                                Text(
-                                    text = CurrencyFormatter.formatQuantity(cartItem.quantity, cartItem.unit),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    color = BrandDark
-                                )
-
-                                OutlinedIconButton(
-                                    onClick = { onUpdateQuantity(index, 1.0) },
-                                    modifier = Modifier.size(28.dp),
-                                    shape = CircleShape
-                                ) {
-                                    Icon(Icons.Default.Add, contentDescription = "Increase", modifier = Modifier.size(14.dp))
-                                }
-
-                                Spacer(modifier = Modifier.width(4.dp))
-
-                                Text(
-                                    text = CurrencyFormatter.formatInr(cartItem.lineTotal),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 13.sp,
-                                    color = BrandDark
-                                )
-
-                                IconButton(
-                                    onClick = { onRemoveItem(index) },
-                                    modifier = Modifier.size(26.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.DeleteOutline,
-                                        contentDescription = "Remove",
-                                        tint = StatusError,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    CartItemRow(
+                        cartItem = cartItem,
+                        onDecrease = { onUpdateQuantity(index, -1.0) },
+                        onIncrease = { onUpdateQuantity(index, 1.0) },
+                        onRemove = { onRemoveItem(index) }
+                    )
+                }
+            }
+        } else {
+            // On mobile sheet, render items in standard Column inside the scrollable container
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                cartItems.forEachIndexed { index, cartItem ->
+                    CartItemRow(
+                        cartItem = cartItem,
+                        onDecrease = { onUpdateQuantity(index, -1.0) },
+                        onIncrease = { onUpdateQuantity(index, 1.0) },
+                        onRemove = { onRemoveItem(index) }
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Total Amount Row
         Row(
@@ -327,7 +278,7 @@ private fun CartContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Payment Method Selector
         Text(
@@ -336,7 +287,7 @@ private fun CartContent(
             fontWeight = FontWeight.Bold,
             color = TextSecondary
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -360,7 +311,7 @@ private fun CartContent(
                         .clickable { onPaymentMethodChange(method) }
                 ) {
                     Box(
-                        modifier = Modifier.padding(vertical = 10.dp),
+                        modifier = Modifier.padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -374,17 +325,17 @@ private fun CartContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Checkout Button
         Button(
             onClick = onSubmitOrder,
             enabled = cartItems.isNotEmpty() && !isSubmitting,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(52.dp)
         ) {
             if (isSubmitting) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.5.dp)
@@ -395,6 +346,95 @@ private fun CartContent(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CartItemRow(
+    cartItem: CartItem,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+    onRemove: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = BrandBackground,
+        border = BorderStroke(1.dp, BrandBorder),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = cartItem.item.name,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 13.sp
+                )
+                Text(
+                    text = "${cartItem.variantName} · ${CurrencyFormatter.formatInr(cartItem.unitPrice)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    fontSize = 11.sp
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                OutlinedIconButton(
+                    onClick = onDecrease,
+                    modifier = Modifier.size(28.dp),
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(14.dp))
+                }
+
+                Text(
+                    text = CurrencyFormatter.formatQuantity(cartItem.quantity, cartItem.unit),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = BrandDark
+                )
+
+                OutlinedIconButton(
+                    onClick = onIncrease,
+                    modifier = Modifier.size(28.dp),
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Increase", modifier = Modifier.size(14.dp))
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                Text(
+                    text = CurrencyFormatter.formatInr(cartItem.lineTotal),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 13.sp,
+                    color = BrandDark
+                )
+
+                IconButton(
+                    onClick = onRemove,
+                    modifier = Modifier.size(26.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteOutline,
+                        contentDescription = "Remove",
+                        tint = StatusError,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }

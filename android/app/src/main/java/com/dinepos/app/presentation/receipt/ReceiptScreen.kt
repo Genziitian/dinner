@@ -278,23 +278,23 @@ fun ReceiptScreen(
                                     )
                                 },
                                 shape = RoundedCornerShape(12.dp),
-                                border = BorderStroke(1.5.dp, BrandOrange),
+                                border = BorderStroke(1.5.dp, BrandDark),
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(50.dp)
                             ) {
-                                Text("📄 Download PDF", fontWeight = FontWeight.Bold, color = BrandOrange)
+                                Text("📄 Print / PDF", fontWeight = FontWeight.Bold, color = BrandDark)
                             }
 
                             Button(
                                 onClick = onNavigateBack,
-                                colors = ButtonDefaults.buttonColors(containerColor = BrandDark),
+                                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(50.dp)
                             ) {
-                                Text("Done", fontWeight = FontWeight.Bold)
+                                Text("✨ Next Order", fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                     }
