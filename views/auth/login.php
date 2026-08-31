@@ -13,7 +13,7 @@ declare(strict_types=1);
     <meta name="theme-color" content="#0f172a">
     <link rel="manifest" href="<?= url('manifest.json') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
-    <title>Sign In · DinePOS</title>
+    <title>Sign In · GI ORDER</title>
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
     <style>
@@ -132,7 +132,7 @@ declare(strict_types=1);
         <div class="app-logo-badge">
             <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
         </div>
-        <h3 class="fw-bold m-0" style="letter-spacing: -0.5px;">DinePOS</h3>
+        <h3 class="fw-bold m-0" style="letter-spacing: -0.5px;">GI ORDER</h3>
         <p class="text-muted" style="font-size: 0.875rem; margin-top: 0.25rem;">Restaurant Billing & Order Management</p>
     </div>
 
