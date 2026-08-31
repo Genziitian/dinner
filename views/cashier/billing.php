@@ -95,6 +95,8 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
                     data-type="<?= e($item['item_type']) ?>" 
                     data-name="<?= e(strtolower($item['name'])) ?>"
                     data-item='<?= json_encode($item, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>'
+                    onclick="DineBilling.handleCardClick(this)"
+                    style="cursor: pointer;"
                 >
                     <div class="pos-item-top-row">
                         <span class="pos-item-emoji"><?= $emoji ?></span>
@@ -205,7 +207,7 @@ $backUrl = $isManager ? url('manager/dashboard') : url('cashier/summary');
     </div>
 </div>
 
-<script src="<?= asset('js/billing.js') ?>"></script>
+<script src="<?= asset('js/billing.js?v=' . filemtime(ROOT_PATH . '/public/assets/js/billing.js')) ?>"></script>
 <script>
 function filterItems(type, btn) {
     document.querySelectorAll('.filter-chip-btn').forEach(b => b.classList.remove('active'));

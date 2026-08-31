@@ -23,9 +23,10 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
     <title><?= e($title ?? 'GI ORDER - Restaurant Billing') ?></title>
 
-    <!-- Stylesheets -->
+    <!-- Stylesheets & Core JS -->
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/app.css?v=' . filemtime(ROOT_PATH . '/public/assets/css/app.css')) ?>">
+    <script src="<?= asset('js/bootstrap.bundle.min.js') ?>"></script>
 </head>
 <body>
 

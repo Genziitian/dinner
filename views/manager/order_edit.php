@@ -11,10 +11,10 @@ declare(strict_types=1);
         <h4 class="fw-bold m-0">Edit Order #<?= (int)$order['order_number'] ?></h4>
         <small class="text-muted">Modify items, quantities, or customer details</small>
     </div>
-    <a href="<?= url('manager/orders/view?id=' . $order['id']) ?>" class="btn btn-outline-secondary btn-sm">Cancel</a>
+    <a href="<?= url('orders/view?id=' . $order['id']) ?>" class="btn btn-outline-secondary btn-sm">Cancel</a>
 </div>
 
-<form id="editOrderForm" method="POST" action="<?= url('manager/orders/edit') ?>">
+<form id="editOrderForm" method="POST" action="<?= url('orders/edit') ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="order_id" value="<?= (int)$order['id'] ?>">
 

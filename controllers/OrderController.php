@@ -123,14 +123,15 @@ class OrderController extends BaseController {
      * Manager Edit Order Screen
      */
     public function edit(): void {
-        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $restaurantId = $this->requireRestaurantId();
 
         $orderId = (int)($_GET['id'] ?? 0);
         $order = Order::findById($orderId, $restaurantId);
 
         if (!$order) {
-            $this->redirect('/manager/orders', 'danger', 'Order not found or inaccessible.');
+            $fallback = $user['role'] === User::ROLE_CASHIER ? '/cashier/order' : '/manager/orders';
+            $this->redirect($fallback, 'danger', 'Order not found or inaccessible.');
         }
 
         $items = Item::allByRestaurant($restaurantId, false);
@@ -143,10 +144,10 @@ class OrderController extends BaseController {
     }
 
     /**
-     * Manager Update Order Submission
+     * Manager & Cashier Update Order Submission
      */
     public function update(): void {
-        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $this->validateCsrf();
         $restaurantId = $this->requireRestaurantId();
 
@@ -179,7 +180,7 @@ class OrderController extends BaseController {
                 $this->json(['success' => true, 'message' => 'Order updated successfully.']);
             }
 
-            $this->redirect("/manager/orders/view?id={$orderId}", 'success', 'Order updated successfully.');
+            $this->redirect("/orders/view?id={$orderId}", 'success', 'Order updated successfully.');
         } catch (Throwable $e) {
             error_log('Order update error: ' . $e->getMessage());
             if ($this->isAjax()) {
@@ -190,10 +191,10 @@ class OrderController extends BaseController {
     }
 
     /**
-     * Manager Soft Delete Order
+     * Manager & Cashier Soft Delete Order
      */
     public function delete(): void {
-        $user = $this->requireRole([User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
+        $user = $this->requireRole([User::ROLE_CASHIER, User::ROLE_MANAGER, User::ROLE_SUPERADMIN]);
         $this->validateCsrf();
         $restaurantId = $this->requireRestaurantId();
 

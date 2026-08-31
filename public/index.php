@@ -200,7 +200,7 @@ try {
         exit;
     }
 
-    if ($path === '/manager/orders/edit') {
+    if ($path === '/manager/orders/edit' || $path === '/orders/edit') {
         $c = new OrderController();
         if ($method === 'POST') {
             $c->update();
@@ -210,7 +210,7 @@ try {
         exit;
     }
 
-    if ($path === '/manager/orders/delete') {
+    if ($path === '/manager/orders/delete' || $path === '/orders/delete') {
         (new OrderController())->delete();
         exit;
     }

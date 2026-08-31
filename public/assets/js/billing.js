@@ -9,116 +9,121 @@
   let cart = [];
   let selectedPayment = 'Cash';
   let currentActiveItem = null;
+  let modalSelectedQty = 1;
 
-  // Cache DOM elements
-  let cartTotalTextEl, cartItemsSubEl, viewCartActionBtnEl;
-  let mobileCartListEl, mobileCartTotalModalEl, saveOrderBtnMobileEl;
-  let customerNameMobileInput, customerPhoneMobileInput;
-  let variantModal, variantModalTitle, variantModalBody;
-  let mobileCartModal;
+  // Modals
+  let variantModal = null;
+  let mobileCartModal = null;
 
-  document.addEventListener('DOMContentLoaded', () => {
-    cartTotalTextEl = document.getElementById('cartTotalText');
-    cartItemsSubEl = document.getElementById('cartItemsSub');
-    viewCartActionBtnEl = document.getElementById('viewCartActionBtn');
-    
-    mobileCartListEl = document.getElementById('mobileCartList');
-    mobileCartTotalModalEl = document.getElementById('mobileCartTotalModal');
-    saveOrderBtnMobileEl = document.getElementById('saveOrderBtnMobile');
-    
-    customerNameMobileInput = document.getElementById('customerNameMobile');
-    customerPhoneMobileInput = document.getElementById('customerPhoneMobile');
-
+  function getVariantModal() {
     const modalEl = document.getElementById('variantModal');
-    if (modalEl) {
+    if (!modalEl) return null;
+    if (!variantModal && typeof bootstrap !== 'undefined') {
       variantModal = new bootstrap.Modal(modalEl);
-      variantModalTitle = document.getElementById('variantModalTitle');
-      variantModalBody = document.getElementById('variantModalBody');
     }
+    return variantModal;
+  }
 
-    const cartModalEl = document.getElementById('mobileCartModal');
-    if (cartModalEl) {
-      mobileCartModal = new bootstrap.Modal(cartModalEl);
+  function getCartModal() {
+    const modalEl = document.getElementById('mobileCartModal');
+    if (!modalEl) return null;
+    if (!mobileCartModal && typeof bootstrap !== 'undefined') {
+      mobileCartModal = new bootstrap.Modal(modalEl);
     }
+    return mobileCartModal;
+  }
 
+  function init() {
     initItemClickListeners();
     renderCart();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
   function initItemClickListeners() {
     document.querySelectorAll('.pos-item-card').forEach((card) => {
-      card.addEventListener('click', (e) => {
-        const itemData = JSON.parse(card.getAttribute('data-item') || '{}');
-        handleItemClick(itemData);
-      });
+      // Remove old listener if any and add fresh
+      card.onclick = (e) => {
+        e.preventDefault();
+        try {
+          const raw = card.getAttribute('data-item');
+          if (raw) {
+            const itemData = JSON.parse(raw);
+            handleItemClick(itemData);
+          }
+        } catch (err) {
+          console.error('Error parsing item data:', err);
+        }
+      };
     });
   }
 
   function handleItemClick(item) {
+    if (!item) return;
     currentActiveItem = item;
     const variants = item.variants || [];
 
     if (item.item_type === 'portion') {
-      showPortionModal(item, variants);
-    } else if (item.item_type === 'piece') {
-      showPieceModal(item, variants[0] || { id: 0, price: 0 });
-    } else if (item.item_type === 'weight') {
-      showWeightModal(item, variants[0] || { id: 0, price: 0, quantity_unit: item.base_unit });
-    } else {
-      if (variants.length > 0) {
+      if (variants.length > 1) {
+        showPortionModal(item, variants);
+      } else if (variants.length === 1) {
         addToCart(item, variants[0], 1);
+      } else {
+        addToCart(item, { id: 0, variant_name: 'Portion', price: item.price_per_unit || 0 }, 1);
       }
+    } else if (item.item_type === 'weight') {
+      const v = variants[0] || { id: 0, variant_name: 'Weight', price: item.price_per_unit || 0, quantity_unit: item.base_unit || 'kg' };
+      showWeightModal(item, v);
+    } else {
+      // Piece or default: Instant add 1 piece!
+      const v = variants[0] || { id: 0, variant_name: 'Piece', price: item.price_per_unit || 0 };
+      addToCart(item, v, 1);
     }
   }
 
   function showPortionModal(item, variants) {
-    if (!variantModal) return;
-    variantModalTitle.innerHTML = `<span style="color: #ea580c;">🍗</span> ${escapeHtml(item.name)} — Select Portion`;
+    const modal = getVariantModal();
+    const titleEl = document.getElementById('variantModalTitle');
+    const bodyEl = document.getElementById('variantModalBody');
+    if (!modal || !titleEl || !bodyEl) return;
 
-    let html = `<div class="portion-grid-android mb-3">`;
+    titleEl.innerHTML = `<span style="color: #ea580c;">🍗</span> ${escapeHtml(item.name)} — Select Portion`;
+
+    let html = `<div class="portion-grid-android mb-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem;">`;
     variants.forEach((v) => {
-      const portionIcon = v.variant_name.toLowerCase().includes('full') ? '🍲' : (v.variant_name.toLowerCase().includes('half') ? '🥣' : '🍽️');
+      const isFull = v.variant_name.toLowerCase().includes('full');
+      const isHalf = v.variant_name.toLowerCase().includes('half');
+      const portionIcon = isFull ? '🍲' : (isHalf ? '🥣' : '🍽️');
+      const priceVal = parseFloat(v.price || 0).toFixed(2);
       html += `
-        <div class="portion-card-btn" onclick="DineBilling.selectPortion(${v.id})">
-          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">${portionIcon}</div>
+        <button type="button" class="btn text-start p-3 border rounded-3 portion-choice-btn" style="background: #ffffff; border-color: #e2e8f0; border-radius: 14px !important;" onclick="DineBilling.selectPortion(${v.id})">
+          <div style="font-size: 1.6rem; margin-bottom: 0.25rem;">${portionIcon}</div>
           <div style="font-weight: 800; font-size: 1rem; color: #0f172a;">${escapeHtml(v.variant_name)}</div>
-          <div style="color: #ea580c; font-weight: 900; font-size: 1.1rem; margin-top: 0.25rem;">₹${parseFloat(v.price).toFixed(2)}</div>
-        </div>
+          <div style="color: #ea580c; font-weight: 900; font-size: 1.15rem; margin-top: 0.25rem;">₹${priceVal}</div>
+        </button>
       `;
     });
     html += `</div>`;
 
-    variantModalBody.innerHTML = html;
-    variantModal.show();
-  }
-
-  function showPieceModal(item, variant) {
-    if (!variantModal) return;
-    variantModalTitle.innerHTML = `<span style="color: #b45309;">🥚</span> ${escapeHtml(item.name)} — Quantity`;
-    const price = parseFloat(variant.price || 0).toFixed(2);
-
-    variantModalBody.innerHTML = `
-      <div class="text-center py-2">
-        <div class="fs-4 fw-bold mb-1" style="color: #0f172a;">₹${price} <span class="text-secondary fs-6">/ piece</span></div>
-        <div class="text-secondary small mb-3">Select quantity to add</div>
-        <div class="d-flex align-items-center justify-content-center gap-3 my-3">
-          <button type="button" class="btn btn-light rounded-circle fw-bold shadow-sm" style="width: 46px; height: 46px; font-size: 1.3rem; border: 1.5px solid #e2e8f0;" onclick="DineBilling.adjustModalQty(-1)">−</button>
-          <span id="modalPieceQty" class="fs-3 fw-bold px-2" style="min-width: 45px;">1</span>
-          <button type="button" class="btn rounded-circle fw-bold text-white shadow-sm" style="width: 46px; height: 46px; font-size: 1.3rem; background: var(--brand-orange);" onclick="DineBilling.adjustModalQty(1)">+</button>
-        </div>
-        <button type="button" class="btn w-100 py-2.5 fw-bold text-white shadow-sm mt-3" style="background: var(--brand-orange); border-radius: 12px;" onclick="DineBilling.confirmPieceAdd(${variant.id})">Add to Order</button>
-      </div>
-    `;
-    variantModal.show();
+    bodyEl.innerHTML = html;
+    modal.show();
   }
 
   function showWeightModal(item, variant) {
-    if (!variantModal) return;
-    const unit = variant.quantity_unit || item.base_unit || 'kg';
-    const price = parseFloat(variant.price || 0).toFixed(2);
-    variantModalTitle.innerHTML = `<span style="color: #047857;">🌾</span> ${escapeHtml(item.name)} — By Weight`;
+    const modal = getVariantModal();
+    const titleEl = document.getElementById('variantModalTitle');
+    const bodyEl = document.getElementById('variantModalBody');
+    if (!modal || !titleEl || !bodyEl) return;
 
-    variantModalBody.innerHTML = `
+    const unit = variant.quantity_unit || item.base_unit || 'kg';
+    const price = parseFloat(variant.price || item.price_per_unit || 0).toFixed(2);
+    titleEl.innerHTML = `<span style="color: #047857;">🌾</span> ${escapeHtml(item.name)} — By Weight`;
+
+    bodyEl.innerHTML = `
       <div class="py-2">
         <div class="d-flex justify-content-between align-items-center p-3 mb-3 bg-light rounded-3">
           <span class="fw-semibold text-secondary">Unit Rate:</span>
@@ -132,18 +137,21 @@
           <button type="button" class="btn btn-sm btn-light border fw-bold" style="border-radius: 20px;" onclick="DineBilling.setWeightVal(1.0)">1.0 ${unit}</button>
           <button type="button" class="btn btn-sm btn-light border fw-bold" style="border-radius: 20px;" onclick="DineBilling.setWeightVal(2.0)">2.0 ${unit}</button>
         </div>
-        <button type="button" class="btn w-100 py-2.5 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px;" onclick="DineBilling.confirmWeightAdd(${variant.id})">Add to Order</button>
+        <button type="button" class="btn w-100 py-2.5 fw-bold text-white shadow-sm" style="background: var(--brand-orange); border-radius: 12px;" onclick="DineBilling.confirmWeightAdd(${variant.id || 0})">Add to Order</button>
       </div>
     `;
-    variantModal.show();
+    modal.show();
   }
 
   function addToCart(item, variant, quantity) {
     quantity = parseFloat(quantity);
-    if (quantity <= 0) return;
+    if (quantity <= 0 || isNaN(quantity)) return;
 
-    const unitPrice = parseFloat(variant.price);
-    const existingIndex = cart.findIndex(c => c.item_id === item.id && c.variant_id === variant.id);
+    const unitPrice = parseFloat(variant.price || item.price_per_unit || 0);
+    const variantId = variant.id || 0;
+    const variantName = variant.variant_name || (item.item_type === 'portion' ? 'Regular' : (variant.quantity_unit || 'Piece'));
+
+    const existingIndex = cart.findIndex(c => c.item_id === item.id && c.variant_id === variantId);
 
     if (existingIndex > -1) {
       cart[existingIndex].quantity += quantity;
@@ -151,9 +159,9 @@
     } else {
       cart.push({
         item_id: item.id,
-        variant_id: variant.id,
+        variant_id: variantId,
         item_name: item.name,
-        variant_name: variant.variant_name,
+        variant_name: variantName,
         unit: variant.quantity_unit || item.base_unit || 'piece',
         unit_price: unitPrice,
         quantity: quantity,
@@ -162,6 +170,14 @@
     }
 
     renderCart();
+
+    // Haptic / Visual bounce on bottom floating cart
+    if (navigator.vibrate) navigator.vibrate(40);
+    const floatingBar = document.querySelector('.pos-floating-cart-bar');
+    if (floatingBar) {
+      floatingBar.style.transform = 'scale(1.03)';
+      setTimeout(() => { floatingBar.style.transform = 'none'; }, 150);
+    }
   }
 
   function renderCart() {
@@ -175,7 +191,11 @@
 
     const formattedTotal = '₹' + subtotal.toFixed(2);
 
-    // Update bottom bar
+    // Update bottom floating bar elements
+    const cartTotalTextEl = document.getElementById('cartTotalText');
+    const cartItemsSubEl = document.getElementById('cartItemsSub');
+    const viewCartActionBtnEl = document.getElementById('viewCartActionBtn');
+
     if (cartTotalTextEl) cartTotalTextEl.textContent = formattedTotal;
     if (cartItemsSubEl) {
       cartItemsSubEl.textContent = cart.length === 0 ? 'Cart is empty' : `${cart.length} item${cart.length > 1 ? 's' : ''} in cart`;
@@ -189,7 +209,11 @@
       }
     }
 
-    // Update Modal Cart
+    // Update Modal Cart elements
+    const mobileCartTotalModalEl = document.getElementById('mobileCartTotalModal');
+    const saveOrderBtnMobileEl = document.getElementById('saveOrderBtnMobile');
+    const mobileCartListEl = document.getElementById('mobileCartList');
+
     if (mobileCartTotalModalEl) mobileCartTotalModalEl.textContent = formattedTotal;
     if (saveOrderBtnMobileEl) saveOrderBtnMobileEl.disabled = cart.length === 0;
 
@@ -219,7 +243,7 @@
                   <button type="button" class="btn btn-sm p-0 border-0 fw-bold text-dark" style="width: 20px; line-height: 1;" onclick="DineBilling.updateQty(${index}, 1)">+</button>
                 </div>
                 <div class="fw-bold text-dark ps-2" style="min-width: 65px; text-align: right;">₹${item.total_price.toFixed(2)}</div>
-                <button type="button" class="btn btn-sm text-danger p-1" onclick="DineBilling.removeItem(${index})" title="Remove">✕</button>
+                <button type="button" class="btn btn-sm text-danger p-1 border-0 bg-transparent" onclick="DineBilling.removeItem(${index})" title="Remove">✕</button>
               </div>
             </div>
           `;
@@ -240,14 +264,18 @@
       return;
     }
 
-    if (saveOrderBtnMobileEl) {
-      saveOrderBtnMobileEl.disabled = true;
-      saveOrderBtnMobileEl.innerHTML = 'Saving Order...';
+    const saveBtn = document.getElementById('saveOrderBtnMobile');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Saving Order...';
     }
 
+    const custName = document.getElementById('customerNameMobile');
+    const custPhone = document.getElementById('customerPhoneMobile');
+
     const payload = {
-      customer_name: customerNameMobileInput ? customerNameMobileInput.value.trim() : '',
-      customer_phone: customerPhoneMobileInput ? customerPhoneMobileInput.value.trim() : '',
+      customer_name: custName ? custName.value.trim() : '',
+      customer_phone: custPhone ? custPhone.value.trim() : '',
       payment_method: selectedPayment,
       items: cart.map(c => ({
         item_id: c.item_id,
@@ -261,108 +289,84 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': getCSRFToken(),
           'Accept': 'application/json',
-          'X-CSRF-Token': getCSRFToken()
+          'X-Requested-With': 'XMLHttpRequest'
         },
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      const res = await response.json();
 
-      if (data.success && data.redirect_url) {
+      if (response.ok && res.success) {
         cart = [];
-        window.location.href = data.redirect_url;
+        renderCart();
+        const cartModal = getCartModal();
+        if (cartModal) cartModal.hide();
+        window.location.href = res.redirect_url || '/receipt/view?id=' + res.order_id;
       } else {
-        alert(data.message || 'Failed to save order. Please try again.');
-        if (saveOrderBtnMobileEl) {
-          saveOrderBtnMobileEl.disabled = false;
-          saveOrderBtnMobileEl.innerHTML = 'Save & Bill Order ➔';
+        alert(res.message || 'Error saving order. Please check item availability.');
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = 'Save & Bill Order ➔';
         }
       }
     } catch (err) {
       console.error('Order save error:', err);
-      alert('Connection error occurred while saving the order. Please check connection and try again.');
-      if (saveOrderBtnMobileEl) {
-        saveOrderBtnMobileEl.disabled = false;
-        saveOrderBtnMobileEl.innerHTML = 'Save & Bill Order ➔';
+      alert('Could not complete order. Please check network connection.');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Save & Bill Order ➔';
       }
     }
   }
 
   function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
   }
 
-  // Public bridge for inline button event handlers
+  // Global window API object
   window.DineBilling = {
-    openMobileCart: function() {
-      if (mobileCartModal) mobileCartModal.show();
-    },
-
-    setPaymentMethod: function(method) {
-      selectedPayment = method;
-    },
-
-    clearCart: function() {
-      if (cart.length === 0) return;
-      if (confirm('Are you sure you want to clear the current cart?')) {
-        cart = [];
-        renderCart();
+    handleCardClick: function(cardEl) {
+      try {
+        const raw = cardEl.getAttribute('data-item');
+        if (raw) {
+          handleItemClick(JSON.parse(raw));
+        }
+      } catch (e) {
+        console.error(e);
       }
     },
-
-    saveOrder: saveOrder,
 
     selectPortion: function(variantId) {
       if (!currentActiveItem) return;
-      const variant = (currentActiveItem.variants || []).find(v => v.id === variantId);
-      if (variant) {
-        addToCart(currentActiveItem, variant, 1);
+      const v = (currentActiveItem.variants || []).find(x => x.id === variantId);
+      if (v) {
+        addToCart(currentActiveItem, v, 1);
+        const modal = getVariantModal();
+        if (modal) modal.hide();
       }
-      if (variantModal) variantModal.hide();
-    },
-
-    adjustModalQty: function(delta) {
-      const qtyEl = document.getElementById('modalPieceQty');
-      if (!qtyEl) return;
-      let val = parseInt(qtyEl.textContent, 10) + delta;
-      if (val < 1) val = 1;
-      qtyEl.textContent = String(val);
-    },
-
-    confirmPieceAdd: function(variantId) {
-      const qtyEl = document.getElementById('modalPieceQty');
-      const qty = qtyEl ? parseInt(qtyEl.textContent, 10) : 1;
-      const variant = (currentActiveItem.variants || []).find(v => v.id === variantId) || (currentActiveItem.variants[0]);
-      if (currentActiveItem && variant) {
-        addToCart(currentActiveItem, variant, qty);
-      }
-      if (variantModal) variantModal.hide();
     },
 
     setWeightVal: function(val) {
       const input = document.getElementById('modalWeightInput');
-      if (input) input.value = String(val);
+      if (input) input.value = val;
     },
 
     confirmWeightAdd: function(variantId) {
+      if (!currentActiveItem) return;
       const input = document.getElementById('modalWeightInput');
-      const qty = input ? parseFloat(input.value) : 1.0;
+      const qty = input ? parseFloat(input.value) : 1;
       if (isNaN(qty) || qty <= 0) {
         alert('Please enter a valid weight quantity.');
         return;
       }
-      const variant = (currentActiveItem.variants || []).find(v => v.id === variantId) || (currentActiveItem.variants[0]);
-      if (currentActiveItem && variant) {
-        addToCart(currentActiveItem, variant, qty);
-      }
-      if (variantModal) variantModal.hide();
+      const v = (currentActiveItem.variants || []).find(x => x.id === variantId) || { id: 0, price: currentActiveItem.price_per_unit || 0 };
+      addToCart(currentActiveItem, v, qty);
+      const modal = getVariantModal();
+      if (modal) modal.hide();
     },
 
     updateQty: function(index, delta) {
@@ -377,9 +381,30 @@
     },
 
     removeItem: function(index) {
-      if (!cart[index]) return;
-      cart.splice(index, 1);
-      renderCart();
-    }
+      if (cart[index]) {
+        cart.splice(index, 1);
+        renderCart();
+      }
+    },
+
+    clearCart: function() {
+      if (cart.length > 0 && confirm('Clear all items from this order cart?')) {
+        cart = [];
+        renderCart();
+      }
+    },
+
+    openMobileCart: function() {
+      const cartModal = getCartModal();
+      if (cartModal) {
+        cartModal.show();
+      }
+    },
+
+    setPaymentMethod: function(method) {
+      selectedPayment = method;
+    },
+
+    saveOrder: saveOrder
   };
 })();
