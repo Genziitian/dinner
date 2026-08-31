@@ -61,6 +61,105 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
         }
     }
 
+    override suspend fun getAdminOverview(): Resource<com.dinepos.app.data.dto.AdminOverviewResponseDto> {
+        return try {
+            val response = apiService.getAdminOverview()
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data ?: com.dinepos.app.data.dto.AdminOverviewResponseDto()
+                Resource.Success(data)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to load super admin overview.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun createRestaurant(
+        name: String,
+        phone: String?,
+        address: String?,
+        timezone: String
+    ): Resource<com.dinepos.app.data.dto.AdminRestaurantDto> {
+        return try {
+            val req = com.dinepos.app.data.dto.CreateRestaurantRequestDto(name, phone, address, timezone, "active")
+            val response = apiService.createRestaurant(req)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to create restaurant.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun updateRestaurant(
+        id: Int,
+        name: String,
+        phone: String?,
+        address: String?,
+        timezone: String,
+        status: String
+    ): Resource<com.dinepos.app.data.dto.AdminRestaurantDto> {
+        return try {
+            val req = com.dinepos.app.data.dto.CreateRestaurantRequestDto(name, phone, address, timezone, status)
+            val response = apiService.updateRestaurant(id, req)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to update restaurant.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun toggleRestaurant(id: Int): Resource<com.dinepos.app.data.dto.AdminRestaurantDto> {
+        return try {
+            val response = apiService.toggleRestaurant(id)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to toggle restaurant status.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun createAdminUser(
+        username: String,
+        password: String,
+        role: String,
+        restaurantId: Int?
+    ): Resource<com.dinepos.app.data.dto.AdminUserDto> {
+        return try {
+            val req = com.dinepos.app.data.dto.CreateAdminUserRequestDto(username, password, role, restaurantId, "active")
+            val response = apiService.createAdminUser(req)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to create user.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun toggleAdminUser(id: Int): Resource<com.dinepos.app.data.dto.AdminUserDto> {
+        return try {
+            val response = apiService.toggleAdminUser(id)
+            if (response.isSuccessful && response.body()?.success == true && response.body()?.data != null) {
+                Resource.Success(response.body()!!.data!!)
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to toggle user status.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
     private fun mapStatsDto(dto: DailyStatsDto): DailyStats {
         return DailyStats(
             totalOrders = dto.totalOrders,

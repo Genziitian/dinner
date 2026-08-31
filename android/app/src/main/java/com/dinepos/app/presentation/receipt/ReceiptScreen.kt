@@ -52,9 +52,9 @@ fun ReceiptScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
-    val restaurantName = remember { sessionManager.getRestaurantName().ifBlank { "The Royal Fork" } }
-    val restaurantAddress = remember { sessionManager.getRestaurantAddress().ifBlank { "102 Flavor Street" } }
-    val restaurantPhone = remember { sessionManager.getRestaurantPhone().ifBlank { "+91 98765 43210" } }
+    val restaurantName = remember { sessionManager.getRestaurantName().ifBlank { "Restaurant" } }
+    val restaurantAddress = remember { sessionManager.getRestaurantAddress() }
+    val restaurantPhone = remember { sessionManager.getRestaurantPhone() }
 
     LaunchedEffect(orderId, token) {
         scope.launch {

@@ -66,6 +66,42 @@ interface DinePosApiService {
         @Query("end_date") endDate: String? = null
     ): Response<ApiResponseDto<ReportsResponseDto>>
 
+    @GET("api/v1/admin/overview")
+    suspend fun getAdminOverview(): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminOverviewResponseDto>>
+
+    @POST("api/v1/admin/restaurants")
+    suspend fun createRestaurant(@Body request: com.dinepos.app.data.dto.CreateRestaurantRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminRestaurantDto>>
+
+    @POST("api/v1/admin/restaurants/{id}")
+    suspend fun updateRestaurant(@Path("id") id: Int, @Body request: com.dinepos.app.data.dto.CreateRestaurantRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminRestaurantDto>>
+
+    @POST("api/v1/admin/restaurants/{id}/toggle")
+    suspend fun toggleRestaurant(@Path("id") id: Int): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminRestaurantDto>>
+
+    @POST("api/v1/admin/users")
+    suspend fun createAdminUser(@Body request: com.dinepos.app.data.dto.CreateAdminUserRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
+
+    @POST("api/v1/admin/users/{id}/toggle")
+    suspend fun toggleAdminUser(@Path("id") id: Int): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
+
+    @GET("api/v1/manager/staff")
+    suspend fun getManagerStaff(): Response<ApiResponseDto<com.dinepos.app.data.dto.StaffListResponseDto>>
+
+    @POST("api/v1/manager/staff")
+    suspend fun createManagerStaff(@Body request: com.dinepos.app.data.dto.CreateCashierRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
+
+    @POST("api/v1/manager/staff/{id}/toggle")
+    suspend fun toggleManagerStaff(@Path("id") id: Int): Response<ApiResponseDto<com.dinepos.app.data.dto.AdminUserDto>>
+
+    @GET("api/v1/manager/export/data")
+    suspend fun getExportData(
+        @Query("type") type: String,
+        @Query("date") date: String? = null,
+        @Query("month") month: String? = null,
+        @Query("start_date") startDate: String? = null,
+        @Query("end_date") endDate: String? = null
+    ): Response<ApiResponseDto<com.dinepos.app.data.dto.ExportDataResponseDto>>
+
     @GET("api/v1/receipt/{token}")
     suspend fun getReceiptByToken(@Path("token") token: String): Response<ApiResponseDto<CreateOrderResponseDto>>
 }

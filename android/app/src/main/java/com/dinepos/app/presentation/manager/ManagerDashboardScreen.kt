@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -89,7 +90,7 @@ fun ManagerDashboardScreen(
                             }
                         }
                         Text(
-                            text = uiState.restaurantName.ifBlank { "The Royal Fork" },
+                            text = uiState.restaurantName.ifBlank { "Restaurant" },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark
@@ -218,7 +219,7 @@ fun ManagerDashboardScreen(
                                 ActionCard(
                                     title = "Order History",
                                     subtitle = "View & search all",
-                                    icon = Icons.Default.ReceiptLong,
+                                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
                                     iconColor = Color(0xFF3B82F6),
                                     onClick = onNavigateToOrders,
                                     modifier = Modifier.weight(1f)
@@ -402,7 +403,7 @@ fun ManagerDashboardScreen(
                         ActionCard(
                             title = "Orders",
                             subtitle = "View History",
-                            icon = Icons.Default.ReceiptLong,
+                            icon = Icons.AutoMirrored.Filled.ReceiptLong,
                             iconColor = Color(0xFF3B82F6),
                             onClick = onNavigateToOrders,
                             modifier = Modifier.weight(1f)

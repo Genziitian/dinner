@@ -35,10 +35,10 @@ class MainActivity : ComponentActivity() {
         val cachedRole = sessionManager.getUserRole()
 
         val startDestination = if (!cachedToken.isNullOrBlank()) {
-            if (cachedRole == "cashier") {
-                Screen.CashierBilling.route
-            } else {
-                Screen.ManagerDashboard.route
+            when (cachedRole.lowercase()) {
+                "superadmin" -> Screen.SuperAdminDashboard.route
+                "cashier" -> Screen.CashierBilling.route
+                else -> Screen.ManagerDashboard.route
             }
         } else {
             Screen.Login.route

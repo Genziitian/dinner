@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.dinepos.app.presentation.admin.SuperAdminDashboardScreen
 import com.dinepos.app.presentation.auth.LoginScreen
 import com.dinepos.app.presentation.cashier.BillingScreen
 import com.dinepos.app.presentation.items.ManageItemsScreen
@@ -14,6 +15,7 @@ import com.dinepos.app.presentation.legal.TermsAndConditionsScreen
 import com.dinepos.app.presentation.manager.ManagerDashboardScreen
 import com.dinepos.app.presentation.orders.OrderDetailScreen
 import com.dinepos.app.presentation.orders.OrderListScreen
+import com.dinepos.app.presentation.profile.ProfileScreen
 import com.dinepos.app.presentation.receipt.ReceiptScreen
 import com.dinepos.app.presentation.reports.ReportsScreen
 import com.dinepos.app.presentation.summary.SummaryScreen
@@ -31,10 +33,10 @@ fun DinePosNavGraph(
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = { user ->
-                    val destination = if (user.isCashier) {
-                        Screen.CashierBilling.route
-                    } else {
-                        Screen.ManagerDashboard.route
+                    val destination = when {
+                        user.isSuperAdmin -> Screen.SuperAdminDashboard.route
+                        user.isCashier -> Screen.CashierBilling.route
+                        else -> Screen.ManagerDashboard.route
                     }
                     navController.navigate(destination) {
                         popUpTo(Screen.Login.route) { inclusive = true }
@@ -49,7 +51,32 @@ fun DinePosNavGraph(
             )
         }
 
-        // 2. Cashier POS Billing Screen
+        // 2. Super Admin Dashboard Screen
+        composable(Screen.SuperAdminDashboard.route) {
+            SuperAdminDashboardScreen(
+                onNavigateToRestaurants = { navController.navigate(Screen.AdminRestaurants.route) },
+                onNavigateToUsers = { navController.navigate(Screen.AdminUsers.route) },
+                onNavigateToReports = { navController.navigate(Screen.ManagerReports.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 2a. Super Admin Restaurants Management
+        composable(Screen.AdminRestaurants.route) {
+            com.dinepos.app.presentation.admin.AdminRestaurantsScreen()
+        }
+
+        // 2b. Super Admin User Administration
+        composable(Screen.AdminUsers.route) {
+            com.dinepos.app.presentation.admin.AdminUsersScreen()
+        }
+
+        // 3. Cashier POS Billing Screen
         composable(Screen.CashierBilling.route) {
             BillingScreen(
                 onOrderPlaced = { order ->
@@ -68,14 +95,14 @@ fun DinePosNavGraph(
             )
         }
 
-        // 3. Cashier Summary Screen
+        // 4. Cashier Summary Screen
         composable(Screen.CashierSummary.route) {
             SummaryScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // 4. Receipt Screen
+        // 5. Receipt Screen
         composable(
             route = Screen.Receipt.route,
             arguments = listOf(
@@ -96,7 +123,7 @@ fun DinePosNavGraph(
             )
         }
 
-        // 5. Manager Dashboard Screen
+        // 6. Manager Dashboard Screen
         composable(Screen.ManagerDashboard.route) {
             ManagerDashboardScreen(
                 onNavigateToBilling = { navController.navigate(Screen.CashierBilling.route) },
@@ -115,7 +142,7 @@ fun DinePosNavGraph(
             )
         }
 
-        // 6. Orders List Screen
+        // 7. Orders List Screen
         composable(Screen.ManagerOrders.route) {
             OrderListScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -125,7 +152,7 @@ fun DinePosNavGraph(
             )
         }
 
-        // 7. Order Detail Screen
+        // 8. Order Detail Screen
         composable(
             route = Screen.OrderDetail.route,
             arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -140,21 +167,42 @@ fun DinePosNavGraph(
             )
         }
 
-        // 8. Menu Items Management Screen
+        // 9. Menu Items Management Screen
         composable(Screen.ManagerItems.route) {
             ManageItemsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // 9. Financial Reports Screen
+        // 10. Financial Reports Screen
         composable(Screen.ManagerReports.route) {
             ReportsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // 10. QR Scanner Screen
+        // 11. Dedicated User Profile Screen
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onNavigateBack = if (navController.previousBackStackEntry != null) {
+                    { navController.popBackStack() }
+                } else null,
+                onNavigateToReports = { navController.navigate(Screen.ManagerReports.route) },
+                onNavigateToOrders = { navController.navigate(Screen.ManagerOrders.route) },
+                onNavigateToItems = { navController.navigate(Screen.ManagerItems.route) },
+                onNavigateToBilling = { navController.navigate(Screen.CashierBilling.route) },
+                onNavigateToSummary = { navController.navigate(Screen.CashierSummary.route) },
+                onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
+                onNavigateToTerms = { navController.navigate(Screen.TermsAndConditions.route) },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 12. QR Scanner Screen
         composable(Screen.QrScanner.route) {
             com.dinepos.app.presentation.scanner.QrScannerScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -167,14 +215,14 @@ fun DinePosNavGraph(
             )
         }
 
-        // 11. Privacy Policy Screen
+        // 13. Privacy Policy Screen
         composable(Screen.PrivacyPolicy.route) {
             PrivacyPolicyScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // 12. Terms and Conditions Screen
+        // 14. Terms and Conditions Screen
         composable(Screen.TermsAndConditions.route) {
             TermsAndConditionsScreen(
                 onNavigateBack = { navController.popBackStack() }

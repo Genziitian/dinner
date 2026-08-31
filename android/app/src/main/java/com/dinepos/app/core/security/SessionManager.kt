@@ -80,9 +80,9 @@ class SessionManager(context: Context) {
 
     fun getRestaurantName(): String = prefs.getString(Constants.KEY_RESTAURANT_NAME, "") ?: ""
 
-    fun getRestaurantAddress(): String = prefs.getString(Constants.KEY_RESTAURANT_ADDRESS, "102 Flavor Street") ?: "102 Flavor Street"
+    fun getRestaurantAddress(): String = prefs.getString(Constants.KEY_RESTAURANT_ADDRESS, "") ?: ""
 
-    fun getRestaurantPhone(): String = prefs.getString(Constants.KEY_RESTAURANT_PHONE, "+91 98765 43210") ?: "+91 98765 43210"
+    fun getRestaurantPhone(): String = prefs.getString(Constants.KEY_RESTAURANT_PHONE, "") ?: ""
 
     fun getBaseUrl(): String = prefs.getString(Constants.KEY_BASE_URL, Constants.DEFAULT_BASE_URL) ?: Constants.DEFAULT_BASE_URL
 

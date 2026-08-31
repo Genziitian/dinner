@@ -43,7 +43,15 @@ class AuthRepositoryImpl(
                     Resource.Error("Invalid server response.")
                 }
             } else {
-                val errorMsg = response.body()?.message ?: response.errorBody()?.string() ?: "Login failed."
+                val errorBodyStr = response.errorBody()?.string()
+                val parsedMsg = try {
+                    if (!errorBodyStr.isNullOrBlank() && errorBodyStr.startsWith("{")) {
+                        org.json.JSONObject(errorBodyStr).optString("message", errorBodyStr)
+                    } else errorBodyStr
+                } catch (e: Exception) {
+                    errorBodyStr
+                }
+                val errorMsg = response.body()?.message ?: parsedMsg ?: "Login failed."
                 Resource.Error(errorMsg, response.code())
             }
         } catch (e: Exception) {

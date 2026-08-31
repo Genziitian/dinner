@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -13,20 +12,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.RestaurantMenu
+import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dinepos.app.DinePosApp
 import com.dinepos.app.core.theme.*
 
 @Composable
@@ -35,15 +39,24 @@ fun DinePosBottomBar(
     onNavigateToRoute: (String) -> Unit,
     onTakeOrderClick: () -> Unit
 ) {
-    // Only visible on main primary hub screens
+    val sessionManager = DinePosApp.instance.sessionManager
+    val role = sessionManager.getUserRole().lowercase()
+
+    // All active top level routes per role
     val topLevelRoutes = listOf(
+        Screen.SuperAdminDashboard.route,
+        Screen.AdminRestaurants.route,
+        Screen.AdminUsers.route,
         Screen.ManagerDashboard.route,
+        Screen.CashierBilling.route,
+        Screen.CashierSummary.route,
         Screen.ManagerOrders.route,
         Screen.ManagerItems.route,
-        Screen.ManagerReports.route
+        Screen.ManagerReports.route,
+        Screen.Profile.route
     )
 
-    val isVisible = currentRoute in topLevelRoutes
+    val isVisible = currentRoute in topLevelRoutes && currentRoute != Screen.Login.route
 
     AnimatedVisibility(
         visible = isVisible,
@@ -73,69 +86,129 @@ fun DinePosBottomBar(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // 1. Home
-                    NavItem(
-                        icon = Icons.Outlined.Home,
-                        label = "Home",
-                        isSelected = currentRoute == Screen.ManagerDashboard.route,
-                        onClick = { onNavigateToRoute(Screen.ManagerDashboard.route) },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // 2. Orders
-                    NavItem(
-                        icon = Icons.AutoMirrored.Outlined.Assignment,
-                        label = "Orders",
-                        isSelected = currentRoute == Screen.ManagerOrders.route,
-                        onClick = { onNavigateToRoute(Screen.ManagerOrders.route) },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // Spacer for Center Floating Action Button
-                    Spacer(modifier = Modifier.weight(1.2f))
-
-                    // 4. Menu
-                    NavItem(
-                        icon = Icons.Outlined.RestaurantMenu,
-                        label = "Menu",
-                        isSelected = currentRoute == Screen.ManagerItems.route,
-                        onClick = { onNavigateToRoute(Screen.ManagerItems.route) },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // 5. Profile / Reports
-                    NavItem(
-                        icon = Icons.Outlined.Person,
-                        label = "Profile",
-                        isSelected = currentRoute == Screen.ManagerReports.route,
-                        onClick = { onNavigateToRoute(Screen.ManagerReports.route) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    when (role) {
+                        "superadmin" -> {
+                            // Super Admin Navigation (Admin | Restaurants | Users | Profile)
+                            NavItem(
+                                icon = Icons.Outlined.GridView,
+                                label = "Admin",
+                                isSelected = currentRoute == Screen.SuperAdminDashboard.route,
+                                onClick = { onNavigateToRoute(Screen.SuperAdminDashboard.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NavItem(
+                                icon = Icons.Outlined.Storefront,
+                                label = "Restaurants",
+                                isSelected = currentRoute == Screen.AdminRestaurants.route,
+                                onClick = { onNavigateToRoute(Screen.AdminRestaurants.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NavItem(
+                                icon = Icons.Outlined.People,
+                                label = "Users",
+                                isSelected = currentRoute == Screen.AdminUsers.route,
+                                onClick = { onNavigateToRoute(Screen.AdminUsers.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NavItem(
+                                icon = Icons.Outlined.Person,
+                                label = "Profile",
+                                isSelected = currentRoute == Screen.Profile.route,
+                                onClick = { onNavigateToRoute(Screen.Profile.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        "cashier" -> {
+                            // Cashier Navigation
+                            NavItem(
+                                icon = Icons.Outlined.ShoppingCart,
+                                label = "POS",
+                                isSelected = currentRoute == Screen.CashierBilling.route,
+                                onClick = { onNavigateToRoute(Screen.CashierBilling.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NavItem(
+                                icon = Icons.AutoMirrored.Outlined.Assignment,
+                                label = "Orders",
+                                isSelected = currentRoute == Screen.ManagerOrders.route,
+                                onClick = { onNavigateToRoute(Screen.ManagerOrders.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NavItem(
+                                icon = Icons.Outlined.Assessment,
+                                label = "Shift",
+                                isSelected = currentRoute == Screen.CashierSummary.route,
+                                onClick = { onNavigateToRoute(Screen.CashierSummary.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NavItem(
+                                icon = Icons.Outlined.Person,
+                                label = "Profile",
+                                isSelected = currentRoute == Screen.Profile.route,
+                                onClick = { onNavigateToRoute(Screen.Profile.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        else -> {
+                            // Manager Navigation (Home | Orders | (+) | Menu | Profile)
+                            NavItem(
+                                icon = Icons.Outlined.Home,
+                                label = "Home",
+                                isSelected = currentRoute == Screen.ManagerDashboard.route,
+                                onClick = { onNavigateToRoute(Screen.ManagerDashboard.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NavItem(
+                                icon = Icons.AutoMirrored.Outlined.Assignment,
+                                label = "Orders",
+                                isSelected = currentRoute == Screen.ManagerOrders.route,
+                                onClick = { onNavigateToRoute(Screen.ManagerOrders.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(modifier = Modifier.weight(1.2f))
+                            NavItem(
+                                icon = Icons.Outlined.RestaurantMenu,
+                                label = "Menu",
+                                isSelected = currentRoute == Screen.ManagerItems.route,
+                                onClick = { onNavigateToRoute(Screen.ManagerItems.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NavItem(
+                                icon = Icons.Outlined.Person,
+                                label = "Profile",
+                                isSelected = currentRoute == Screen.Profile.route,
+                                onClick = { onNavigateToRoute(Screen.Profile.route) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
                 }
             }
 
-            // Elevated Center '+' Floating Button (Takes New Order)
-            Surface(
-                onClick = onTakeOrderClick,
-                shape = CircleShape,
-                color = BrandOrange,
-                shadowElevation = 12.dp,
-                border = BorderStroke(3.dp, Color.White),
-                modifier = Modifier
-                    .size(60.dp)
-                    .align(Alignment.TopCenter)
-                    .offset(y = (-14).dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
+            // Elevated Center '+' Floating Button (For Managers to quickly open POS Billing)
+            if (role == "manager") {
+                Surface(
+                    onClick = onTakeOrderClick,
+                    shape = CircleShape,
+                    color = BrandOrange,
+                    shadowElevation = 12.dp,
+                    border = BorderStroke(3.dp, Color.White),
+                    modifier = Modifier
+                        .size(60.dp)
+                        .align(Alignment.TopCenter)
+                        .offset(y = (-14).dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "New Order / POS Billing",
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "New Order / POS Billing",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
                 }
             }
         }

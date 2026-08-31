@@ -16,6 +16,10 @@ sealed class Screen(val route: String) {
             if (!token.isNullOrBlank()) "receipt/$orderId?token=$token" else "receipt/$orderId"
     }
     object QrScanner : Screen("qr_scanner")
+    object SuperAdminDashboard : Screen("superadmin_dashboard")
+    object AdminRestaurants : Screen("admin_restaurants")
+    object AdminUsers : Screen("admin_users")
+    object Profile : Screen("profile")
     object PrivacyPolicy : Screen("privacy_policy")
     object TermsAndConditions : Screen("terms_and_conditions")
 }

@@ -515,14 +515,327 @@ class ApiController {
         }
 
         $order = Order::findByReceiptToken($token);
-        if (!$order) {
-            $this->jsonError('Receipt not found or invalid token.', 404);
-        }
-
         $this->jsonSuccess([
             'order' => $order,
             'receipt_token' => $token,
             'public_receipt_url' => url('receipt/' . $token),
+        ]);
+    }
+
+    /**
+     * GET /api/v1/admin/overview
+     * Super Admin Multi-Tenant System Overview
+     */
+    public function getAdminOverview(): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized. Only Super Admin can access this.', 403);
+        }
+
+        $restaurants = Restaurant::all();
+        $users = User::all();
+
+        $this->jsonSuccess([
+            'restaurants' => $restaurants,
+            'total_restaurants' => count($restaurants),
+            'total_users' => count($users),
+            'users' => $users,
+        ]);
+    }
+
+    /**
+     * POST /api/v1/admin/restaurants
+     */
+    public function createRestaurant(): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized.', 403);
+        }
+
+        $input = $this->getJsonInput();
+        $name = trim((string)($input['name'] ?? ''));
+        $phone = trim((string)($input['phone'] ?? ''));
+        $address = trim((string)($input['address'] ?? ''));
+        $timezone = trim((string)($input['timezone'] ?? 'Asia/Kolkata'));
+        $status = (string)($input['status'] ?? 'active');
+
+        if (empty($name)) {
+            $this->jsonError('Restaurant name is required.', 422);
+        }
+
+        try {
+            $id = Restaurant::create([
+                'name' => $name,
+                'phone' => $phone,
+                'address' => $address,
+                'timezone' => $timezone,
+                'status' => $status,
+            ]);
+
+            AuditLog::log(AuditLog::ACTION_SETTINGS_UPDATE, 'restaurant', $id, $id, $user['id'], ['name' => $name]);
+            $created = Restaurant::findById($id);
+            $this->jsonSuccess($created, "Restaurant '{$name}' created successfully.", 201);
+        } catch (Throwable $e) {
+            $this->jsonError('Failed to create restaurant: ' . $e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * POST /api/v1/admin/restaurants/{id}
+     */
+    public function updateRestaurant(int $id): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized.', 403);
+        }
+
+        $restaurant = Restaurant::findById($id);
+        if (!$restaurant) {
+            $this->jsonError('Restaurant not found.', 404);
+        }
+
+        $input = $this->getJsonInput();
+        $name = trim((string)($input['name'] ?? $restaurant['name']));
+        $phone = trim((string)($input['phone'] ?? $restaurant['phone']));
+        $address = trim((string)($input['address'] ?? $restaurant['address']));
+        $timezone = trim((string)($input['timezone'] ?? $restaurant['timezone']));
+        $status = (string)($input['status'] ?? $restaurant['status']);
+
+        if (empty($name)) {
+            $this->jsonError('Restaurant name is required.', 422);
+        }
+
+        try {
+            Restaurant::update($id, [
+                'name' => $name,
+                'phone' => $phone,
+                'address' => $address,
+                'timezone' => $timezone,
+                'status' => $status,
+            ]);
+
+            AuditLog::log(AuditLog::ACTION_SETTINGS_UPDATE, 'restaurant', $id, $id, $user['id'], ['name' => $name, 'status' => $status]);
+            $updated = Restaurant::findById($id);
+            $this->jsonSuccess($updated, "Restaurant updated successfully.");
+        } catch (Throwable $e) {
+            $this->jsonError('Failed to update restaurant: ' . $e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * POST /api/v1/admin/restaurants/{id}/toggle
+     */
+    public function toggleRestaurant(int $id): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized.', 403);
+        }
+
+        $restaurant = Restaurant::findById($id);
+        if (!$restaurant) {
+            $this->jsonError('Restaurant not found.', 404);
+        }
+
+        Restaurant::toggleStatus($id);
+        $updated = Restaurant::findById($id);
+        $this->jsonSuccess($updated, "Restaurant status updated.");
+    }
+
+    /**
+     * POST /api/v1/admin/users
+     */
+    public function createUser(): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized.', 403);
+        }
+
+        $input = $this->getJsonInput();
+        $username = strtolower(trim((string)($input['username'] ?? '')));
+        $password = (string)($input['password'] ?? '');
+        $role = (string)($input['role'] ?? User::ROLE_CASHIER);
+        $restaurantId = !empty($input['restaurant_id']) ? (int)$input['restaurant_id'] : null;
+        $status = (string)($input['status'] ?? 'active');
+
+        if ($role !== User::ROLE_SUPERADMIN && empty($restaurantId)) {
+            $this->jsonError('Restaurant is required for manager and cashier roles.', 422);
+        }
+
+        try {
+            $newUserId = User::create([
+                'restaurant_id' => $restaurantId,
+                'username' => $username,
+                'password' => $password,
+                'role' => $role,
+                'status' => $status,
+            ]);
+
+            AuditLog::log(AuditLog::ACTION_USER_CREATE, 'user', $newUserId, $restaurantId, $user['id'], ['username' => $username, 'role' => $role]);
+            $created = User::findById($newUserId);
+            $this->jsonSuccess($created, "User '{$username}' created successfully.", 201);
+        } catch (Throwable $e) {
+            $this->jsonError('Failed to create user: ' . $e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * POST /api/v1/admin/users/{id}/toggle
+     */
+    public function toggleUser(int $id): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized.', 403);
+        }
+
+        $targetUser = User::findById($id);
+        if (!$targetUser) {
+            $this->jsonError('User not found.', 404);
+        }
+
+        if ($targetUser['id'] == $user['id']) {
+            $this->jsonError('Cannot deactivate your own superadmin account.', 422);
+        }
+
+        User::toggleStatus($id);
+        $updated = User::findById($id);
+        $this->jsonSuccess($updated, "User status updated.");
+    }
+
+    /**
+     * GET /api/v1/manager/staff
+     */
+    public function getManagerStaff(): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_MANAGER && $user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized. Manager only.', 403);
+        }
+
+        $restaurantId = $user['restaurant_id'];
+        if (!$restaurantId) {
+            $this->jsonError('Restaurant ID not assigned.', 400);
+        }
+
+        $staff = User::allByRestaurant((int)$restaurantId);
+        $this->jsonSuccess(['staff' => $staff]);
+    }
+
+    /**
+     * POST /api/v1/manager/staff
+     */
+    public function createManagerStaff(): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_MANAGER && $user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized. Manager only.', 403);
+        }
+
+        $restaurantId = $user['restaurant_id'];
+        if (!$restaurantId) {
+            $this->jsonError('Restaurant ID not assigned.', 400);
+        }
+
+        $input = $this->getJsonInput();
+        $username = strtolower(trim((string)($input['username'] ?? '')));
+        $password = (string)($input['password'] ?? '');
+        $confirmPassword = (string)($input['confirm_password'] ?? $password);
+
+        if (empty($username) || empty($password)) {
+            $this->jsonError('Username and password are required.', 422);
+        }
+
+        if ($password !== $confirmPassword) {
+            $this->jsonError('Password confirmation does not match.', 422);
+        }
+
+        try {
+            // Manager can ONLY create Cashier accounts
+            $newUserId = User::create([
+                'restaurant_id' => (int)$restaurantId,
+                'username' => $username,
+                'password' => $password,
+                'role' => User::ROLE_CASHIER,
+                'status' => 'active',
+            ]);
+
+            AuditLog::log(AuditLog::ACTION_USER_CREATE, 'user', $newUserId, (int)$restaurantId, $user['id'], [
+                'username' => $username,
+                'role' => User::ROLE_CASHIER,
+                'created_by_manager' => $user['username']
+            ]);
+
+            $created = User::findById($newUserId);
+            $this->jsonSuccess($created, "Cashier '{$username}' created successfully.", 201);
+        } catch (Throwable $e) {
+            $this->jsonError('Failed to create staff: ' . $e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * POST /api/v1/manager/staff/{id}/toggle
+     */
+    public function toggleManagerStaff(int $id): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_MANAGER && $user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized. Manager only.', 403);
+        }
+
+        $restaurantId = $user['restaurant_id'];
+        $targetUser = User::findById($id);
+
+        if (!$targetUser || (int)$targetUser['restaurant_id'] !== (int)$restaurantId) {
+            $this->jsonError('Staff user not found in your restaurant.', 404);
+        }
+
+        if ($targetUser['role'] !== User::ROLE_CASHIER) {
+            $this->jsonError('Managers can only toggle cashier accounts.', 403);
+        }
+
+        User::toggleStatus($id);
+        $updated = User::findById($id);
+        $this->jsonSuccess($updated, "Staff status updated.");
+    }
+
+    /**
+     * GET /api/v1/manager/export/data
+     */
+    public function getExportData(): void {
+        $user = $this->authenticate();
+        if ($user['role'] !== User::ROLE_MANAGER && $user['role'] !== User::ROLE_SUPERADMIN) {
+            $this->jsonError('Unauthorized. Manager only.', 403);
+        }
+
+        $restaurantId = (int)$user['restaurant_id'];
+        $restaurant = Restaurant::findById($restaurantId);
+        $tz = new DateTimeZone($restaurant['timezone'] ?? 'Asia/Kolkata');
+        $now = new DateTime('now', $tz);
+
+        $exportType = $_GET['type'] ?? 'daily';
+        $startDate = $now->format('Y-m-d');
+        $endDate = $now->format('Y-m-d');
+
+        if ($exportType === 'daily') {
+            $date = $_GET['date'] ?? $now->format('Y-m-d');
+            $startDate = $date;
+            $endDate = $date;
+        } elseif ($exportType === 'monthly') {
+            $month = $_GET['month'] ?? $now->format('Y-m');
+            $dt = DateTime::createFromFormat('Y-m', $month, $tz) ?: $now;
+            $startDate = $dt->format('Y-m-01');
+            $endDate = $dt->format('Y-m-t');
+        } elseif ($exportType === 'custom') {
+            $startDate = $_GET['start_date'] ?? $now->format('Y-m-d');
+            $endDate = $_GET['end_date'] ?? $now->format('Y-m-d');
+        }
+
+        $stats = Order::getStats($restaurantId, 'custom', $startDate, $endDate);
+        $orders = Order::getOrdersForExport($restaurantId, $startDate, $endDate);
+
+        $this->jsonSuccess([
+            'restaurant_name' => $restaurant['name'] ?? '',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'stats' => $stats,
+            'orders' => $orders,
+            'download_url' => url("exports/download?type={$exportType}&start_date={$startDate}&end_date={$endDate}&date={$startDate}&month=" . substr($startDate, 0, 7)),
         ]);
     }
 }

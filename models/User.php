@@ -121,6 +121,18 @@ class User {
         return true;
     }
 
+    public static function toggleStatus(int $id): bool {
+        $user = self::findById($id);
+        if (!$user) return false;
+        $newStatus = $user['status'] === 'active' ? 'inactive' : 'active';
+        $now = date('Y-m-d H:i:s');
+        Database::execute(
+            "UPDATE users SET status = :status, updated_at = :updated_at WHERE id = :id",
+            [':status' => $newStatus, ':updated_at' => $now, ':id' => $id]
+        );
+        return true;
+    }
+
     public static function recordFailedLogin(int $userId): void {
         $user = self::findById($userId);
         if (!$user) return;

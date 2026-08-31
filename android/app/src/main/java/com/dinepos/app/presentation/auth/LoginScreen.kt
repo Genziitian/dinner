@@ -295,44 +295,6 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // Quick Login Shortcuts
-                    Text(
-                        text = "Quick Demo Accounts:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                viewModel.onUsernameChange("manager1")
-                                viewModel.onPasswordChange("pass1234")
-                                viewModel.login()
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("👔 Manager", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
-                        }
-                        OutlinedButton(
-                            onClick = {
-                                viewModel.onUsernameChange("cashier1")
-                                viewModel.onPasswordChange("pass1234")
-                                viewModel.login()
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("🛒 Cashier", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     TextButton(
                         onClick = { viewModel.setShowServerConfig(true) }
                     ) {
@@ -359,7 +321,7 @@ fun LoginScreen(
             text = {
                 Column {
                     Text(
-                        text = "Enter DinePOS Backend URL (e.g. http://10.0.2.2:8000/ or your local server IP):",
+                        text = "Enter DinePOS Backend URL (e.g. https://dinner.genziitian.in/ or custom IP):",
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary
                     )
