@@ -15,7 +15,7 @@ declare(strict_types=1);
     <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
     <title>Sign In · GI ORDER POS</title>
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
-    <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/app.css?v=' . filemtime(ROOT_PATH . '/public/assets/css/app.css')) ?>">
     <style>
         body {
             background-color: #f8fafc;
