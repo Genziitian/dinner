@@ -61,6 +61,30 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html, body, input, select, textarea {
+  color-scheme: light !important;
+}
+
+input, select, textarea, .form-control {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  box-shadow: 0 0 0 30px #ffffff inset !important;
+  caret-color: #ea580c !important;
+}
+
 /* ==========================================================================
    Responsive Utilities & Layout Container
    ========================================================================== */

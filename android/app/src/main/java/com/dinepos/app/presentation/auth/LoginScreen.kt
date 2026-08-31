@@ -151,6 +151,19 @@ fun LoginScreen(
                         },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = BrandDark,
+                            unfocusedTextColor = BrandDark,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedLabelColor = BrandOrange,
+                            unfocusedLabelColor = TextSecondary,
+                            focusedBorderColor = BrandOrange,
+                            unfocusedBorderColor = BrandBorder,
+                            focusedLeadingIconColor = BrandOrange,
+                            unfocusedLeadingIconColor = TextSecondary,
+                            cursorColor = BrandOrange
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
@@ -183,6 +196,21 @@ fun LoginScreen(
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = BrandDark,
+                            unfocusedTextColor = BrandDark,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedLabelColor = BrandOrange,
+                            unfocusedLabelColor = TextSecondary,
+                            focusedBorderColor = BrandOrange,
+                            unfocusedBorderColor = BrandBorder,
+                            focusedLeadingIconColor = BrandOrange,
+                            unfocusedLeadingIconColor = TextSecondary,
+                            focusedTrailingIconColor = BrandOrange,
+                            unfocusedTrailingIconColor = TextSecondary,
+                            cursorColor = BrandOrange
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,

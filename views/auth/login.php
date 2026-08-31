@@ -11,12 +11,16 @@ declare(strict_types=1);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#f8fafc">
+    <meta name="color-scheme" content="light">
     <link rel="manifest" href="<?= url('manifest.json') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
     <title>Sign In · GI ORDER POS</title>
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/app.css?v=' . filemtime(ROOT_PATH . '/public/assets/css/app.css')) ?>">
     <style>
+        html, body, input {
+            color-scheme: light !important;
+        }
         body {
             background-color: #f8fafc;
             min-height: 100vh;
@@ -66,16 +70,31 @@ declare(strict_types=1);
             padding: 0.85rem 1rem 0.85rem 2.75rem;
             font-size: 0.95rem;
             font-family: inherit;
-            color: #0f172a;
-            background-color: #ffffff;
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            background-color: #ffffff !important;
             border: 1.5px solid #e2e8f0;
             border-radius: 14px;
             outline: none;
             transition: all 0.15s ease-in-out;
+            caret-color: #ea580c;
+        }
+        .form-control-android::placeholder {
+            color: #94a3b8 !important;
+            -webkit-text-fill-color: #94a3b8 !important;
         }
         .form-control-android:focus {
             border-color: #ea580c;
             box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+        }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+            -webkit-text-fill-color: #0f172a !important;
+            box-shadow: 0 0 0 30px #ffffff inset !important;
+            caret-color: #ea580c !important;
         }
         .btn-signin-android {
             width: 100%;
