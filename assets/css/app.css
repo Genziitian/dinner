@@ -1388,3 +1388,407 @@ input:checked + .m3-switch-slider:before {
     margin: 0 !important;
   }
 }
+
+/* ==========================================================================
+   Desktop Navigation Bar & Modern Admin Components
+   ========================================================================== */
+@media (min-width: 992px) {
+  .app-bottom-nav {
+    display: none !important;
+  }
+  .app-container {
+    padding-bottom: 2rem !important;
+  }
+}
+
+.app-navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  padding: 0.65rem 0;
+}
+
+.brand-icon-box {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #ea580c, #f97316);
+  color: #ffffff;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+}
+.brand-icon-box.sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.brand-title {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+.brand-title.sm {
+  font-size: 1rem;
+}
+
+.badge-role {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+.badge-role-superadmin {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+.badge-role-manager {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.badge-role-cashier {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.badge-role.sm {
+  font-size: 9px;
+  padding: 2px 6px;
+}
+
+.nav-link-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.95rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.15s ease-in-out;
+}
+.nav-link-pill:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+.nav-link-pill.active {
+  color: #ea580c;
+  background-color: #fff7ed;
+  font-weight: 700;
+}
+
+.nav-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.35rem 0.75rem 0.35rem 0.35rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+}
+.nav-user-pill:hover, .nav-user-pill.active {
+  border-color: #cbd5e1;
+  background-color: #f1f5f9;
+}
+.nav-user-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.8rem;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-user-avatar.sm {
+  width: 28px;
+  height: 28px;
+  font-size: 0.75rem;
+}
+.nav-user-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+.nav-user-subtitle {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.1;
+}
+
+.nav-logout-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+.nav-logout-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.app-mobile-top-bar {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+/* Admin Dashboard & Management UI */
+.admin-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 3rem 1.25rem;
+}
+
+.admin-header-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+.admin-page-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.6px;
+  margin: 0;
+  line-height: 1.2;
+}
+.admin-page-subtitle {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.admin-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.35rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  height: 100%;
+}
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+.admin-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-stat-icon.orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+.admin-stat-icon.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.admin-stat-icon.emerald {
+  background: #ecfdf5;
+  color: #059669;
+}
+.admin-stat-icon.purple {
+  background: #faf5ff;
+  color: #9333ea;
+}
+.admin-stat-val {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin: 0.5rem 0 0.25rem 0;
+}
+.admin-stat-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.admin-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1.75rem;
+}
+.admin-card-header {
+  padding: 1.15rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.admin-card-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.admin-table {
+  width: 100%;
+  margin-bottom: 0;
+}
+.admin-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.admin-table td {
+  padding: 1rem 1.25rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+.admin-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.restaurant-grid-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.35rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.restaurant-grid-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+.restaurant-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff7ed, #fed7aa);
+  color: #ea580c;
+  font-weight: 800;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-btn-primary {
+  background-color: #ea580c;
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 10px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
+  transition: all 0.15s ease;
+}
+.admin-btn-primary:hover {
+  background-color: #c2410c;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35);
+}
+
+.admin-btn-secondary {
+  background-color: #ffffff;
+  color: #334155 !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+.admin-btn-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a !important;
+}
+
+.admin-pill-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 50rem;
+}
+.admin-pill-status.active {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+.admin-pill-status.inactive {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+.admin-pill-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.admin-pill-status.active .dot {
+  background-color: #10b981;
+}
+.admin-pill-status.inactive .dot {
+  background-color: #ef4444;
+}
+
