@@ -43,17 +43,23 @@ $isEdit = !empty($isEdit);
 
                     <!-- Password -->
                     <div class="mb-3">
-                        <label class="form-label">Password <?= $isEdit ? '<span class="text-muted small">(Leave blank to keep unchanged)</span>' : '<span class="text-danger">*</span>' ?></label>
-                        <input 
-                            type="password" 
-                            name="password" 
-                            class="form-control" 
-                            minlength="8" 
-                            maxlength="72"
-                            placeholder="••••••••" 
-                            <?= $isEdit ? '' : 'required' ?>
-                        >
-                        <div class="text-muted small">Must be 8 to 72 characters.</div>
+                        <label class="form-label fw-semibold">Password <?= $isEdit ? '<span class="text-muted small fw-normal">(Leave blank to keep unchanged)</span>' : '<span class="text-danger">*</span>' ?></label>
+                        <div class="input-group">
+                            <input 
+                                type="password" 
+                                name="password" 
+                                id="mgrStaffPassword"
+                                class="form-control" 
+                                minlength="8" 
+                                maxlength="72" 
+                                placeholder="<?= $isEdit ? '••••••••' : 'Enter password (min 8 chars)' ?>" 
+                                <?= $isEdit ? '' : 'required' ?>
+                            >
+                            <button class="btn btn-outline-secondary" type="button" onclick="const p = document.getElementById('mgrStaffPassword'); p.type = p.type === 'password' ? 'text' : 'password';" title="Toggle Password Visibility">
+                                👁️
+                            </button>
+                        </div>
+                        <div class="text-muted small mt-1">Must be 8 to 72 characters.</div>
                     </div>
 
                     <!-- Role Selection -->

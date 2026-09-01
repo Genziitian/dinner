@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -710,6 +711,8 @@ private fun ManagerStaffDialog(
         var cashierUsername by remember { mutableStateOf("") }
         var cashierPassword by remember { mutableStateOf("") }
         var confirmPassword by remember { mutableStateOf("") }
+        var passwordVisible by remember { mutableStateOf(false) }
+        var confirmPasswordVisible by remember { mutableStateOf(false) }
         var isSubmitting by remember { mutableStateOf(false) }
 
         val passwordsMatch = cashierPassword.isNotEmpty() && cashierPassword == confirmPassword
@@ -756,7 +759,16 @@ private fun ManagerStaffDialog(
                         onValueChange = { cashierPassword = it },
                         label = { Text("Password (min 8 chars) *") },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = "Toggle password visibility",
+                                    tint = TextSecondary
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -765,7 +777,16 @@ private fun ManagerStaffDialog(
                         onValueChange = { confirmPassword = it },
                         label = { Text("Confirm Password *") },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = "Toggle confirm password visibility",
+                                    tint = TextSecondary
+                                )
+                            }
+                        },
                         isError = confirmPassword.isNotEmpty() && !passwordsMatch,
                         supportingText = {
                             if (confirmPassword.isNotEmpty()) {
@@ -828,6 +849,8 @@ private fun ManagerStaffDialog(
         var usernameVal by remember { mutableStateOf(cashier.username) }
         var newPass by remember { mutableStateOf("") }
         var confirmNewPass by remember { mutableStateOf("") }
+        var passwordVisible by remember { mutableStateOf(false) }
+        var confirmPasswordVisible by remember { mutableStateOf(false) }
         var isSubmitting by remember { mutableStateOf(false) }
 
         val passwordsMatch = newPass.isEmpty() || (newPass == confirmNewPass && newPass.length >= 8)
@@ -874,7 +897,16 @@ private fun ManagerStaffDialog(
                         onValueChange = { newPass = it },
                         label = { Text("New Password (min 8 chars)") },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = "Toggle password visibility",
+                                    tint = TextSecondary
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -884,7 +916,16 @@ private fun ManagerStaffDialog(
                             onValueChange = { confirmNewPass = it },
                             label = { Text("Confirm New Password *") },
                             singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
+                            visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                    Icon(
+                                        imageVector = if (confirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = "Toggle confirm password visibility",
+                                        tint = TextSecondary
+                                    )
+                                }
+                            },
                             isError = newPass != confirmNewPass,
                             supportingText = {
                                 if (confirmNewPass.isNotEmpty()) {

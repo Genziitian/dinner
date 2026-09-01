@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dinepos.app.DinePosApp
@@ -454,6 +455,8 @@ private fun CreateUserDialog(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var selectedRole by remember { mutableStateOf("manager") }
     var selectedRestaurantId by remember { mutableStateOf(restaurants.firstOrNull()?.id) }
     var restaurantDropdownExpanded by remember { mutableStateOf(false) }
@@ -479,7 +482,16 @@ private fun CreateUserDialog(
                     onValueChange = { password = it },
                     label = { Text("Password (min 8 chars) *") },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = "Toggle password visibility",
+                                tint = TextSecondary
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -488,7 +500,16 @@ private fun CreateUserDialog(
                     onValueChange = { confirmPassword = it },
                     label = { Text("Confirm Password *") },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(
+                                imageVector = if (confirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = "Toggle confirm password visibility",
+                                tint = TextSecondary
+                            )
+                        }
+                    },
                     isError = confirmPassword.isNotEmpty() && !passwordsMatch,
                     supportingText = {
                         if (confirmPassword.isNotEmpty()) {
@@ -599,6 +620,8 @@ private fun EditUserDialog(
     var username by remember { mutableStateOf(user.username) }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var selectedRole by remember { mutableStateOf(user.role) }
     var selectedRestaurantId by remember { mutableStateOf(user.restaurantId ?: restaurants.firstOrNull()?.id) }
     var restaurantDropdownExpanded by remember { mutableStateOf(false) }
@@ -625,7 +648,16 @@ private fun EditUserDialog(
                     onValueChange = { password = it },
                     label = { Text("New Password") },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = "Toggle password visibility",
+                                tint = TextSecondary
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -635,7 +667,16 @@ private fun EditUserDialog(
                         onValueChange = { confirmPassword = it },
                         label = { Text("Confirm New Password") },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = "Toggle confirm password visibility",
+                                    tint = TextSecondary
+                                )
+                            }
+                        },
                         isError = password != confirmPassword,
                         modifier = Modifier.fillMaxWidth()
                     )
