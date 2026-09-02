@@ -21,12 +21,21 @@ class AdminController extends BaseController {
         $restaurants = Restaurant::all();
         $users = User::all();
 
+        $activeRestaurants = count(array_filter($restaurants, fn($r) => ($r['status'] ?? '') === 'active'));
+        $superAdminCount = count(array_filter($users, fn($u) => ($u['role'] ?? '') === 'superadmin'));
+        $managerCount = count(array_filter($users, fn($u) => ($u['role'] ?? '') === 'manager'));
+        $cashierCount = count(array_filter($users, fn($u) => ($u['role'] ?? '') === 'cashier'));
+
         $this->render('admin/dashboard', [
-            'title' => 'Super Admin Dashboard | DinePOS',
+            'title' => 'Super Admin Dashboard | GI ORDER',
             'restaurants' => $restaurants,
             'users' => $users,
             'totalRestaurants' => count($restaurants),
+            'activeRestaurants' => $activeRestaurants,
             'totalUsers' => count($users),
+            'superAdminCount' => $superAdminCount,
+            'managerCount' => $managerCount,
+            'cashierCount' => $cashierCount,
         ]);
     }
 

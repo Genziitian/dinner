@@ -107,7 +107,7 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
                 </div>
                 <span class="nav-label">Users</span>
             </a>
-            <a href="<?= url('manager/settings') ?>" class="app-nav-item <?= str_contains($currentUri, 'profile') ? 'active' : '' ?>">
+            <a href="<?= url('manager/settings') ?>" class="app-nav-item <?= (str_contains($currentUri, 'manager/settings') || str_contains($currentUri, 'profile')) ? 'active' : '' ?>">
                 <div class="nav-icon">
                     <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                 </div>
