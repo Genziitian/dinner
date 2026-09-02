@@ -9,7 +9,7 @@ declare(strict_types=1);
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#f8fafc">
     <meta name="color-scheme" content="light">
     <link rel="manifest" href="<?= url('manifest.json') ?>">

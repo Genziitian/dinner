@@ -38,6 +38,8 @@
   --status-warning: #F59E0B;
 
   --bottom-nav-height: 68px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --bottom-nav-total-height: calc(var(--bottom-nav-height) + var(--safe-area-bottom));
   --top-app-bar-height: 64px;
 }
 
@@ -93,13 +95,13 @@ input:-webkit-autofill:active {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
-  padding-bottom: calc(var(--bottom-nav-height) + 2rem);
+  padding-bottom: calc(var(--bottom-nav-total-height) + 2rem);
 }
 
 @media (max-width: 767.98px) {
   .app-container {
     padding: 0.85rem;
-    padding-bottom: calc(var(--bottom-nav-height) + 2.5rem);
+    padding-bottom: calc(var(--bottom-nav-total-height) + 2.5rem);
   }
 }
 
@@ -254,8 +256,12 @@ input:-webkit-autofill:active {
   right: 0;
   z-index: 1040;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   pointer-events: none;
+  /* Fill the system nav area behind the app nav with the surface color */
+  padding-bottom: var(--safe-area-bottom);
+  background-color: var(--brand-surface);
 }
 
 .app-bottom-nav-surface {
@@ -271,11 +277,15 @@ input:-webkit-autofill:active {
   align-items: center;
   justify-content: space-around;
   padding: 0 0.5rem;
-  padding-bottom: max(0.25rem, env(safe-area-inset-bottom, 14px));
+  padding-bottom: 0.25rem;
   position: relative;
 }
 
 @media (min-width: 768px) {
+  .app-bottom-nav {
+    background-color: transparent;
+    padding-bottom: 0;
+  }
   .app-bottom-nav-surface {
     border-radius: 20px;
     margin-bottom: 1rem;
@@ -783,7 +793,7 @@ input:-webkit-autofill:active {
    ========================================================================== */
 .pos-floating-cart-bar {
   position: fixed;
-  bottom: calc(var(--bottom-nav-height) + 8px);
+  bottom: calc(var(--bottom-nav-total-height) + 8px);
   left: 0;
   right: 0;
   z-index: 1030;
@@ -926,7 +936,7 @@ input:checked + .m3-switch-slider:before {
 /* Floating Action Button (FAB) Bottom-Right '+' */
 .fab-add-btn {
   position: fixed;
-  bottom: calc(var(--bottom-nav-height) + 1.25rem);
+  bottom: calc(var(--bottom-nav-total-height) + 1.25rem);
   right: 1.25rem;
   z-index: 1030;
   width: 56px;
