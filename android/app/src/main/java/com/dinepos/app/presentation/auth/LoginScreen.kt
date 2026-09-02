@@ -1,5 +1,6 @@
 package com.dinepos.app.presentation.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +39,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dinepos.app.R
 import com.dinepos.app.core.theme.*
 import com.dinepos.app.domain.model.User
 
@@ -87,20 +90,13 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // App Logo Icon
-                    Box(
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo),
+                        contentDescription = "GI ORDER Logo",
                         modifier = Modifier
-                            .size(68.dp)
-                            .clip(CircleShape)
-                            .background(BrandOrange),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Restaurant,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(36.dp)
-                        )
-                    }
+                            .size(76.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 

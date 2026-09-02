@@ -18,8 +18,11 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="GI ORDER">
     <link rel="manifest" href="<?= url('manifest.json') ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= asset('icons/favicon-32x32.png') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('icons/favicon-16x16.png') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
-    <link rel="apple-touch-icon" href="<?= asset('icons/icon-192.png') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('icons/apple-touch-icon.png') ?>">
+    <link rel="shortcut icon" href="<?= asset('icons/favicon.ico') ?>">
 
     <title><?= e($title ?? 'GI ORDER - Restaurant Billing') ?></title>
 
@@ -37,7 +40,7 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         <div class="d-flex align-items-center gap-3">
             <a href="<?= url('/') ?>" class="brand text-decoration-none d-flex align-items-center gap-2">
                 <div class="brand-icon-box">
-                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <img src="<?= asset('icons/icon-192.png') ?>" alt="GI ORDER POS" class="brand-logo-img">
                 </div>
                 <span class="brand-title">GI ORDER POS</span>
                 <span class="badge-role badge-role-<?= e($currentUser['role']) ?>">
@@ -125,7 +128,7 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     <div class="d-flex justify-content-between align-items-center px-3 py-2">
         <a href="<?= url('/') ?>" class="brand text-decoration-none d-flex align-items-center gap-2">
             <div class="brand-icon-box sm">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <img src="<?= asset('icons/icon-192.png') ?>" alt="GI ORDER POS" class="brand-logo-img">
             </div>
             <span class="brand-title sm">GI ORDER POS</span>
             <span class="badge-role sm"><?= strtoupper(e($currentUser['role'])) ?></span>

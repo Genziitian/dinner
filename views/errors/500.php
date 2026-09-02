@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= asset('icons/favicon-32x32.png') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('icons/favicon-16x16.png') ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('icons/apple-touch-icon.png') ?>">
+    <link rel="shortcut icon" href="<?= asset('icons/favicon.ico') ?>">
     <title>500 - Server Error | GI ORDER</title>
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">

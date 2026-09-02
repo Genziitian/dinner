@@ -13,7 +13,11 @@ declare(strict_types=1);
     <meta name="theme-color" content="#f8fafc">
     <meta name="color-scheme" content="light">
     <link rel="manifest" href="<?= url('manifest.json') ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= asset('icons/favicon-32x32.png') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('icons/favicon-16x16.png') ?>">
     <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('icons/apple-touch-icon.png') ?>">
+    <link rel="shortcut icon" href="<?= asset('icons/favicon.ico') ?>">
     <title>Sign In · GI ORDER POS</title>
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/app.css?v=' . filemtime(ROOT_PATH . '/public/assets/css/app.css')) ?>">
@@ -146,10 +150,10 @@ declare(strict_types=1);
 <body>
 
 <div class="login-card-android">
-    <!-- Brand Logo Circle -->
+    <!-- Brand Logo -->
     <div class="text-center">
-        <div class="app-circle-logo">
-            <svg width="34" height="34" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        <div class="mb-3">
+            <img src="<?= asset('icons/icon-192.png') ?>" alt="GI ORDER POS" class="app-brand-logo-img" width="76" height="76" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(253, 108, 1, 0.35);">
         </div>
         <h3 class="fw-bold m-0" style="letter-spacing: -0.5px; color: #0f172a; font-size: 1.5rem;">GI ORDER POS</h3>
         <p class="text-secondary" style="font-size: 0.85rem; margin-top: 0.25rem; margin-bottom: 1.5rem;">Restaurant Billing & Order Management</p>

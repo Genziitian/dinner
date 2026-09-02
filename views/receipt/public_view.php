@@ -11,6 +11,11 @@ declare(strict_types=1);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= asset('icons/favicon-32x32.png') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('icons/favicon-16x16.png') ?>">
+    <link rel="icon" type="image/svg+xml" href="<?= asset('icons/icon.svg') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('icons/apple-touch-icon.png') ?>">
+    <link rel="shortcut icon" href="<?= asset('icons/favicon.ico') ?>">
     <title>Receipt #<?= (int)$order['order_number'] ?> - <?= e($order['restaurant_name']) ?></title>
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
