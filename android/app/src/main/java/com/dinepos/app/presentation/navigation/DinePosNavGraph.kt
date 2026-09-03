@@ -131,7 +131,10 @@ fun DinePosNavGraph(
                 onNavigateToItems = { navController.navigate(Screen.ManagerItems.route) },
                 onNavigateToReports = { navController.navigate(Screen.ManagerReports.route) },
                 onNavigateToScanner = { navController.navigate(Screen.QrScanner.route) },
-                onNavigateToMillHub = { path -> navController.navigate(Screen.MillHub.createRoute(path)) },
+                onNavigateToMillOrder = { navController.navigate(Screen.MillCreateOrder.route) },
+                onNavigateToMillOrders = { navController.navigate(Screen.MillOrders.route) },
+                onNavigateToMillServices = { navController.navigate(Screen.MillServices.route) },
+                onNavigateToMillCustomers = { navController.navigate(Screen.MillCustomers.route) },
                 onOrderClick = { order ->
                     navController.navigate(Screen.OrderDetail.createRoute(order.id))
                 },
@@ -143,24 +146,28 @@ fun DinePosNavGraph(
             )
         }
 
-        // 6b. Mill Hub Screen
-        composable(
-            route = Screen.MillHub.route,
-            arguments = listOf(
-                navArgument("path") {
-                    type = NavType.StringType
-                    defaultValue = "mill/dashboard"
-                }
+        // Mill Native Screens
+        composable(Screen.MillCreateOrder.route) {
+            com.dinepos.app.presentation.mill.MillCreateOrderScreen(
+                onOrderCreated = { navController.popBackStack() },
+                onNavigateBack = { navController.popBackStack() }
             )
-        ) { backStackEntry ->
-            val rawPath = backStackEntry.arguments?.getString("path") ?: "mill/dashboard"
-            val decodedPath = try {
-                java.net.URLDecoder.decode(rawPath, "UTF-8")
-            } catch (e: Exception) {
-                rawPath
-            }
-            com.dinepos.app.presentation.mill.MillHubScreen(
-                initialPath = decodedPath,
+        }
+
+        composable(Screen.MillOrders.route) {
+            com.dinepos.app.presentation.mill.MillOrdersScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.MillServices.route) {
+            com.dinepos.app.presentation.mill.MillServicesScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.MillCustomers.route) {
+            com.dinepos.app.presentation.mill.MillCustomersScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

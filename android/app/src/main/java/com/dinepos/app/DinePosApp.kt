@@ -21,6 +21,7 @@ class DinePosApp : Application() {
     lateinit var menuRepository: MenuRepository private set
     lateinit var orderRepository: OrderRepository private set
     lateinit var managerRepository: ManagerRepository private set
+    lateinit var millRepository: com.dinepos.app.domain.repository.MillRepository private set
 
     override fun onCreate() {
         super.onCreate()
@@ -38,6 +39,7 @@ class DinePosApp : Application() {
         menuRepository = MenuRepositoryImpl(apiService)
         orderRepository = OrderRepositoryImpl(apiService)
         managerRepository = ManagerRepositoryImpl(apiService)
+        millRepository = com.dinepos.app.data.repository.MillRepositoryImpl(apiService)
     }
 
     companion object {

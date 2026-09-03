@@ -56,10 +56,11 @@ fun DinePosBottomBar(
         Screen.ManagerItems.route,
         Screen.ManagerReports.route,
         Screen.Profile.route,
-        Screen.MillHub.route
+        Screen.MillOrders.route,
+        Screen.MillServices.route
     )
 
-    val isVisible = (currentRoute in topLevelRoutes || currentRoute?.startsWith("mill_hub") == true) && currentRoute != Screen.Login.route
+    val isVisible = currentRoute in topLevelRoutes && currentRoute != Screen.Login.route
 
     AnimatedVisibility(
         visible = isVisible,
@@ -167,10 +168,10 @@ fun DinePosBottomBar(
                             NavItem(
                                 icon = Icons.AutoMirrored.Outlined.Assignment,
                                 label = "Orders",
-                                isSelected = currentRoute == Screen.ManagerOrders.route || (isMill && currentRoute?.contains("mill_hub") == true && currentRoute.contains("orders")),
+                                isSelected = currentRoute == (if (isMill) Screen.MillOrders.route else Screen.ManagerOrders.route),
                                 onClick = {
                                     if (isMill) {
-                                        onNavigateToRoute(Screen.MillHub.createRoute("mill/orders"))
+                                        onNavigateToRoute(Screen.MillOrders.route)
                                     } else {
                                         onNavigateToRoute(Screen.ManagerOrders.route)
                                     }
@@ -181,10 +182,10 @@ fun DinePosBottomBar(
                             NavItem(
                                 icon = if (isMill) Icons.Outlined.Storefront else Icons.Outlined.RestaurantMenu,
                                 label = if (isMill) "Rates" else "Menu",
-                                isSelected = currentRoute == Screen.ManagerItems.route || (isMill && currentRoute?.contains("mill_hub") == true && currentRoute.contains("services")),
+                                isSelected = currentRoute == (if (isMill) Screen.MillServices.route else Screen.ManagerItems.route),
                                 onClick = {
                                     if (isMill) {
-                                        onNavigateToRoute(Screen.MillHub.createRoute("mill/services"))
+                                        onNavigateToRoute(Screen.MillServices.route)
                                     } else {
                                         onNavigateToRoute(Screen.ManagerItems.route)
                                     }

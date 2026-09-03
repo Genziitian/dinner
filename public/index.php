@@ -157,6 +157,22 @@ try {
             $api->toggleUser((int)$m[1]);
         } elseif (preg_match('#^/api/v1/receipt/([a-zA-Z0-9_-]+)$#', $path, $m) && $method === 'GET') {
             $api->getReceipt($m[1]);
+        } elseif ($path === '/api/v1/mill/services' && $method === 'GET') {
+            $api->getMillServices();
+        } elseif ($path === '/api/v1/mill/services' && $method === 'POST') {
+            $api->saveMillService();
+        } elseif (preg_match('#^/api/v1/mill/services/(\d+)/toggle$#', $path, $m) && $method === 'POST') {
+            $api->toggleMillService((int)$m[1]);
+        } elseif ($path === '/api/v1/mill/orders' && $method === 'GET') {
+            $api->getMillOrders();
+        } elseif ($path === '/api/v1/mill/orders' && $method === 'POST') {
+            $api->createMillOrder();
+        } elseif (preg_match('#^/api/v1/mill/orders/(\d+)/status$#', $path, $m) && $method === 'POST') {
+            $api->updateMillOrderStatus((int)$m[1]);
+        } elseif ($path === '/api/v1/mill/customers' && $method === 'GET') {
+            $api->getMillCustomers();
+        } elseif ($path === '/api/v1/mill/customers/search' && $method === 'GET') {
+            $api->searchMillCustomers();
         } else {
             http_response_code(404);
             header('Content-Type: application/json');

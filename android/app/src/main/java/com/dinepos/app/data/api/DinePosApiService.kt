@@ -110,4 +110,29 @@ interface DinePosApiService {
 
     @GET("api/v1/receipt/{token}")
     suspend fun getReceiptByToken(@Path("token") token: String): Response<ApiResponseDto<CreateOrderResponseDto>>
+
+    // Mill API
+    @GET("api/v1/mill/services")
+    suspend fun getMillServices(): Response<ApiResponseDto<List<com.dinepos.app.data.dto.MillServiceDto>>>
+
+    @POST("api/v1/mill/services")
+    suspend fun saveMillService(@Body request: com.dinepos.app.data.dto.MillServiceDto): Response<ApiResponseDto<com.dinepos.app.data.dto.MillServiceDto>>
+
+    @POST("api/v1/mill/services/{id}/toggle")
+    suspend fun toggleMillService(@Path("id") id: Int): Response<ApiResponseDto<com.dinepos.app.data.dto.MillServiceDto>>
+
+    @GET("api/v1/mill/orders")
+    suspend fun getMillOrders(
+        @Query("status") status: String? = null,
+        @Query("search") search: String? = null
+    ): Response<ApiResponseDto<List<com.dinepos.app.data.dto.MillOrderDto>>>
+
+    @POST("api/v1/mill/orders")
+    suspend fun createMillOrder(@Body request: com.dinepos.app.data.dto.CreateMillOrderRequestDto): Response<ApiResponseDto<com.dinepos.app.data.dto.MillOrderDto>>
+
+    @POST("api/v1/mill/orders/{id}/status")
+    suspend fun updateMillOrderStatus(@Path("id") id: Int, @Body body: Map<String, String>): Response<ApiResponseDto<com.dinepos.app.data.dto.MillOrderDto>>
+
+    @GET("api/v1/mill/customers")
+    suspend fun getMillCustomers(@Query("search") search: String? = null): Response<ApiResponseDto<List<com.dinepos.app.data.dto.MillCustomerDto>>>
 }

@@ -69,7 +69,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onTakeOrderClick = {
                                     if (sessionManager.isMill()) {
-                                        navController.navigate(Screen.MillHub.createRoute("mill/orders/new"))
+                                        navController.navigate(Screen.MillCreateOrder.route)
                                     } else {
                                         navController.navigate(Screen.CashierBilling.route)
                                     }

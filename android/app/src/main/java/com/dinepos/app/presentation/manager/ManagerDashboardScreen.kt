@@ -42,7 +42,10 @@ fun ManagerDashboardScreen(
     onNavigateBack: (() -> Unit)? = null,
     onOrderClick: (Order) -> Unit,
     onLogout: () -> Unit,
-    onNavigateToMillHub: (String) -> Unit = {},
+    onNavigateToMillOrder: () -> Unit = {},
+    onNavigateToMillOrders: () -> Unit = {},
+    onNavigateToMillServices: () -> Unit = {},
+    onNavigateToMillCustomers: () -> Unit = {},
     viewModel: DashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -103,17 +106,6 @@ fun ManagerDashboardScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToScanner) {
-                        Icon(Icons.Default.QrCode, contentDescription = "Scan QR", tint = BrandOrange)
-                    }
-                    IconButton(onClick = { viewModel.loadDashboard() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandDark)
-                    }
-                    IconButton(onClick = { viewModel.logout(onLogout) }) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = StatusError)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandSurface)
@@ -216,7 +208,7 @@ fun ManagerDashboardScreen(
                                     icon = if (isMill) Icons.Default.AddShoppingCart else Icons.Default.ShoppingCart,
                                     iconColor = BrandOrange,
                                     badgeText = "${stats?.totalOrders ?: 0} orders",
-                                    onClick = if (isMill) { { onNavigateToMillHub("mill/orders/new") } } else onNavigateToBilling,
+                                    onClick = if (isMill) onNavigateToMillOrder else onNavigateToBilling,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ActionCard(
@@ -224,7 +216,7 @@ fun ManagerDashboardScreen(
                                     subtitle = if (isMill) "Status & WhatsApp" else "View & search all",
                                     icon = Icons.AutoMirrored.Filled.ReceiptLong,
                                     iconColor = Color(0xFF3B82F6),
-                                    onClick = if (isMill) { { onNavigateToMillHub("mill/orders") } } else onNavigateToOrders,
+                                    onClick = if (isMill) onNavigateToMillOrders else onNavigateToOrders,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -237,7 +229,7 @@ fun ManagerDashboardScreen(
                                     subtitle = if (isMill) "Rates & price/KG" else "Rates & portions",
                                     icon = if (isMill) Icons.Default.Storefront else Icons.Default.RestaurantMenu,
                                     iconColor = BrandEmerald,
-                                    onClick = if (isMill) { { onNavigateToMillHub("mill/services") } } else onNavigateToItems,
+                                    onClick = if (isMill) onNavigateToMillServices else onNavigateToItems,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ActionCard(
@@ -245,7 +237,7 @@ fun ManagerDashboardScreen(
                                     subtitle = if (isMill) "Directory & dues" else "Analytics & exports",
                                     icon = if (isMill) Icons.Default.People else Icons.Default.BarChart,
                                     iconColor = Color(0xFF8B5CF6),
-                                    onClick = if (isMill) { { onNavigateToMillHub("mill/customers") } } else onNavigateToReports,
+                                    onClick = if (isMill) onNavigateToMillCustomers else onNavigateToReports,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -405,7 +397,7 @@ fun ManagerDashboardScreen(
                             subtitle = if (isMill) "Record KG & Price" else "POS Billing Screen",
                             icon = if (isMill) Icons.Default.AddShoppingCart else Icons.Default.ShoppingCart,
                             iconColor = BrandOrange,
-                            onClick = if (isMill) { { onNavigateToMillHub("mill/orders/new") } } else onNavigateToBilling,
+                            onClick = if (isMill) onNavigateToMillOrder else onNavigateToBilling,
                             modifier = Modifier.weight(1f)
                         )
                         ActionCard(
@@ -413,7 +405,7 @@ fun ManagerDashboardScreen(
                             subtitle = if (isMill) "Status & WhatsApp" else "View History",
                             icon = Icons.AutoMirrored.Filled.ReceiptLong,
                             iconColor = Color(0xFF3B82F6),
-                            onClick = if (isMill) { { onNavigateToMillHub("mill/orders") } } else onNavigateToOrders,
+                            onClick = if (isMill) onNavigateToMillOrders else onNavigateToOrders,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -427,7 +419,7 @@ fun ManagerDashboardScreen(
                             subtitle = if (isMill) "Price per KG" else "Rates & Portions",
                             icon = if (isMill) Icons.Default.Storefront else Icons.Default.RestaurantMenu,
                             iconColor = BrandEmerald,
-                            onClick = if (isMill) { { onNavigateToMillHub("mill/services") } } else onNavigateToItems,
+                            onClick = if (isMill) onNavigateToMillServices else onNavigateToItems,
                             modifier = Modifier.weight(1f)
                         )
                         ActionCard(
@@ -435,7 +427,7 @@ fun ManagerDashboardScreen(
                             subtitle = if (isMill) "Directory & Dues" else "Sales & Analytics",
                             icon = if (isMill) Icons.Default.People else Icons.Default.BarChart,
                             iconColor = Color(0xFF8B5CF6),
-                            onClick = if (isMill) { { onNavigateToMillHub("mill/customers") } } else onNavigateToReports,
+                            onClick = if (isMill) onNavigateToMillCustomers else onNavigateToReports,
                             modifier = Modifier.weight(1f)
                         )
                     }

@@ -992,4 +992,192 @@ class ApiController {
             $this->jsonError('Failed to update cashier: ' . $e->getMessage(), 400);
         }
     }
+
+    // ==========================================
+    // MILL API ENDPOINTS
+    // ==========================================
+
+    /**
+     * GET /api/v1/mill/services
+     */
+    public function getMillServices(): void {
+        $user = $this->authenticate();
+        $restaurantId = (int)($user['restaurant_id'] ?? 0);
+        require_once ROOT_PATH . '/models/MillService.php';
+        $services = MillService::allByRestaurant($restaurantId, false);
+        $this->jsonSuccess($services);
+    }
+
+    /**
+     * POST /api/v1/mill/services
+     */
+    public function saveMillService(): void {
+        $user = $this->authenticate();
+        $restaurantId = (int)($user['restaurant_id'] ?? 0);
+        require_once ROOT_PATH . '/models/MillService.php';
+        $input = $this->getJsonInput();
+
+        $name = trim((string)($input['name'] ?? ''));
+        $nameHi = trim((string)($input['name_hi'] ?? ''));
+        $rate = (float)($input['rate_per_kg'] ?? 0);
+        $active = isset($input['active']) ? (int)$input['active'] : 1;
+        $id = isset($input['id']) ? (int)$input['id'] : 0;
+
+        if (empty($name)) {
+            $this->jsonError('Service name is required.', 422);
+        }
+        if ($rate <= 0) {
+            $this->jsonError('Rate per KG must be greater than zero.', 422);
+        }
+
+        if ($id > 0) {
+            MillService::update($id, [
+                'name' => $name,
+                'name_hi' => $nameHi,
+                'rate_per_kg' => $rate,
+                'active' => $active,
+            ]);
+            $service = MillService::findById($id);
+            $this->jsonSuccess($service, 'Service updated successfully.');
+        } else {
+            $newId = MillService::create([
+                'restaurant_id' => $restaurantId,
+                'name' => $name,
+                'name_hi' => $nameHi,
+                'rate_per_kg' => $rate,
+                'active' => $active,
+            ]);
+            $service = MillService::findById($newId);
+            $this->jsonSuccess($service, 'Service created successfully.');
+        }
+    }
+
+    /**
+     * POST /api/v1/mill/services/{id}/toggle
+     */
+    public function toggleMillService(int $id): void {
+        $user = $this->authenticate();
+        require_once ROOT_PATH . '/models/MillService.php';
+        $service = MillService::findById($id);
+        if (!$service) {
+            $this->jsonError('Service not found.', 404);
+        }
+        MillService::toggleActive($id);
+        $updated = MillService::findById($id);
+        $this->jsonSuccess($updated, 'Service status updated.');
+    }
+
+    /**
+     * GET /api/v1/mill/orders
+     */
+    public function getMillOrders(): void {
+        $user = $this->authenticate();
+        $restaurantId = (int)($user['restaurant_id'] ?? 0);
+        require_once ROOT_PATH . '/models/MillOrder.php';
+
+        $status = $_GET['status'] ?? 'all';
+        $search = $_GET['search'] ?? null;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
+        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+
+        $orders = MillOrder::allByRestaurant($restaurantId, $status, $search, $limit, $offset);
+        $this->jsonSuccess($orders);
+    }
+
+    /**
+     * POST /api/v1/mill/orders
+     */
+    public function createMillOrder(): void {
+        $user = $this->authenticate();
+        $restaurantId = (int)($user['restaurant_id'] ?? 0);
+        require_once ROOT_PATH . '/models/MillOrder.php';
+        $input = $this->getJsonInput();
+
+        $customerName = trim((string)($input['customer_name'] ?? ''));
+        $customerPhone = trim((string)($input['customer_phone'] ?? ''));
+        $serviceId = isset($input['service_id']) ? (int)$input['service_id'] : null;
+        $serviceName = trim((string)($input['service_name'] ?? 'Grinding'));
+        $weightKg = (float)($input['weight_kg'] ?? 0);
+        $ratePerKg = (float)($input['rate_per_kg'] ?? 0);
+        $paymentStatus = (string)($input['payment_status'] ?? 'unpaid');
+        $paymentMethod = (string)($input['payment_method'] ?? 'cash');
+        $notes = trim((string)($input['notes'] ?? ''));
+
+        if (empty($customerName)) {
+            $this->jsonError('Customer name is required.', 422);
+        }
+        if (empty($customerPhone)) {
+            $this->jsonError('Customer phone is required.', 422);
+        }
+        if ($weightKg <= 0) {
+            $this->jsonError('Weight in KG must be greater than zero.', 422);
+        }
+        if ($ratePerKg <= 0) {
+            $this->jsonError('Rate per KG must be greater than zero.', 422);
+        }
+
+        $orderId = MillOrder::create([
+            'restaurant_id' => $restaurantId,
+            'customer_name' => $customerName,
+            'customer_phone' => $customerPhone,
+            'service_id' => $serviceId,
+            'service_name' => $serviceName,
+            'weight_kg' => $weightKg,
+            'rate_per_kg' => $ratePerKg,
+            'payment_status' => $paymentStatus,
+            'payment_method' => $paymentMethod,
+            'notes' => $notes,
+        ]);
+
+        $order = MillOrder::findById($orderId);
+        $this->jsonSuccess($order, 'Order created successfully.');
+    }
+
+    /**
+     * POST /api/v1/mill/orders/{id}/status
+     */
+    public function updateMillOrderStatus(int $id): void {
+        $user = $this->authenticate();
+        require_once ROOT_PATH . '/models/MillOrder.php';
+        $order = MillOrder::findById($id);
+        if (!$order) {
+            $this->jsonError('Order not found.', 404);
+        }
+
+        $input = $this->getJsonInput();
+        if (isset($input['status'])) {
+            MillOrder::updateStatus($id, (string)$input['status']);
+        }
+        if (isset($input['payment_status'])) {
+            $method = (string)($input['payment_method'] ?? 'cash');
+            MillOrder::updatePaymentStatus($id, (string)$input['payment_status'], $method);
+        }
+
+        $updated = MillOrder::findById($id);
+        $this->jsonSuccess($updated, 'Order updated successfully.');
+    }
+
+    /**
+     * GET /api/v1/mill/customers
+     */
+    public function getMillCustomers(): void {
+        $user = $this->authenticate();
+        $restaurantId = (int)($user['restaurant_id'] ?? 0);
+        require_once ROOT_PATH . '/models/MillCustomer.php';
+        $search = (string)($_GET['search'] ?? '');
+        $customers = MillCustomer::allByRestaurant($restaurantId, $search);
+        $this->jsonSuccess($customers);
+    }
+
+    /**
+     * GET /api/v1/mill/customers/search
+     */
+    public function searchMillCustomers(): void {
+        $user = $this->authenticate();
+        $restaurantId = (int)($user['restaurant_id'] ?? 0);
+        require_once ROOT_PATH . '/models/MillCustomer.php';
+        $query = (string)($_GET['q'] ?? '');
+        $results = MillCustomer::search($restaurantId, $query);
+        $this->jsonSuccess($results);
+    }
 }
