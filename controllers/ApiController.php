@@ -356,6 +356,7 @@ class ApiController {
             $mill = MillOrder::findById($orderId);
             if ($mill && ((int)$mill['restaurant_id'] === $restaurantId || $restaurantId === 0)) {
                 $isPaid = ($mill['payment_status'] ?? '') === 'paid';
+                $payText = $isPaid ? ('Paid (' . ucfirst($mill['payment_method'] ?? 'Cash') . ')') : 'Unpaid';
                 $order = [
                     'id' => (int)$mill['id'],
                     'restaurant_id' => (int)$mill['restaurant_id'],
@@ -363,10 +364,10 @@ class ApiController {
                     'order_date' => $mill['order_date'],
                     'order_time' => $mill['order_time'],
                     'customer_name' => !empty($mill['customer_name']) ? $mill['customer_name'] : 'Walk-in Customer',
-                    'customer_phone' => $mill['customer_phone'] ?? '',
+                    'customer_phone' => !empty($mill['customer_phone']) ? $mill['customer_phone'] : null,
                     'subtotal' => (float)$mill['total_amount'],
                     'total' => (float)$mill['total_amount'],
-                    'payment_method' => ucfirst($mill['payment_method'] ?? 'cash') . ($isPaid ? ' (Paid)' : ' (Unpaid)'),
+                    'payment_method' => $payText,
                     'status' => $mill['status'] ?? 'received',
                     'receipt_token_hash' => '',
                     'created_by_username' => $user['username'] ?? null,
@@ -376,7 +377,9 @@ class ApiController {
                             'order_id' => (int)$mill['id'],
                             'item_id' => (int)($mill['service_id'] ?? 1),
                             'item_name' => $mill['service_name'] ?? 'Grinding Service',
+                            'item_name_snapshot' => $mill['service_name'] ?? 'Grinding Service',
                             'variant_name' => ($mill['weight_kg'] ?? '0') . ' KG',
+                            'variant_name_snapshot' => ($mill['weight_kg'] ?? '0') . ' KG',
                             'quantity' => (float)($mill['weight_kg'] ?? 1),
                             'unit' => 'KG',
                             'unit_price' => (float)($mill['rate_per_kg'] ?? 0),
@@ -445,14 +448,17 @@ class ApiController {
             foreach ($millRecent as $mo) {
                 $mo['total'] = (float)$mo['total_amount'];
                 $mo['subtotal'] = (float)$mo['total_amount'];
-                $mo['payment_method'] = ucfirst($mo['payment_method'] ?? 'cash');
+                $isPaidMo = ($mo['payment_status'] ?? '') === 'paid';
+                $mo['payment_method'] = $isPaidMo ? ('Paid (' . ucfirst($mo['payment_method'] ?? 'Cash') . ')') : 'Unpaid';
                 $mo['items'] = [
                     [
                         'id' => (int)$mo['id'],
                         'order_id' => (int)$mo['id'],
                         'item_id' => (int)($mo['service_id'] ?? 1),
                         'item_name' => $mo['service_name'] ?? 'Milling',
+                        'item_name_snapshot' => $mo['service_name'] ?? 'Milling',
                         'variant_name' => ($mo['weight_kg'] ?? '0') . ' KG',
+                        'variant_name_snapshot' => ($mo['weight_kg'] ?? '0') . ' KG',
                         'quantity' => (float)($mo['weight_kg'] ?? 1),
                         'unit' => 'KG',
                         'unit_price' => (float)($mo['rate_per_kg'] ?? 0),
