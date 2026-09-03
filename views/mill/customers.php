@@ -15,7 +15,7 @@ declare(strict_types=1);
             <p class="admin-page-subtitle mb-0"><?= count($customers) ?> <?= __t('nav_customers') ?></p>
         </div>
 
-        <a href="<?= url('mill/orders/new') ?>" class="admin-btn-primary py-1.5 px-3" style="font-size: 0.85rem;">
+        <a href="<?= url('mill/orders/new') ?>" class="admin-btn-primary py-1.5 px-3 d-none d-md-inline-flex" style="font-size: 0.85rem;">
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             <span><?= __t('nav_new_order') ?></span>
         </a>

@@ -8,8 +8,8 @@ declare(strict_types=1);
 ?>
 
 <div class="admin-container" style="max-width: 1100px;">
-    <!-- Top Action Banner -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <!-- Top Action Banner (Hidden in mobile view) -->
+    <div class="d-none d-md-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div>
             <h2 class="admin-page-title mb-0.5"><?= __t('dashboard_title') ?></h2>
             <p class="admin-page-subtitle mb-0">
@@ -104,8 +104,10 @@ declare(strict_types=1);
                 <span class="h4 fw-bold text-success mb-0"><?= format_currency($summary['paid_amount']) ?></span>
             </div>
             <div class="col-6 col-md-4">
-                <span class="text-muted small d-block mb-1"><?= __t('unpaid_amount') ?></span>
-                <span class="h4 fw-bold text-danger mb-0"><?= format_currency($summary['unpaid_amount']) ?></span>
+                <a href="<?= url('mill/orders?status=unpaid') ?>" class="text-decoration-none d-block">
+                    <span class="text-muted small d-block mb-1"><?= __t('unpaid_amount') ?></span>
+                    <span class="h4 fw-bold text-danger mb-0"><?= format_currency($summary['unpaid_amount']) ?></span>
+                </a>
             </div>
         </div>
     </div>

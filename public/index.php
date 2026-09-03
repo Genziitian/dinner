@@ -148,6 +148,19 @@ try {
         exit;
     }
 
+    // Mill Route Guard: Automatically redirect mill accounts to mill views
+    startSecureSession();
+    if (auth_check()) {
+        $checkUser = current_user();
+        if (($checkUser['shop_type'] ?? '') === 'mill' && $checkUser['role'] !== User::ROLE_SUPERADMIN) {
+            if (str_starts_with($path, '/cashier') || 
+                in_array($path, ['/manager/dashboard', '/manager/orders', '/manager/items', '/manager/items/create', '/manager/items/edit', '/manager/reports', '/manager/users', '/manager/tables'], true)) {
+                header('Location: ' . url('mill/dashboard'));
+                exit;
+            }
+        }
+    }
+
     // 2. Authentication Routes
     if ($path === '/login') {
         $c = new AuthController();

@@ -156,7 +156,7 @@ declare(strict_types=1);
             <img src="<?= asset('icons/icon-192.png') ?>" alt="GI ORDER POS" class="app-brand-logo-img" width="76" height="76" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(253, 108, 1, 0.35);">
         </div>
         <h3 class="fw-bold m-0" style="letter-spacing: -0.5px; color: #0f172a; font-size: 1.5rem;">GI ORDER POS</h3>
-        <p class="text-secondary" style="font-size: 0.85rem; margin-top: 0.25rem; margin-bottom: 1.5rem;">Restaurant Billing & Order Management</p>
+        <p class="text-secondary" style="font-size: 0.85rem; margin-top: 0.25rem; margin-bottom: 1.5rem;">Billing & Store Management</p>
     </div>
 
     <?php require ROOT_PATH . '/views/layouts/flash.php'; ?>

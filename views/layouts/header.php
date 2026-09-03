@@ -16,7 +16,7 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     <meta name="theme-color" content="#f8fafc">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="GI ORDER">
+    <meta name="apple-mobile-web-app-title" content="<?= !empty($currentUser['restaurant_name']) ? e($currentUser['restaurant_name']) : (($currentUser['shop_type'] ?? '') === 'mill' ? 'Atta Mill' : 'GI ORDER') ?>">
     <link rel="manifest" href="<?= url('manifest.json') ?>">
     <link rel="icon" type="image/png" sizes="32x32" href="<?= asset('icons/favicon-32x32.png') ?>">
     <link rel="icon" type="image/png" sizes="16x16" href="<?= asset('icons/favicon-16x16.png') ?>">
@@ -24,7 +24,12 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     <link rel="apple-touch-icon" sizes="180x180" href="<?= asset('icons/apple-touch-icon.png') ?>">
     <link rel="shortcut icon" href="<?= asset('icons/favicon.ico') ?>">
 
-    <title><?= e($title ?? 'GI ORDER - Restaurant Billing') ?></title>
+    <?php 
+    $defaultAppTitle = (($currentUser['shop_type'] ?? '') === 'mill') 
+        ? (!empty($currentUser['restaurant_name']) ? $currentUser['restaurant_name'] . ' - Atta Mill' : 'Atta Mill Management')
+        : 'GI ORDER - Restaurant Billing';
+    ?>
+    <title><?= e($title ?? $defaultAppTitle) ?></title>
 
     <!-- Stylesheets & Core JS -->
     <link rel="stylesheet" href="<?= asset('css/bootstrap.min.css') ?>">
@@ -40,11 +45,17 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         <div class="d-flex align-items-center gap-3">
             <a href="<?= url('/') ?>" class="brand text-decoration-none d-flex align-items-center gap-2">
                 <div class="brand-icon-box">
-                    <img src="<?= asset('icons/icon-192.png') ?>" alt="GI ORDER POS" class="brand-logo-img">
+                    <img src="<?= asset('icons/icon-192.png') ?>" alt="POS" class="brand-logo-img">
                 </div>
-                <span class="brand-title">GI ORDER POS</span>
+                <span class="brand-title">
+                    <?php if (($currentUser['shop_type'] ?? '') === 'mill' && $currentUser['role'] !== User::ROLE_SUPERADMIN): ?>
+                        <?= !empty($currentUser['restaurant_name']) ? e($currentUser['restaurant_name']) : 'Atta Mill' ?>
+                    <?php else: ?>
+                        GI ORDER POS
+                    <?php endif; ?>
+                </span>
                 <span class="badge-role badge-role-<?= e($currentUser['role']) ?>">
-                    <?= $currentUser['role'] === User::ROLE_SUPERADMIN ? 'SUPER ADMIN' : strtoupper(e($currentUser['role'])) ?>
+                    <?= ($currentUser['shop_type'] ?? '') === 'mill' && $currentUser['role'] !== User::ROLE_SUPERADMIN ? 'MILL' : ($currentUser['role'] === User::ROLE_SUPERADMIN ? 'SUPER ADMIN' : strtoupper(e($currentUser['role']))) ?>
                 </span>
             </a>
         </div>
@@ -161,8 +172,8 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
             <div class="brand-icon-box sm">
                 <img src="<?= asset('icons/icon-192.png') ?>" alt="GI ORDER POS" class="brand-logo-img">
             </div>
-            <span class="brand-title sm"><?= !empty($currentUser['restaurant_name']) ? e($currentUser['restaurant_name']) : 'GI ORDER' ?></span>
-            <span class="badge-role sm"><?= ($currentUser['shop_type'] ?? '') === 'mill' ? 'MILL' : strtoupper(e($currentUser['role'])) ?></span>
+            <span class="brand-title sm"><?= !empty($currentUser['restaurant_name']) ? e($currentUser['restaurant_name']) : (($currentUser['shop_type'] ?? '') === 'mill' ? 'Atta Mill' : 'GI ORDER') ?></span>
+            <span class="badge-role sm"><?= ($currentUser['shop_type'] ?? '') === 'mill' && $currentUser['role'] !== User::ROLE_SUPERADMIN ? 'MILL' : strtoupper(e($currentUser['role'])) ?></span>
         </a>
         <div class="d-flex align-items-center gap-2">
             <div class="d-flex align-items-center bg-white rounded border px-1 py-0.5" style="font-size: 0.72rem; font-weight: 600;">

@@ -57,6 +57,7 @@ class ApiController {
                                 'restaurant_id' => $user['restaurant_id'] ? (int)$user['restaurant_id'] : null,
                                 'restaurant_name' => $user['restaurant_name'] ?? '',
                                 'restaurant_timezone' => $user['restaurant_timezone'] ?? 'Asia/Kolkata',
+                                'shop_type' => $user['shop_type'] ?? 'restaurant',
                             ];
                         }
                     }
@@ -194,6 +195,7 @@ class ApiController {
                 'phone' => $restaurant['phone'] ?? '',
                 'address' => $restaurant['address'] ?? '',
                 'timezone' => $restaurant['timezone'] ?? 'Asia/Kolkata',
+                'shop_type' => $restaurant['shop_type'] ?? 'restaurant',
             ] : null,
         ], 'Login successful.');
     }

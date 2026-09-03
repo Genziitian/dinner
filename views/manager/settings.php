@@ -6,20 +6,32 @@
 declare(strict_types=1);
 $currentUser = current_user();
 $role = strtolower($currentUser['role'] ?? 'manager');
+$isMill = ($currentUser['shop_type'] ?? '') === 'mill';
+
+$roleTitle = match($role) {
+    'superadmin' => 'Master Super Administrator',
+    'manager' => $isMill ? 'Mill Manager' : 'Restaurant General Manager',
+    'cashier' => 'POS Billing Operator & Cashier',
+    default => 'Staff Member'
+};
 
 $roleDetails = match($role) {
-    'superadmin' => ['title' => 'Master Super Administrator', 'badgeClass' => 'badge-role-superadmin', 'gradient' => 'linear-gradient(135deg, #8b5cf6, #6d28d9)'],
-    'manager' => ['title' => 'Restaurant General Manager', 'badgeClass' => 'badge-role-manager', 'gradient' => 'linear-gradient(135deg, #3b82f6, #1d4ed8)'],
-    'cashier' => ['title' => 'POS Billing Operator & Cashier', 'badgeClass' => 'badge-role-cashier', 'gradient' => 'linear-gradient(135deg, #10b981, #047857)'],
-    default => ['title' => 'Staff Member', 'badgeClass' => 'badge-role-manager', 'gradient' => 'linear-gradient(135deg, #64748b, #475569)']
+    'superadmin' => ['title' => $roleTitle, 'badgeClass' => 'badge-role-superadmin', 'gradient' => 'linear-gradient(135deg, #8b5cf6, #6d28d9)'],
+    'manager' => ['title' => $roleTitle, 'badgeClass' => 'badge-role-manager', 'gradient' => 'linear-gradient(135deg, #3b82f6, #1d4ed8)'],
+    'cashier' => ['title' => $roleTitle, 'badgeClass' => 'badge-role-cashier', 'gradient' => 'linear-gradient(135deg, #10b981, #047857)'],
+    default => ['title' => $roleTitle, 'badgeClass' => 'badge-role-manager', 'gradient' => 'linear-gradient(135deg, #64748b, #475569)']
 };
+
+$dashboardUrl = $role === 'superadmin' 
+    ? 'admin/dashboard' 
+    : ($isMill ? 'mill/dashboard' : ($role === 'cashier' ? 'cashier/order' : 'manager/dashboard'));
 ?>
 
 <div class="admin-container" style="max-width: 800px;">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-2">
-            <a href="<?= url($role === 'superadmin' ? 'admin/dashboard' : ($role === 'cashier' ? 'cashier/order' : 'manager/dashboard')) ?>" class="admin-btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;">
+            <a href="<?= url($dashboardUrl) ?>" class="admin-btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span>Back to Dashboard</span>
             </a>
@@ -54,13 +66,13 @@ $roleDetails = match($role) {
             <div class="col-4 col-sm-3">
                 <div class="p-3 bg-light rounded-3 border" style="border-color: #f1f5f9 !important;">
                     <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Status</div>
-                    <div class="fw-bold text-success fs-6 mt-1">🟢 Active</div>
+                    <div class="fw-bold text-success fs-6 mt-1">Active</div>
                 </div>
             </div>
             <div class="col-4 col-sm-3">
                 <div class="p-3 bg-light rounded-3 border" style="border-color: #f1f5f9 !important;">
                     <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.72rem;">Security</div>
-                    <div class="fw-bold text-dark fs-6 mt-1">🔒 Bcrypt</div>
+                    <div class="fw-bold text-dark fs-6 mt-1">Bcrypt</div>
                 </div>
             </div>
         </div>
@@ -70,7 +82,7 @@ $roleDetails = match($role) {
             <span>
                 <?= $role === 'superadmin' 
                     ? 'Master Administrator account with unrestricted platform-wide privileges across all tenant outlets.' 
-                    : ($role === 'manager' ? 'Restaurant Manager privileges restricted to assigned branch outlet.' : 'Cashier billing access restricted to assigned branch outlet.') ?>
+                    : ($role === 'manager' ? ($isMill ? 'Mill Manager privileges restricted to assigned mill outlet.' : 'Restaurant Manager privileges restricted to assigned branch outlet.') : 'Cashier billing access restricted to assigned branch outlet.') ?>
             </span>
         </div>
     </div>
@@ -114,8 +126,8 @@ $roleDetails = match($role) {
         <!-- Outlet Details for Manager / Cashier -->
         <div class="admin-card mb-4">
             <div class="admin-card-header">
-                <h5 class="admin-card-title">Restaurant Outlet Details</h5>
-                <span class="badge bg-light text-muted border px-2.5 py-1">🔒 Assigned Branch</span>
+                <h5 class="admin-card-title"><?= $isMill ? 'Mill' : 'Restaurant' ?> Outlet Details</h5>
+                <span class="badge bg-light text-muted border px-2.5 py-1">Assigned Outlet</span>
             </div>
 
             <div class="p-4 d-flex flex-column gap-3">
@@ -124,7 +136,7 @@ $roleDetails = match($role) {
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     </div>
                     <div>
-                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem;">Restaurant Name</small>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem;"><?= $isMill ? 'Mill' : 'Restaurant' ?> Name</small>
                         <div class="fw-bold text-dark fs-6"><?= e($restaurant['name'] ?? 'Main Outlet') ?></div>
                     </div>
                 </div>
