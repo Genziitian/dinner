@@ -1192,58 +1192,68 @@ class ApiController {
      * GET /api/v1/mill/earnings
      */
     public function getMillEarnings(): void {
-        $user = $this->authenticate();
-        $restaurantId = (int)($user['restaurant_id'] ?? 0);
-        $restaurant = Restaurant::findById($restaurantId);
-        require_once ROOT_PATH . '/models/MillOrder.php';
+        try {
+            $user = $this->authenticate();
+            $restaurantId = (int)($user['restaurant_id'] ?? 0);
+            $restaurant = Restaurant::findById($restaurantId);
+            require_once ROOT_PATH . '/models/MillOrder.php';
 
-        $tz = new DateTimeZone($restaurant['timezone'] ?? 'Asia/Kolkata');
-        $now = new DateTime('now', $tz);
-        $today = $now->format('Y-m-d');
+            $tzName = !empty($restaurant['timezone']) ? $restaurant['timezone'] : 'Asia/Kolkata';
+            try {
+                $tz = new DateTimeZone($tzName);
+            } catch (Exception $e) {
+                $tz = new DateTimeZone('Asia/Kolkata');
+            }
 
-        $period = trim((string)($_GET['period'] ?? 'today'));
-        $dateParam = trim((string)($_GET['date'] ?? ''));
-        $startDateParam = trim((string)($_GET['start_date'] ?? ''));
-        $endDateParam = trim((string)($_GET['end_date'] ?? ''));
+            $now = new DateTime('now', $tz);
+            $today = $now->format('Y-m-d');
 
-        if ($period === 'yesterday') {
-            $yesterday = (new DateTime('yesterday', $tz))->format('Y-m-d');
-            $startDate = $yesterday;
-            $endDate = $yesterday;
-            $dateLabel = 'Yesterday, ' . (new DateTime('yesterday', $tz))->format('d M Y');
-        } elseif ($period === 'month') {
-            $startDate = $now->format('Y-m-01');
-            $endDate = $now->format('Y-m-t');
-            $dateLabel = 'This Month (' . $now->format('M Y') . ')';
-        } elseif ($period === 'custom') {
-            if (!empty($startDateParam) && !empty($endDateParam)) {
-                $startDate = $startDateParam;
-                $endDate = $endDateParam;
-                $dateLabel = (new DateTime($startDate))->format('d M Y') . ' - ' . (new DateTime($endDate))->format('d M Y');
-            } elseif (!empty($dateParam)) {
-                $startDate = $dateParam;
-                $endDate = $dateParam;
-                $dateLabel = (new DateTime($startDate))->format('d M Y');
+            $period = trim((string)($_GET['period'] ?? 'today'));
+            $dateParam = trim((string)($_GET['date'] ?? ''));
+            $startDateParam = trim((string)($_GET['start_date'] ?? ''));
+            $endDateParam = trim((string)($_GET['end_date'] ?? ''));
+
+            if ($period === 'yesterday') {
+                $yesterdayObj = (new DateTime('yesterday', $tz));
+                $startDate = $yesterdayObj->format('Y-m-d');
+                $endDate = $startDate;
+                $dateLabel = 'Yesterday, ' . $yesterdayObj->format('d M Y');
+            } elseif ($period === 'month') {
+                $startDate = $now->format('Y-m-01');
+                $endDate = $now->format('Y-m-t');
+                $dateLabel = 'This Month (' . $now->format('M Y') . ')';
+            } elseif ($period === 'custom') {
+                if (!empty($startDateParam) && !empty($endDateParam)) {
+                    $startDate = $startDateParam;
+                    $endDate = $endDateParam;
+                    $dateLabel = (new DateTime($startDate))->format('d M Y') . ' - ' . (new DateTime($endDate))->format('d M Y');
+                } elseif (!empty($dateParam)) {
+                    $startDate = $dateParam;
+                    $endDate = $dateParam;
+                    $dateLabel = (new DateTime($startDate))->format('d M Y');
+                } else {
+                    $startDate = $today;
+                    $endDate = $today;
+                    $dateLabel = 'Today, ' . $now->format('d M Y');
+                }
             } else {
+                $period = 'today';
                 $startDate = $today;
                 $endDate = $today;
                 $dateLabel = 'Today, ' . $now->format('d M Y');
             }
-        } else {
-            $period = 'today';
-            $startDate = $today;
-            $endDate = $today;
-            $dateLabel = 'Today, ' . $now->format('d M Y');
+
+            $res = MillOrder::getEarningsSummary($restaurantId, $startDate, $endDate);
+
+            $this->jsonSuccess([
+                'period'     => $period,
+                'date_label' => $dateLabel,
+                'summary'    => $res['summary'],
+                'services'   => $res['services'],
+                'orders'     => $res['orders'],
+            ]);
+        } catch (Throwable $e) {
+            $this->jsonError('Failed to fetch earnings: ' . $e->getMessage(), 500);
         }
-
-        $res = MillOrder::getEarningsSummary($restaurantId, $startDate, $endDate);
-
-        $this->jsonSuccess([
-            'period'     => $period,
-            'date_label' => $dateLabel,
-            'summary'    => $res['summary'],
-            'services'   => $res['services'],
-            'orders'     => $res['orders'],
-        ]);
     }
 }
