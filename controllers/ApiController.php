@@ -352,6 +352,42 @@ class ApiController {
 
         $order = Order::findById($orderId, $restaurantId);
         if (!$order) {
+            require_once ROOT_PATH . '/models/MillOrder.php';
+            $mill = MillOrder::findById($orderId);
+            if ($mill && ((int)$mill['restaurant_id'] === $restaurantId || $restaurantId === 0)) {
+                $isPaid = ($mill['payment_status'] ?? '') === 'paid';
+                $order = [
+                    'id' => (int)$mill['id'],
+                    'restaurant_id' => (int)$mill['restaurant_id'],
+                    'order_number' => (int)$mill['order_number'],
+                    'order_date' => $mill['order_date'],
+                    'order_time' => $mill['order_time'],
+                    'customer_name' => !empty($mill['customer_name']) ? $mill['customer_name'] : 'Walk-in Customer',
+                    'customer_phone' => $mill['customer_phone'] ?? '',
+                    'subtotal' => (float)$mill['total_amount'],
+                    'total' => (float)$mill['total_amount'],
+                    'payment_method' => ucfirst($mill['payment_method'] ?? 'cash') . ($isPaid ? ' (Paid)' : ' (Unpaid)'),
+                    'status' => $mill['status'] ?? 'received',
+                    'receipt_token_hash' => '',
+                    'created_by_username' => $user['username'] ?? null,
+                    'items' => [
+                        [
+                            'id' => (int)$mill['id'],
+                            'order_id' => (int)$mill['id'],
+                            'item_id' => (int)($mill['service_id'] ?? 1),
+                            'item_name' => $mill['service_name'] ?? 'Grinding Service',
+                            'variant_name' => ($mill['weight_kg'] ?? '0') . ' KG',
+                            'quantity' => (float)($mill['weight_kg'] ?? 1),
+                            'unit' => 'KG',
+                            'unit_price' => (float)($mill['rate_per_kg'] ?? 0),
+                            'total_price' => (float)$mill['total_amount'],
+                        ]
+                    ]
+                ];
+            }
+        }
+
+        if (!$order) {
             $this->jsonError('Order not found.', 404);
         }
 
@@ -404,6 +440,27 @@ class ApiController {
             $today = (new DateTime('now', $tz))->format('Y-m-d');
             $millSummary = MillOrder::getDailySummary($restaurantId, $today);
             $millRecent = MillOrder::allByRestaurant($restaurantId, ['limit' => 10]);
+
+            $formattedRecent = [];
+            foreach ($millRecent as $mo) {
+                $mo['total'] = (float)$mo['total_amount'];
+                $mo['subtotal'] = (float)$mo['total_amount'];
+                $mo['payment_method'] = ucfirst($mo['payment_method'] ?? 'cash');
+                $mo['items'] = [
+                    [
+                        'id' => (int)$mo['id'],
+                        'order_id' => (int)$mo['id'],
+                        'item_id' => (int)($mo['service_id'] ?? 1),
+                        'item_name' => $mo['service_name'] ?? 'Milling',
+                        'variant_name' => ($mo['weight_kg'] ?? '0') . ' KG',
+                        'quantity' => (float)($mo['weight_kg'] ?? 1),
+                        'unit' => 'KG',
+                        'unit_price' => (float)($mo['rate_per_kg'] ?? 0),
+                        'total_price' => (float)$mo['total_amount'],
+                    ]
+                ];
+                $formattedRecent[] = $mo;
+            }
             
             $todayStats = [
                 'total_sales' => (float)$millSummary['total_amount'],
@@ -418,9 +475,19 @@ class ApiController {
             ];
 
             $this->jsonSuccess([
+                'restaurant' => [
+                    'id' => (int)$restaurant['id'],
+                    'name' => $restaurant['name'],
+                    'phone' => $restaurant['phone'],
+                    'address' => $restaurant['address'],
+                    'timezone' => $restaurant['timezone'],
+                    'shop_type' => $restaurant['shop_type'],
+                    'status' => $restaurant['status'],
+                    'created_at' => $restaurant['created_at'],
+                    'updated_at' => $restaurant['updated_at']
+                ],
                 'stats' => $todayStats,
-                'recent_orders' => $millRecent,
-                'restaurant' => $restaurant,
+                'recent_orders' => $formattedRecent,
             ]);
             return;
         }
