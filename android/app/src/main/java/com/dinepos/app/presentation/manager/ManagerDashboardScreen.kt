@@ -42,10 +42,13 @@ fun ManagerDashboardScreen(
     onNavigateBack: (() -> Unit)? = null,
     onOrderClick: (Order) -> Unit,
     onLogout: () -> Unit,
+    onNavigateToMillHub: (String) -> Unit = {},
     viewModel: DashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val stats = uiState.stats
+    val sessionManager = com.dinepos.app.DinePosApp.instance.sessionManager
+    val isMill = sessionManager.isMill()
 
     Scaffold(
         containerColor = BrandBackground,
@@ -81,7 +84,7 @@ fun ManagerDashboardScreen(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "GI ORDER POS",
+                                    text = if (isMill) "MILL" else "GI ORDER POS",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Black,
                                     color = BrandOrange,
@@ -90,13 +93,13 @@ fun ManagerDashboardScreen(
                             }
                         }
                         Text(
-                            text = uiState.restaurantName.ifBlank { "Restaurant" },
+                            text = uiState.restaurantName.ifBlank { if (isMill) "Atta Mill" else "Restaurant" },
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark
                         )
                         Text(
-                            text = "Manager Dashboard",
+                            text = if (isMill) "Mill Dashboard" else "Manager Dashboard",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
@@ -151,7 +154,7 @@ fun ManagerDashboardScreen(
                         ) {
                             Column(modifier = Modifier.padding(20.dp)) {
                                 Text(
-                                    text = "TODAY'S TOTAL REVENUE",
+                                    text = if (isMill) "TODAY'S MILL REVENUE" else "TODAY'S TOTAL REVENUE",
                                     color = TextMuted,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
@@ -172,7 +175,7 @@ fun ManagerDashboardScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Column {
-                                        Text(text = "Cash Collection", color = TextMuted, fontSize = 11.sp)
+                                        Text(text = if (isMill) "Paid Collection" else "Cash Collection", color = TextMuted, fontSize = 11.sp)
                                         Text(
                                             text = CurrencyFormatter.formatInr(stats?.cashSales ?: 0.0),
                                             color = BrandEmerald,
@@ -181,9 +184,9 @@ fun ManagerDashboardScreen(
                                         )
                                     }
                                     Column(horizontalAlignment = Alignment.End) {
-                                        Text(text = "Online / UPI", color = TextMuted, fontSize = 11.sp)
+                                        Text(text = if (isMill) "Pending Due" else "Online / UPI", color = TextMuted, fontSize = 11.sp)
                                         Text(
-                                            text = CurrencyFormatter.formatInr(stats?.onlineSales ?: 0.0),
+                                            text = CurrencyFormatter.formatInr(if (isMill) (stats?.unpaidAmount ?: 0.0) else (stats?.onlineSales ?: 0.0)),
                                             color = BrandAmber,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.sp
@@ -208,20 +211,20 @@ fun ManagerDashboardScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 ActionCard(
-                                    title = "POS Billing",
-                                    subtitle = "Take orders & print",
-                                    icon = Icons.Default.ShoppingCart,
+                                    title = if (isMill) "New Order" else "POS Billing",
+                                    subtitle = if (isMill) "Record KG & calculate" else "Take orders & print",
+                                    icon = if (isMill) Icons.Default.AddShoppingCart else Icons.Default.ShoppingCart,
                                     iconColor = BrandOrange,
                                     badgeText = "${stats?.totalOrders ?: 0} orders",
-                                    onClick = onNavigateToBilling,
+                                    onClick = if (isMill) { { onNavigateToMillHub("mill/orders/new") } } else onNavigateToBilling,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ActionCard(
-                                    title = "Order History",
-                                    subtitle = "View & search all",
+                                    title = if (isMill) "Grinding Orders" else "Order History",
+                                    subtitle = if (isMill) "Status & WhatsApp" else "View & search all",
                                     icon = Icons.AutoMirrored.Filled.ReceiptLong,
                                     iconColor = Color(0xFF3B82F6),
-                                    onClick = onNavigateToOrders,
+                                    onClick = if (isMill) { { onNavigateToMillHub("mill/orders") } } else onNavigateToOrders,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -230,19 +233,19 @@ fun ManagerDashboardScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 ActionCard(
-                                    title = "Menu Items",
-                                    subtitle = "Rates & portions",
-                                    icon = Icons.Default.RestaurantMenu,
+                                    title = if (isMill) "Grinding Rates" else "Menu Items",
+                                    subtitle = if (isMill) "Rates & price/KG" else "Rates & portions",
+                                    icon = if (isMill) Icons.Default.Storefront else Icons.Default.RestaurantMenu,
                                     iconColor = BrandEmerald,
-                                    onClick = onNavigateToItems,
+                                    onClick = if (isMill) { { onNavigateToMillHub("mill/services") } } else onNavigateToItems,
                                     modifier = Modifier.weight(1f)
                                 )
                                 ActionCard(
-                                    title = "Sales Reports",
-                                    subtitle = "Analytics & exports",
-                                    icon = Icons.Default.BarChart,
+                                    title = if (isMill) "Customers" else "Sales Reports",
+                                    subtitle = if (isMill) "Directory & dues" else "Analytics & exports",
+                                    icon = if (isMill) Icons.Default.People else Icons.Default.BarChart,
                                     iconColor = Color(0xFF8B5CF6),
-                                    onClick = onNavigateToReports,
+                                    onClick = if (isMill) { { onNavigateToMillHub("mill/customers") } } else onNavigateToReports,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -309,7 +312,12 @@ fun ManagerDashboardScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("🧾", fontSize = 36.sp)
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                                            contentDescription = null,
+                                            tint = TextMuted,
+                                            modifier = Modifier.size(36.dp)
+                                        )
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text("No orders placed today yet.", color = TextSecondary, fontSize = 14.sp)
                                     }
@@ -345,7 +353,7 @@ fun ManagerDashboardScreen(
                     ) {
                         Column(modifier = Modifier.padding(18.dp)) {
                             Text(
-                                text = "TODAY'S REVENUE",
+                                text = if (isMill) "TODAY'S MILL REVENUE" else "TODAY'S REVENUE",
                                 color = TextMuted,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -364,13 +372,13 @@ fun ManagerDashboardScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Cash: ${CurrencyFormatter.formatInr(stats?.cashSales ?: 0.0)}",
+                                    text = if (isMill) "Paid: ${CurrencyFormatter.formatInr(stats?.cashSales ?: 0.0)}" else "Cash: ${CurrencyFormatter.formatInr(stats?.cashSales ?: 0.0)}",
                                     color = BrandEmerald,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "UPI: ${CurrencyFormatter.formatInr(stats?.onlineSales ?: 0.0)}",
+                                    text = if (isMill) "Pending: ${CurrencyFormatter.formatInr(stats?.unpaidAmount ?: 0.0)}" else "UPI: ${CurrencyFormatter.formatInr(stats?.onlineSales ?: 0.0)}",
                                     color = BrandAmber,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold
@@ -393,19 +401,19 @@ fun ManagerDashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         ActionCard(
-                            title = "New Order",
-                            subtitle = "POS Billing Screen",
-                            icon = Icons.Default.ShoppingCart,
+                            title = if (isMill) "New Order" else "New Order",
+                            subtitle = if (isMill) "Record KG & Price" else "POS Billing Screen",
+                            icon = if (isMill) Icons.Default.AddShoppingCart else Icons.Default.ShoppingCart,
                             iconColor = BrandOrange,
-                            onClick = onNavigateToBilling,
+                            onClick = if (isMill) { { onNavigateToMillHub("mill/orders/new") } } else onNavigateToBilling,
                             modifier = Modifier.weight(1f)
                         )
                         ActionCard(
-                            title = "Orders",
-                            subtitle = "View History",
+                            title = if (isMill) "Grinding Orders" else "Orders",
+                            subtitle = if (isMill) "Status & WhatsApp" else "View History",
                             icon = Icons.AutoMirrored.Filled.ReceiptLong,
                             iconColor = Color(0xFF3B82F6),
-                            onClick = onNavigateToOrders,
+                            onClick = if (isMill) { { onNavigateToMillHub("mill/orders") } } else onNavigateToOrders,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -415,19 +423,19 @@ fun ManagerDashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         ActionCard(
-                            title = "Menu Items",
-                            subtitle = "Rates & Portions",
-                            icon = Icons.Default.RestaurantMenu,
+                            title = if (isMill) "Grinding Rates" else "Menu Items",
+                            subtitle = if (isMill) "Price per KG" else "Rates & Portions",
+                            icon = if (isMill) Icons.Default.Storefront else Icons.Default.RestaurantMenu,
                             iconColor = BrandEmerald,
-                            onClick = onNavigateToItems,
+                            onClick = if (isMill) { { onNavigateToMillHub("mill/services") } } else onNavigateToItems,
                             modifier = Modifier.weight(1f)
                         )
                         ActionCard(
-                            title = "Reports",
-                            subtitle = "Sales & Analytics",
-                            icon = Icons.Default.BarChart,
+                            title = if (isMill) "Customers" else "Reports",
+                            subtitle = if (isMill) "Directory & Dues" else "Sales & Analytics",
+                            icon = if (isMill) Icons.Default.People else Icons.Default.BarChart,
                             iconColor = Color(0xFF8B5CF6),
-                            onClick = onNavigateToReports,
+                            onClick = if (isMill) { { onNavigateToMillHub("mill/customers") } } else onNavigateToReports,
                             modifier = Modifier.weight(1f)
                         )
                     }

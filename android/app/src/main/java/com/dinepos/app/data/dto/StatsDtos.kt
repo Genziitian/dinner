@@ -40,5 +40,7 @@ data class DailyStatsDto(
     @SerialName("total_sales") val totalSales: Double = 0.0,
     @SerialName("cash_sales") val cashSales: Double = 0.0,
     @SerialName("online_sales") val onlineSales: Double = 0.0,
-    @SerialName("avg_order_value") val avgOrderValue: Double = 0.0
+    @SerialName("avg_order_value") val avgOrderValue: Double = 0.0,
+    @SerialName("unpaid_amount") val unpaidAmount: Double = 0.0,
+    @SerialName("total_weight_kg") val totalWeightKg: Double = 0.0
 )

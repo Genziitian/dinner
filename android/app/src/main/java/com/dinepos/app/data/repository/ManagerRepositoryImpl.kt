@@ -23,7 +23,9 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
                     totalSales = statsDto.totalSales,
                     cashSales = statsDto.cashSales,
                     onlineSales = statsDto.onlineSales,
-                    avgOrderValue = statsDto.avgOrderValue
+                    avgOrderValue = statsDto.avgOrderValue,
+                    unpaidAmount = statsDto.unpaidAmount,
+                    totalWeightKg = statsDto.totalWeightKg
                 )
                 val orders = data?.recentOrders?.map { mapOrderDto(it) } ?: emptyList()
                 Resource.Success(Pair(stats, orders))
@@ -269,7 +271,9 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
             totalSales = dto.totalSales,
             cashSales = dto.cashSales,
             onlineSales = dto.onlineSales,
-            avgOrderValue = dto.avgOrderValue
+            avgOrderValue = dto.avgOrderValue,
+            unpaidAmount = dto.unpaidAmount,
+            totalWeightKg = dto.totalWeightKg
         )
     }
 

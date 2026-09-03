@@ -21,6 +21,7 @@ class AuthRepositoryImpl(
             if (response.isSuccessful && response.body()?.success == true) {
                 val data = response.body()?.data
                 if (data != null) {
+                    val shopType = data.restaurant?.shopType ?: data.user.shopType ?: "restaurant"
                     sessionManager.saveSession(
                         token = data.token,
                         userId = data.user.id,
@@ -29,14 +30,16 @@ class AuthRepositoryImpl(
                         restaurantId = data.user.restaurantId,
                         restaurantName = data.restaurant?.name,
                         restaurantAddress = data.restaurant?.address,
-                        restaurantPhone = data.restaurant?.phone
+                        restaurantPhone = data.restaurant?.phone,
+                        shopType = shopType
                     )
                     val user = User(
                         id = data.user.id,
                         username = data.user.username,
                         role = data.user.role,
                         restaurantId = data.user.restaurantId,
-                        restaurantName = data.restaurant?.name
+                        restaurantName = data.restaurant?.name,
+                        shopType = shopType
                     )
                     Resource.Success(user, response.body()?.message)
                 } else {
@@ -81,7 +84,8 @@ class AuthRepositoryImpl(
             username = sessionManager.getUsername(),
             role = sessionManager.getUserRole(),
             restaurantId = sessionManager.getRestaurantId().takeIf { it > 0 },
-            restaurantName = sessionManager.getRestaurantName()
+            restaurantName = sessionManager.getRestaurantName(),
+            shopType = sessionManager.getShopType()
         )
     }
 }

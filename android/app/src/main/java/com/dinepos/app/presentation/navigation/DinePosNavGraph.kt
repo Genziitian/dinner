@@ -131,6 +131,7 @@ fun DinePosNavGraph(
                 onNavigateToItems = { navController.navigate(Screen.ManagerItems.route) },
                 onNavigateToReports = { navController.navigate(Screen.ManagerReports.route) },
                 onNavigateToScanner = { navController.navigate(Screen.QrScanner.route) },
+                onNavigateToMillHub = { path -> navController.navigate(Screen.MillHub.createRoute(path)) },
                 onOrderClick = { order ->
                     navController.navigate(Screen.OrderDetail.createRoute(order.id))
                 },
@@ -139,6 +140,28 @@ fun DinePosNavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // 6b. Mill Hub Screen
+        composable(
+            route = Screen.MillHub.route,
+            arguments = listOf(
+                navArgument("path") {
+                    type = NavType.StringType
+                    defaultValue = "mill/dashboard"
+                }
+            )
+        ) { backStackEntry ->
+            val rawPath = backStackEntry.arguments?.getString("path") ?: "mill/dashboard"
+            val decodedPath = try {
+                java.net.URLDecoder.decode(rawPath, "UTF-8")
+            } catch (e: Exception) {
+                rawPath
+            }
+            com.dinepos.app.presentation.mill.MillHubScreen(
+                initialPath = decodedPath,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

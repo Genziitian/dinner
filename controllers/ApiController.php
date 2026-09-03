@@ -392,6 +392,34 @@ class ApiController {
 
         $restaurantId = (int)($user['restaurant_id'] ?? 0);
         $restaurant = Restaurant::findById($restaurantId);
+
+        if (($restaurant['shop_type'] ?? '') === 'mill') {
+            require_once ROOT_PATH . '/models/MillOrder.php';
+            $tz = new DateTimeZone($restaurant['timezone'] ?? 'Asia/Kolkata');
+            $today = (new DateTime('now', $tz))->format('Y-m-d');
+            $millSummary = MillOrder::getDailySummary($restaurantId, $today);
+            $millRecent = MillOrder::allByRestaurant($restaurantId, 'all', null, 10);
+            
+            $todayStats = [
+                'total_sales' => (float)$millSummary['total_amount'],
+                'cash_sales' => (float)$millSummary['paid_amount'],
+                'online_sales' => 0.0,
+                'total_orders' => (int)$millSummary['total_orders'],
+                'unpaid_amount' => (float)$millSummary['unpaid_amount'],
+                'total_weight_kg' => (float)$millSummary['total_weight_kg'],
+                'pending_orders' => (int)$millSummary['pending_orders'],
+                'ready_orders' => (int)$millSummary['ready_orders'],
+                'delivered_orders' => (int)$millSummary['delivered_orders'],
+            ];
+
+            $this->jsonSuccess([
+                'stats' => $todayStats,
+                'recent_orders' => $millRecent,
+                'restaurant' => $restaurant,
+            ]);
+            return;
+        }
+
         $todayStats = Order::getStats($restaurantId, 'today');
         $recentOrders = Order::getOrdersList($restaurantId, [], 10);
 

@@ -13,6 +13,7 @@ object Constants {
     const val KEY_RESTAURANT_NAME = "key_restaurant_name"
     const val KEY_RESTAURANT_ADDRESS = "key_restaurant_address"
     const val KEY_RESTAURANT_PHONE = "key_restaurant_phone"
+    const val KEY_SHOP_TYPE = "key_shop_type"
     const val KEY_BASE_URL = "key_base_url"
 
     const val ROLE_SUPERADMIN = "superadmin"

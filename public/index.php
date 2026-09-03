@@ -68,6 +68,44 @@ try {
         exit;
     }
 
+    // Token-based auto login for webview / app integration
+    if ($path === '/auth/token-login') {
+        $token = $_GET['token'] ?? '';
+        if (!empty($token)) {
+            $decoded = base64_decode($token, true);
+            if ($decoded && str_contains($decoded, ':')) {
+                $parts = explode(':', $decoded);
+                if (count($parts) >= 3) {
+                    $userId = (int)$parts[0];
+                    $username = $parts[1];
+                    $secretHash = $parts[2];
+                    $u = User::findById($userId);
+                    if ($u && $u['username'] === $username && $u['status'] === 'active') {
+                        $secret = (string)env('APP_SECRET', 'dinepos-default-app-secret-change-in-prod');
+                        $expected = substr(hash('sha256', $u['password_hash'] . $secret), 0, 16);
+                        if (hash_equals($expected, $secretHash)) {
+                            startSecureSession();
+                            $_SESSION['user_id'] = (int)$u['id'];
+                            $_SESSION['username'] = $u['username'];
+                            $_SESSION['role'] = $u['role'];
+                            $_SESSION['restaurant_id'] = $u['restaurant_id'] ? (int)$u['restaurant_id'] : null;
+                            $_SESSION['restaurant_name'] = $u['restaurant_name'] ?? '';
+                            $_SESSION['restaurant_timezone'] = $u['restaurant_timezone'] ?? 'Asia/Kolkata';
+                            $_SESSION['shop_type'] = $u['shop_type'] ?? 'restaurant';
+                            
+                            $redirectParam = $_GET['redirect'] ?? '';
+                            $dest = !empty($redirectParam) ? url(ltrim($redirectParam, '/')) : (($_SESSION['shop_type'] === 'mill') ? url('mill/dashboard') : url('manager/dashboard'));
+                            header('Location: ' . $dest);
+                            exit;
+                        }
+                    }
+                }
+            }
+        }
+        header('Location: ' . url('login'));
+        exit;
+    }
+
     // 0. REST API v1 Routes (Mobile Client)
     if (str_starts_with($path, '/api/v1/')) {
         $api = new ApiController();

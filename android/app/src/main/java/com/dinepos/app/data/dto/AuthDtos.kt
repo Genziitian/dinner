@@ -22,7 +22,8 @@ data class UserDto(
     val username: String,
     val role: String,
     @SerialName("restaurant_id") val restaurantId: Int? = null,
-    @SerialName("restaurant_name") val restaurantName: String? = null
+    @SerialName("restaurant_name") val restaurantName: String? = null,
+    @SerialName("shop_type") val shopType: String? = null
 )
 
 @Serializable
@@ -31,5 +32,6 @@ data class RestaurantDto(
     val name: String,
     val phone: String? = null,
     val address: String? = null,
-    val timezone: String = "Asia/Kolkata"
+    val timezone: String = "Asia/Kolkata",
+    @SerialName("shop_type") val shopType: String? = null
 )

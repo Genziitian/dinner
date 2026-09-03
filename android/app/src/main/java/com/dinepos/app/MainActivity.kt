@@ -68,7 +68,11 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onTakeOrderClick = {
-                                    navController.navigate(Screen.CashierBilling.route)
+                                    if (sessionManager.isMill()) {
+                                        navController.navigate(Screen.MillHub.createRoute("mill/orders/new"))
+                                    } else {
+                                        navController.navigate(Screen.CashierBilling.route)
+                                    }
                                 },
                                 onScannerClick = {
                                     navController.navigate(Screen.QrScanner.route)

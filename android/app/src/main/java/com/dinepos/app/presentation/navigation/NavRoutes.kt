@@ -20,6 +20,15 @@ sealed class Screen(val route: String) {
     object AdminRestaurants : Screen("admin_restaurants")
     object AdminUsers : Screen("admin_users")
     object Profile : Screen("profile")
+    object MillHub : Screen("mill_hub?path={path}") {
+        fun createRoute(path: String = "mill/dashboard"): String {
+            return try {
+                "mill_hub?path=" + java.net.URLEncoder.encode(path, "UTF-8")
+            } catch (e: Exception) {
+                "mill_hub?path=$path"
+            }
+        }
+    }
     object PrivacyPolicy : Screen("privacy_policy")
     object TermsAndConditions : Screen("terms_and_conditions")
 }

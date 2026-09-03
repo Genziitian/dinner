@@ -37,7 +37,8 @@ class SessionManager(context: Context) {
         restaurantId: Int?,
         restaurantName: String?,
         restaurantAddress: String? = null,
-        restaurantPhone: String? = null
+        restaurantPhone: String? = null,
+        shopType: String? = "restaurant"
     ) {
         prefs.edit().apply {
             putString(Constants.KEY_AUTH_TOKEN, token)
@@ -48,6 +49,7 @@ class SessionManager(context: Context) {
             putString(Constants.KEY_RESTAURANT_NAME, restaurantName ?: "")
             if (!restaurantAddress.isNullOrBlank()) putString(Constants.KEY_RESTAURANT_ADDRESS, restaurantAddress)
             if (!restaurantPhone.isNullOrBlank()) putString(Constants.KEY_RESTAURANT_PHONE, restaurantPhone)
+            putString(Constants.KEY_SHOP_TYPE, shopType ?: "restaurant")
             apply()
         }
         _isLoggedIn.value = true
@@ -63,10 +65,15 @@ class SessionManager(context: Context) {
             remove(Constants.KEY_RESTAURANT_NAME)
             remove(Constants.KEY_RESTAURANT_ADDRESS)
             remove(Constants.KEY_RESTAURANT_PHONE)
+            remove(Constants.KEY_SHOP_TYPE)
             apply()
         }
         _isLoggedIn.value = false
     }
+
+    fun getShopType(): String = prefs.getString(Constants.KEY_SHOP_TYPE, "restaurant") ?: "restaurant"
+
+    fun isMill(): Boolean = getShopType().equals("mill", ignoreCase = true)
 
     fun getAuthToken(): String? = prefs.getString(Constants.KEY_AUTH_TOKEN, null)
 

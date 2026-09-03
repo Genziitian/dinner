@@ -55,10 +55,11 @@ fun DinePosBottomBar(
         Screen.ManagerOrders.route,
         Screen.ManagerItems.route,
         Screen.ManagerReports.route,
-        Screen.Profile.route
+        Screen.Profile.route,
+        Screen.MillHub.route
     )
 
-    val isVisible = currentRoute in topLevelRoutes && currentRoute != Screen.Login.route
+    val isVisible = (currentRoute in topLevelRoutes || currentRoute?.startsWith("mill_hub") == true) && currentRoute != Screen.Login.route
 
     AnimatedVisibility(
         visible = isVisible,
@@ -154,7 +155,8 @@ fun DinePosBottomBar(
                             )
                         }
                         else -> {
-                            // Manager Navigation (Home | Orders | [Elevated Center + Button] | Menu | Profile)
+                            val isMill = sessionManager.isMill()
+                            // Manager Navigation (Home | Orders | [Elevated Center + Button] | Menu/Rates | Profile)
                             NavItem(
                                 icon = Icons.Outlined.Home,
                                 label = "Home",
@@ -165,16 +167,28 @@ fun DinePosBottomBar(
                             NavItem(
                                 icon = Icons.AutoMirrored.Outlined.Assignment,
                                 label = "Orders",
-                                isSelected = currentRoute == Screen.ManagerOrders.route,
-                                onClick = { onNavigateToRoute(Screen.ManagerOrders.route) },
+                                isSelected = currentRoute == Screen.ManagerOrders.route || (isMill && currentRoute?.contains("mill_hub") == true && currentRoute.contains("orders")),
+                                onClick = {
+                                    if (isMill) {
+                                        onNavigateToRoute(Screen.MillHub.createRoute("mill/orders"))
+                                    } else {
+                                        onNavigateToRoute(Screen.ManagerOrders.route)
+                                    }
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                             Spacer(modifier = Modifier.weight(1.2f))
                             NavItem(
-                                icon = Icons.Outlined.RestaurantMenu,
-                                label = "Menu",
-                                isSelected = currentRoute == Screen.ManagerItems.route,
-                                onClick = { onNavigateToRoute(Screen.ManagerItems.route) },
+                                icon = if (isMill) Icons.Outlined.Storefront else Icons.Outlined.RestaurantMenu,
+                                label = if (isMill) "Rates" else "Menu",
+                                isSelected = currentRoute == Screen.ManagerItems.route || (isMill && currentRoute?.contains("mill_hub") == true && currentRoute.contains("services")),
+                                onClick = {
+                                    if (isMill) {
+                                        onNavigateToRoute(Screen.MillHub.createRoute("mill/services"))
+                                    } else {
+                                        onNavigateToRoute(Screen.ManagerItems.route)
+                                    }
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                             NavItem(
