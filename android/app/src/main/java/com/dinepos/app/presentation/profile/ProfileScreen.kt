@@ -5,6 +5,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -65,19 +66,13 @@ fun ProfileScreen(
     val restaurantName = remember { sessionManager.getRestaurantName() }
     val restaurantAddress = remember { sessionManager.getRestaurantAddress() }
     val restaurantPhone = remember { sessionManager.getRestaurantPhone() }
+    val isMill = remember { sessionManager.getShopType().equals("mill", ignoreCase = true) }
+    val shopLabel = if (isMill) "MILL" else "Restaurant"
     var currentBaseUrl by remember { mutableStateOf(sessionManager.getBaseUrl()) }
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showStaffManagementDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
-
-    // Role specific badge and title
-    val (roleTitle, roleBadgeColor, _) = when (role) {
-        "superadmin" -> Triple("Master Super Administrator", Color(0xFFF59E0B), "")
-        "manager" -> Triple("Restaurant General Manager", Color(0xFF3B82F6), "")
-        "cashier" -> Triple("POS Billing Operator & Cashier", Color(0xFF10B981), "")
-        else -> Triple("Staff Member", TextSecondary, "")
-    }
 
     Scaffold(
         containerColor = BrandBackground,
@@ -126,7 +121,7 @@ fun ProfileScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. User Header & Role Designation Card
+            // 1. User Header & Real Username Card
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -155,7 +150,7 @@ fun ProfileScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
                         text = username,
@@ -164,97 +159,37 @@ fun ProfileScreen(
                         color = BrandDark
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    // Designation Badge
-                    Surface(
-                        color = roleBadgeColor.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(50),
-                        border = BorderStroke(1.dp, roleBadgeColor.copy(alpha = 0.3f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = roleTitle,
-                                color = roleBadgeColor,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
                     Spacer(modifier = Modifier.height(14.dp))
                     HorizontalDivider(color = BrandBorder.copy(alpha = 0.6f))
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // Account Stats Row
+                    // Real Username row in place of User ID / Account Status / Security
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(BrandBackground, shape = RoundedCornerShape(10.dp))
+                            .border(BorderStroke(1.dp, BrandBorder), shape = RoundedCornerShape(10.dp))
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "User ID", fontSize = 11.sp, color = TextMuted)
-                            Text(
-                                text = if (userId > 0) "#$userId" else "--",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandDark
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Account Status", fontSize = 11.sp, color = TextMuted)
-                            Text(
-                                text = "🟢 Active",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = StatusSuccess
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Security", fontSize = 11.sp, color = TextMuted)
-                            Text(
-                                text = "🔒 Encrypted",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandDark
-                            )
-                        }
-                    }
-
-                    // Security Authority Notice
-                    if (role != "superadmin") {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Surface(
-                            color = BrandBackground,
-                            shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, BrandBorder)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(text = "🔒", fontSize = 12.sp)
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (role == "manager")
-                                        "Account & credentials managed by Super Administrator."
-                                    else
-                                        "Account & credentials managed by Restaurant Manager.",
-                                    fontSize = 11.sp,
-                                    color = TextSecondary,
-                                    lineHeight = 14.sp
-                                )
-                            }
-                        }
+                        Text(
+                            text = "Username",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextSecondary
+                        )
+                        Text(
+                            text = username,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandDark
+                        )
                     }
                 }
             }
 
-            // 2. Organization / Restaurant Outlet Details Card (Strictly Read-Only for Manager & Cashier)
+            // 2. Organization / Shop Outlet Details Card (Strictly Read-Only for Manager & Cashier)
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -273,7 +208,7 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "🏢 Restaurant Outlet Details",
+                            text = "${shopLabel} Outlet Details",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark
@@ -284,7 +219,7 @@ fun ProfileScreen(
                                 shape = RoundedCornerShape(50)
                             ) {
                                 Text(
-                                    text = "🔒 Read-Only",
+                                    text = "Read-Only",
                                     fontSize = 10.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextMuted,
@@ -308,8 +243,8 @@ fun ProfileScreen(
                     } else {
                         InfoRow(
                             icon = Icons.Outlined.Storefront,
-                            label = "Restaurant Name",
-                            value = restaurantName.ifBlank { "Main Restaurant Branch" }
+                            label = "${shopLabel} Name",
+                            value = restaurantName.ifBlank { "Main ${shopLabel} Branch" }
                         )
                         if (restaurantAddress.isNotBlank()) {
                             InfoRow(
@@ -326,7 +261,7 @@ fun ProfileScreen(
                             )
                         }
                         Text(
-                            text = "💡 Branch details & locations can only be modified by Super Administrator.",
+                            text = "Branch details and locations can only be modified by Super Administrator.",
                             fontSize = 11.sp,
                             color = TextMuted,
                             modifier = Modifier.padding(top = 2.dp)
@@ -335,7 +270,7 @@ fun ProfileScreen(
                 }
             }
 
-            // 3. Manager Exclusive Tools: Staff Management (Cashier creation & reset) & CSV Exports
+            // 3. Manager Exclusive Tools: Staff Management & CSV Exports
             if (role == "manager") {
                 Card(
                     shape = RoundedCornerShape(18.dp),
@@ -350,19 +285,21 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "👔 Restaurant Manager Tools",
+                            text = "${shopLabel} Manager Tools",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark
                         )
 
-                        // 1. Staff Management (Cashier creation & password reset with double confirmation)
-                        ProfileNavOption(
-                            icon = Icons.Outlined.People,
-                            title = "Staff Management (Cashiers)",
-                            subtitle = "Create & reset passwords for cashier staff (double confirmation)",
-                            onClick = { showStaffManagementDialog = true }
-                        )
+                        // 1. Staff Management (Only for Restaurant, HIDDEN FOR MILL)
+                        if (!isMill) {
+                            ProfileNavOption(
+                                icon = Icons.Outlined.People,
+                                title = "Staff Management (Cashiers)",
+                                subtitle = "Create & reset passwords for cashier staff (double confirmation)",
+                                onClick = { showStaffManagementDialog = true }
+                            )
+                        }
 
                         // 2. CSV Exports (Sales data downloads)
                         ProfileNavOption(
@@ -374,8 +311,6 @@ fun ProfileScreen(
                     }
                 }
             }
-
-
 
             // 5. System Shortcuts (For Superadmin only)
             if (role == "superadmin") {
@@ -392,7 +327,7 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "⚡ System Shortcuts",
+                            text = "System Shortcuts",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark
@@ -640,7 +575,12 @@ private fun ManagerStaffDialog(
                                             .background(if (isCashier) Color(0xFF10B981).copy(alpha = 0.15f) else BrandOrange.copy(alpha = 0.15f)),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(text = if (isCashier) "🛒" else "👔", fontSize = 16.sp)
+                                        Icon(
+                                            imageVector = Icons.Outlined.Person,
+                                            contentDescription = null,
+                                            tint = if (isCashier) Color(0xFF10B981) else BrandOrange,
+                                            modifier = Modifier.size(18.dp)
+                                        )
                                     }
 
                                     Spacer(modifier = Modifier.width(10.dp))
@@ -685,7 +625,7 @@ private fun ManagerStaffDialog(
                                             contentPadding = PaddingValues(horizontal = 4.dp)
                                         ) {
                                             Text(
-                                                text = if (isActive) "🟢 Active" else "🔴 Inactive",
+                                                text = if (isActive) "Active" else "Inactive",
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = if (isActive) StatusSuccess else StatusError
@@ -735,7 +675,12 @@ private fun ManagerStaffDialog(
                         border = BorderStroke(1.dp, Color(0xFFBFDBFE))
                     ) {
                         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "🛡️", fontSize = 14.sp)
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = Color(0xFF1E40AF),
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Double confirmation required: verify password before saving.",
@@ -791,9 +736,9 @@ private fun ManagerStaffDialog(
                         supportingText = {
                             if (confirmPassword.isNotEmpty()) {
                                 if (passwordsMatch) {
-                                    Text("🟢 Passwords match perfectly", color = StatusSuccess, fontSize = 11.sp)
+                                    Text("Passwords match", color = StatusSuccess, fontSize = 11.sp)
                                 } else {
-                                    Text("❌ Passwords do not match", color = StatusError, fontSize = 11.sp)
+                                    Text("Passwords do not match", color = StatusError, fontSize = 11.sp)
                                 }
                             }
                         },
@@ -871,10 +816,15 @@ private fun ManagerStaffDialog(
                         border = BorderStroke(1.dp, Color(0xFFBFDBFE))
                     ) {
                         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "🛡️", fontSize = 14.sp)
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = Color(0xFF1E40AF),
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Only Restaurant Manager can modify cashier credentials.",
+                                text = "Only Manager can modify cashier credentials.",
                                 fontSize = 11.sp,
                                 color = Color(0xFF1E40AF),
                                 lineHeight = 14.sp
@@ -929,8 +879,8 @@ private fun ManagerStaffDialog(
                             isError = newPass != confirmNewPass,
                             supportingText = {
                                 if (confirmNewPass.isNotEmpty()) {
-                                    if (newPass == confirmNewPass) Text("🟢 Passwords match", color = StatusSuccess, fontSize = 11.sp)
-                                    else Text("❌ Passwords do not match", color = StatusError, fontSize = 11.sp)
+                                    if (newPass == confirmNewPass) Text("Passwords match", color = StatusSuccess, fontSize = 11.sp)
+                                    else Text("Passwords do not match", color = StatusError, fontSize = 11.sp)
                                 }
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -1073,7 +1023,7 @@ private fun ManagerExportDialog(
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
                         Text(
-                            text = "📊 What is CSV Export?",
+                            text = "What is CSV Export?",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = BrandOrange
@@ -1103,7 +1053,7 @@ private fun ManagerExportDialog(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("📅 Today", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                        Text("Today", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
@@ -1115,7 +1065,7 @@ private fun ManagerExportDialog(
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("📆 This Month", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                        Text("This Month", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                     }
                 }
 
