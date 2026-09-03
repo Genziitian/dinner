@@ -136,4 +136,12 @@ interface DinePosApiService {
 
     @GET("api/v1/mill/customers")
     suspend fun getMillCustomers(@Query("search") search: String? = null): Response<ApiResponseDto<List<com.dinepos.app.data.dto.MillCustomerDto>>>
+
+    @GET("api/v1/mill/earnings")
+    suspend fun getMillEarnings(
+        @Query("period") period: String? = null,
+        @Query("date") date: String? = null,
+        @Query("start_date") startDate: String? = null,
+        @Query("end_date") endDate: String? = null
+    ): Response<ApiResponseDto<com.dinepos.app.data.dto.MillEarningsResponseDto>>
 }

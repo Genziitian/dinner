@@ -12,4 +12,10 @@ interface MillRepository {
     suspend fun updateOrderStatus(id: Int, status: String): Resource<MillOrderDto>
     suspend fun updateOrderPayment(id: Int, paymentStatus: String, paymentMethod: String): Resource<MillOrderDto>
     suspend fun getCustomers(search: String? = null): Resource<List<MillCustomerDto>>
+    suspend fun getEarnings(
+        period: String? = null,
+        date: String? = null,
+        startDate: String? = null,
+        endDate: String? = null
+    ): Resource<MillEarningsResponseDto>
 }

@@ -120,4 +120,29 @@ class MillRepositoryImpl(private val apiService: DinePosApiService) : MillReposi
             Resource.Error("Network error: ${e.localizedMessage}")
         }
     }
+
+    override suspend fun getEarnings(
+        period: String?,
+        date: String?,
+        startDate: String?,
+        endDate: String?
+    ): Resource<MillEarningsResponseDto> {
+        return try {
+            val response = apiService.getMillEarnings(
+                period = period,
+                date = date,
+                startDate = startDate,
+                endDate = endDate
+            )
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) Resource.Success(data)
+                else Resource.Error("Empty earnings data received.")
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to load earnings.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
 }

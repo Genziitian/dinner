@@ -24,6 +24,7 @@ sealed class Screen(val route: String) {
     object MillOrders : Screen("mill_orders")
     object MillServices : Screen("mill_services")
     object MillCustomers : Screen("mill_customers")
+    object MillEarnings : Screen("mill_earnings")
     object PrivacyPolicy : Screen("privacy_policy")
     object TermsAndConditions : Screen("terms_and_conditions")
 }

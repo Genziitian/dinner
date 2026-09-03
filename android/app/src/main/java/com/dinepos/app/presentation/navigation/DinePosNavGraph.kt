@@ -172,6 +172,12 @@ fun DinePosNavGraph(
             )
         }
 
+        composable(Screen.MillEarnings.route) {
+            com.dinepos.app.presentation.mill.MillEarningsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         // 7. Orders List Screen
         composable(Screen.ManagerOrders.route) {
             OrderListScreen(
@@ -224,6 +230,7 @@ fun DinePosNavGraph(
                 onNavigateToSummary = { navController.navigate(Screen.CashierSummary.route) },
                 onNavigateToPrivacy = { navController.navigate(Screen.PrivacyPolicy.route) },
                 onNavigateToTerms = { navController.navigate(Screen.TermsAndConditions.route) },
+                onNavigateToRates = { navController.navigate(Screen.MillServices.route) },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }

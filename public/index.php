@@ -173,6 +173,8 @@ try {
             $api->getMillCustomers();
         } elseif ($path === '/api/v1/mill/customers/search' && $method === 'GET') {
             $api->searchMillCustomers();
+        } elseif ($path === '/api/v1/mill/earnings' && $method === 'GET') {
+            $api->getMillEarnings();
         } else {
             http_response_code(404);
             header('Content-Type: application/json');

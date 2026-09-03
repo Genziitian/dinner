@@ -180,12 +180,12 @@ fun DinePosBottomBar(
                             )
                             Spacer(modifier = Modifier.weight(1.2f))
                             NavItem(
-                                icon = if (isMill) Icons.Outlined.Storefront else Icons.Outlined.RestaurantMenu,
-                                label = if (isMill) "Rates" else "Menu",
-                                isSelected = currentRoute == (if (isMill) Screen.MillServices.route else Screen.ManagerItems.route),
+                                icon = if (isMill) Icons.Outlined.Assessment else Icons.Outlined.RestaurantMenu,
+                                label = if (isMill) "Earning" else "Menu",
+                                isSelected = currentRoute == (if (isMill) Screen.MillEarnings.route else Screen.ManagerItems.route),
                                 onClick = {
                                     if (isMill) {
-                                        onNavigateToRoute(Screen.MillServices.route)
+                                        onNavigateToRoute(Screen.MillEarnings.route)
                                     } else {
                                         onNavigateToRoute(Screen.ManagerItems.route)
                                     }

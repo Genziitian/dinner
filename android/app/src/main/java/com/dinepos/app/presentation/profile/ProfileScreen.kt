@@ -53,6 +53,7 @@ fun ProfileScreen(
     onNavigateToSummary: () -> Unit = {},
     onNavigateToPrivacy: () -> Unit = {},
     onNavigateToTerms: () -> Unit = {},
+    onNavigateToRates: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -298,6 +299,14 @@ fun ProfileScreen(
                                 title = "Staff Management (Cashiers)",
                                 subtitle = "Create & reset passwords for cashier staff (double confirmation)",
                                 onClick = { showStaffManagementDialog = true }
+                            )
+                        } else {
+                            // Grinding Rates (Moved to Profile for Mill)
+                            ProfileNavOption(
+                                icon = Icons.Outlined.Storefront,
+                                title = "Grinding Rates",
+                                subtitle = "Manage grain services and price per KG",
+                                onClick = onNavigateToRates
                             )
                         }
 

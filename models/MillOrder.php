@@ -202,6 +202,77 @@ class MillOrder {
         );
     }
 
+    public static function getEarningsSummary(int $restaurantId, string $startDate, string $endDate): array {
+        $sql = "SELECT 
+                    COUNT(id) AS total_orders,
+                    COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS total_earnings,
+                    COALESCE(SUM(CASE WHEN payment_status = 'paid' AND status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS paid_earnings,
+                    COALESCE(SUM(CASE WHEN payment_status = 'unpaid' AND status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS unpaid_earnings,
+                    COALESCE(SUM(CASE WHEN status != 'cancelled' THEN weight_kg ELSE 0 END), 0) AS total_weight_kg
+                FROM mill_orders 
+                WHERE restaurant_id = :restaurant_id 
+                  AND order_date BETWEEN :start_date AND :end_date";
+
+        $summary = Database::fetchOne($sql, [
+            ':restaurant_id' => $restaurantId,
+            ':start_date'    => $startDate,
+            ':end_date'      => $endDate
+        ]);
+
+        $summaryData = [
+            'total_orders'    => (int)($summary['total_orders'] ?? 0),
+            'total_earnings'  => (float)($summary['total_earnings'] ?? 0),
+            'paid_earnings'   => (float)($summary['paid_earnings'] ?? 0),
+            'unpaid_earnings' => (float)($summary['unpaid_earnings'] ?? 0),
+            'total_weight_kg' => (float)($summary['total_weight_kg'] ?? 0),
+        ];
+
+        // Service breakdown
+        $servicesSql = "SELECT 
+                            service_name,
+                            COUNT(id) AS order_count,
+                            COALESCE(SUM(weight_kg), 0) AS total_weight_kg,
+                            COALESCE(SUM(total_amount), 0) AS total_amount
+                        FROM mill_orders
+                        WHERE restaurant_id = :restaurant_id
+                          AND order_date BETWEEN :start_date AND :end_date
+                          AND status != 'cancelled'
+                        GROUP BY service_name
+                        ORDER BY total_amount DESC";
+        $services = Database::fetchAll($servicesSql, [
+            ':restaurant_id' => $restaurantId,
+            ':start_date'    => $startDate,
+            ':end_date'      => $endDate
+        ]);
+        $formattedServices = [];
+        foreach ($services as $s) {
+            $formattedServices[] = [
+                'service_name'    => $s['service_name'] ?: 'General Grinding',
+                'order_count'     => (int)$s['order_count'],
+                'total_weight_kg' => (float)$s['total_weight_kg'],
+                'total_amount'    => (float)$s['total_amount'],
+            ];
+        }
+
+        // Orders in this period
+        $ordersSql = "SELECT * FROM mill_orders
+                      WHERE restaurant_id = :restaurant_id
+                        AND order_date BETWEEN :start_date AND :end_date
+                      ORDER BY order_date DESC, order_time DESC, id DESC
+                      LIMIT 100";
+        $orders = Database::fetchAll($ordersSql, [
+            ':restaurant_id' => $restaurantId,
+            ':start_date'    => $startDate,
+            ':end_date'      => $endDate
+        ]);
+
+        return [
+            'summary'  => $summaryData,
+            'services' => $formattedServices,
+            'orders'   => $orders
+        ];
+    }
+
     /**
      * Export all data for backup
      */

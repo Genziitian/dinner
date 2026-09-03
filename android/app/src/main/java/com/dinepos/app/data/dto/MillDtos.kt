@@ -54,3 +54,29 @@ data class MillCustomerDto(
     @SerialName("lifetime_amount") val lifetimeAmount: Double = 0.0,
     @SerialName("unpaid_amount") val unpaidAmount: Double = 0.0
 )
+
+@Serializable
+data class MillEarningsSummaryDto(
+    @SerialName("total_orders") val totalOrders: Int = 0,
+    @SerialName("total_earnings") val totalEarnings: Double = 0.0,
+    @SerialName("paid_earnings") val paidEarnings: Double = 0.0,
+    @SerialName("unpaid_earnings") val unpaidEarnings: Double = 0.0,
+    @SerialName("total_weight_kg") val totalWeightKg: Double = 0.0
+)
+
+@Serializable
+data class MillServiceBreakdownDto(
+    @SerialName("service_name") val serviceName: String,
+    @SerialName("order_count") val orderCount: Int = 0,
+    @SerialName("total_weight_kg") val totalWeightKg: Double = 0.0,
+    @SerialName("total_amount") val totalAmount: Double = 0.0
+)
+
+@Serializable
+data class MillEarningsResponseDto(
+    val period: String = "today",
+    @SerialName("date_label") val dateLabel: String = "",
+    val summary: MillEarningsSummaryDto = MillEarningsSummaryDto(),
+    val services: List<MillServiceBreakdownDto> = emptyList(),
+    val orders: List<MillOrderDto> = emptyList()
+)
