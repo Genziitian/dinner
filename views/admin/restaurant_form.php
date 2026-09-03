@@ -87,19 +87,16 @@ $isEdit = !empty($isEdit);
                     <div class="text-muted small mt-1" style="font-size: 0.76rem;">Appears on customer receipts and printouts.</div>
                 </div>
 
-                <div class="row g-2.5 mb-3.5">
+                <div class="row g-2.5 mb-3">
                     <div class="col-12 col-sm-6">
                         <label class="form-label fw-bold text-dark" style="font-size: 0.86rem;">
-                            Timezone <span class="text-danger">*</span>
+                            Shop Type <span class="text-danger">*</span>
                         </label>
-                        <select name="timezone" class="form-select" style="font-size: 0.88rem;" required>
-                            <option value="Asia/Kolkata" <?= ($restaurant['timezone'] ?? 'Asia/Kolkata') === 'Asia/Kolkata' ? 'selected' : '' ?>>Asia/Kolkata (IST)</option>
-                            <option value="Asia/Dubai" <?= ($restaurant['timezone'] ?? '') === 'Asia/Dubai' ? 'selected' : '' ?>>Asia/Dubai (GST)</option>
-                            <option value="Asia/Singapore" <?= ($restaurant['timezone'] ?? '') === 'Asia/Singapore' ? 'selected' : '' ?>>Asia/Singapore (SGT)</option>
-                            <option value="Europe/London" <?= ($restaurant['timezone'] ?? '') === 'Europe/London' ? 'selected' : '' ?>>Europe/London (GMT/BST)</option>
-                            <option value="America/New_York" <?= ($restaurant['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>America/New_York (EST/EDT)</option>
-                            <option value="UTC" <?= ($restaurant['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
+                        <select name="shop_type" class="form-select" style="font-size: 0.88rem;" required>
+                            <option value="restaurant" <?= ($restaurant['shop_type'] ?? 'restaurant') === 'restaurant' ? 'selected' : '' ?>>Default (Restaurant / Food POS)</option>
+                            <option value="mill" <?= ($restaurant['shop_type'] ?? '') === 'mill' ? 'selected' : '' ?>>Mill (Atta, Grain & Oil Mill)</option>
                         </select>
+                        <div class="text-muted small mt-1" style="font-size: 0.76rem;">Select "Mill" for Atta/Grain grinding operations.</div>
                     </div>
 
                     <div class="col-12 col-sm-6">
@@ -110,6 +107,37 @@ $isEdit = !empty($isEdit);
                         </select>
                     </div>
                 </div>
+
+                <div class="mb-3.5">
+                    <label class="form-label fw-bold text-dark" style="font-size: 0.86rem;">
+                        Timezone <span class="text-danger">*</span>
+                    </label>
+                    <select name="timezone" class="form-select" style="font-size: 0.88rem;" required>
+                        <option value="Asia/Kolkata" <?= ($restaurant['timezone'] ?? 'Asia/Kolkata') === 'Asia/Kolkata' ? 'selected' : '' ?>>Asia/Kolkata (IST)</option>
+                        <option value="Asia/Dubai" <?= ($restaurant['timezone'] ?? '') === 'Asia/Dubai' ? 'selected' : '' ?>>Asia/Dubai (GST)</option>
+                        <option value="Asia/Singapore" <?= ($restaurant['timezone'] ?? '') === 'Asia/Singapore' ? 'selected' : '' ?>>Asia/Singapore (SGT)</option>
+                        <option value="Europe/London" <?= ($restaurant['timezone'] ?? '') === 'Europe/London' ? 'selected' : '' ?>>Europe/London (GMT/BST)</option>
+                        <option value="America/New_York" <?= ($restaurant['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>America/New_York (EST/EDT)</option>
+                        <option value="UTC" <?= ($restaurant['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
+                    </select>
+                </div>
+
+                <?php if (!$isEdit): ?>
+                <div class="p-3 bg-light rounded border mb-3.5">
+                    <h6 class="fw-bold text-dark mb-1" style="font-size: 0.88rem;">Manager Login Credentials (Optional)</h6>
+                    <p class="text-muted mb-2.5" style="font-size: 0.78rem;">Create a shop manager account immediately. Leave blank to configure users later.</p>
+                    <div class="row g-2">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Manager Username</label>
+                            <input type="text" name="manager_username" class="form-control form-control-sm" placeholder="e.g. millmanager" autocomplete="off" maxlength="10">
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label small fw-semibold text-secondary mb-1">Password</label>
+                            <input type="password" name="manager_password" class="form-control form-control-sm" placeholder="Min 6 characters" autocomplete="new-password">
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <div class="d-flex gap-2 pt-3 border-top">
                     <button type="submit" class="admin-btn-primary py-2 px-3.5 flex-grow-1 justify-content-center">

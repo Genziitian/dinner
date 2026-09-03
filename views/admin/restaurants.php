@@ -88,7 +88,12 @@ $inactiveCount = count($restaurants) - $activeCount;
                                     <?= strtoupper(substr($r['name'], 0, 1)) ?>
                                 </div>
                                 <div>
-                                    <h5 class="fw-bold text-dark m-0" style="font-size: 0.95rem;"><?= e($r['name']) ?></h5>
+                                    <div class="d-flex align-items-center gap-1.5">
+                                        <h5 class="fw-bold text-dark m-0" style="font-size: 0.95rem;"><?= e($r['name']) ?></h5>
+                                        <span class="badge <?= ($r['shop_type'] ?? 'restaurant') === 'mill' ? 'bg-warning-subtle text-dark border-warning' : 'bg-light text-secondary border' ?> px-1.5 py-0.5" style="font-size: 0.68rem; font-weight: 600;">
+                                            <?= ($r['shop_type'] ?? 'restaurant') === 'mill' ? 'MILL' : 'RESTAURANT' ?>
+                                        </span>
+                                    </div>
                                     <small class="text-muted" style="font-size: 0.74rem;">ID #<?= (int)$r['id'] ?></small>
                                 </div>
                             </div>

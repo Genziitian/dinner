@@ -110,6 +110,7 @@ class AuthController extends BaseController {
         $_SESSION['restaurant_id'] = $user['restaurant_id'] ? (int)$user['restaurant_id'] : null;
         $_SESSION['restaurant_name'] = $user['restaurant_name'] ?? '';
         $_SESSION['restaurant_timezone'] = $user['restaurant_timezone'] ?? 'Asia/Kolkata';
+        $_SESSION['shop_type'] = $user['shop_type'] ?? 'restaurant';
 
         // Re-seed CSRF token on login
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -123,7 +124,7 @@ class AuthController extends BaseController {
             ['username' => $user['username'], 'role' => $user['role']]
         );
 
-        $this->redirectByRole($user['role']);
+        $this->redirectByRole($user['role'], $user['shop_type'] ?? 'restaurant');
     }
 
     /**
@@ -160,9 +161,22 @@ class AuthController extends BaseController {
         $this->redirect('/login', 'info', 'You have been logged out securely.');
     }
 
-    private function redirectByRole(string $role): void {
+    private function redirectByRole(string $role, string $shopType = ''): void {
+        if (empty($shopType)) {
+            $shopType = $_SESSION['shop_type'] ?? 'restaurant';
+        }
+
+        if ($role === User::ROLE_SUPERADMIN) {
+            $this->redirect('/admin/dashboard');
+            return;
+        }
+
+        if ($shopType === 'mill') {
+            $this->redirect('/mill/dashboard');
+            return;
+        }
+
         match ($role) {
-            User::ROLE_SUPERADMIN => $this->redirect('/admin/dashboard'),
             User::ROLE_MANAGER => $this->redirect('/manager/dashboard'),
             User::ROLE_CASHIER => $this->redirect('/cashier/order'),
             default => $this->redirect('/login'),

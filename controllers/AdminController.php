@@ -76,10 +76,11 @@ class AdminController extends BaseController {
         $phone = trim((string)($_POST['phone'] ?? ''));
         $address = trim((string)($_POST['address'] ?? ''));
         $timezone = trim((string)($_POST['timezone'] ?? 'Asia/Kolkata'));
+        $shopType = (string)($_POST['shop_type'] ?? 'restaurant');
         $status = (string)($_POST['status'] ?? 'active');
 
         if (empty($name)) {
-            $this->redirect('/admin/restaurants/create', 'danger', 'Restaurant name is required.');
+            $this->redirect('/admin/restaurants/create', 'danger', 'Shop name is required.');
         }
 
         try {
@@ -88,12 +89,32 @@ class AdminController extends BaseController {
                 'phone' => $phone,
                 'address' => $address,
                 'timezone' => $timezone,
+                'shop_type' => $shopType,
                 'status' => $status,
             ]);
 
-            AuditLog::log(AuditLog::ACTION_SETTINGS_UPDATE, 'restaurant', $restId, $restId, $user['id'], ['name' => $name]);
+            // Seed default services if shop is a Mill
+            if ($shopType === 'mill') {
+                require_once ROOT_PATH . '/models/MillService.php';
+                MillService::seedDefaults($restId);
+            }
 
-            $this->redirect('/admin/restaurants', 'success', "Restaurant '{$name}' created successfully.");
+            // Create manager user if provided
+            $mgrUsername = strtolower(trim((string)($_POST['manager_username'] ?? '')));
+            $mgrPassword = (string)($_POST['manager_password'] ?? '');
+            if (!empty($mgrUsername) && !empty($mgrPassword)) {
+                User::create([
+                    'restaurant_id' => $restId,
+                    'username' => $mgrUsername,
+                    'password' => $mgrPassword,
+                    'role' => User::ROLE_MANAGER,
+                    'status' => 'active',
+                ]);
+            }
+
+            AuditLog::log(AuditLog::ACTION_SETTINGS_UPDATE, 'restaurant', $restId, $restId, $user['id'], ['name' => $name, 'shop_type' => $shopType]);
+
+            $this->redirect('/admin/restaurants', 'success', "Shop '{$name}' created successfully.");
         } catch (Throwable $e) {
             $this->redirect('/admin/restaurants/create', 'danger', 'Error: ' . $e->getMessage());
         }
@@ -112,7 +133,7 @@ class AdminController extends BaseController {
         }
 
         $this->render('admin/restaurant_form', [
-            'title' => "Edit Restaurant - {$restaurant['name']} | DinePOS",
+            'title' => "Edit Shop - {$restaurant['name']} | DinePOS",
             'restaurant' => $restaurant,
             'isEdit' => true,
         ]);
@@ -130,10 +151,11 @@ class AdminController extends BaseController {
         $phone = trim((string)($_POST['phone'] ?? ''));
         $address = trim((string)($_POST['address'] ?? ''));
         $timezone = trim((string)($_POST['timezone'] ?? 'Asia/Kolkata'));
+        $shopType = (string)($_POST['shop_type'] ?? 'restaurant');
         $status = (string)($_POST['status'] ?? 'active');
 
         if (empty($name)) {
-            $this->redirect("/admin/restaurants/edit?id={$id}", 'danger', 'Restaurant name is required.');
+            $this->redirect("/admin/restaurants/edit?id={$id}", 'danger', 'Shop name is required.');
         }
 
         try {
@@ -142,12 +164,18 @@ class AdminController extends BaseController {
                 'phone' => $phone,
                 'address' => $address,
                 'timezone' => $timezone,
+                'shop_type' => $shopType,
                 'status' => $status,
             ]);
 
-            AuditLog::log(AuditLog::ACTION_SETTINGS_UPDATE, 'restaurant', $id, $id, $user['id'], ['name' => $name, 'status' => $status]);
+            if ($shopType === 'mill') {
+                require_once ROOT_PATH . '/models/MillService.php';
+                MillService::seedDefaults($id);
+            }
 
-            $this->redirect('/admin/restaurants', 'success', "Restaurant '{$name}' updated successfully.");
+            AuditLog::log(AuditLog::ACTION_SETTINGS_UPDATE, 'restaurant', $id, $id, $user['id'], ['name' => $name, 'shop_type' => $shopType, 'status' => $status]);
+
+            $this->redirect('/admin/restaurants', 'success', "Shop '{$name}' updated successfully.");
         } catch (Throwable $e) {
             $this->redirect("/admin/restaurants/edit?id={$id}", 'danger', 'Error: ' . $e->getMessage());
         }

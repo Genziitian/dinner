@@ -19,6 +19,7 @@ CREATE TABLE `restaurants` (
     `phone` VARCHAR(20) NULL,
     `address` TEXT NULL,
     `timezone` VARCHAR(64) NOT NULL DEFAULT 'Asia/Kolkata',
+    `shop_type` VARCHAR(32) NOT NULL DEFAULT 'restaurant',
     `status` ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     `created_at` DATETIME NOT NULL,
     `updated_at` DATETIME NOT NULL
@@ -146,4 +147,59 @@ CREATE TABLE `login_attempts` (
     `attempted_at` DATETIME NOT NULL,
     INDEX `idx_login_ip_attempt` (`ip_address`, `attempted_at`),
     INDEX `idx_login_user_attempt` (`username`, `attempted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Mill Services
+CREATE TABLE IF NOT EXISTS `mill_services` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `restaurant_id` INT NOT NULL,
+    `name` VARCHAR(150) NOT NULL,
+    `name_hi` VARCHAR(150) NULL,
+    `rate_per_kg` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` DATETIME NOT NULL,
+    `updated_at` DATETIME NOT NULL,
+    INDEX `idx_mill_services_rest` (`restaurant_id`, `active`),
+    CONSTRAINT `fk_mill_services_rest` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. Mill Customers
+CREATE TABLE IF NOT EXISTS `mill_customers` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `restaurant_id` INT NOT NULL,
+    `name` VARCHAR(150) NOT NULL,
+    `phone` VARCHAR(20) NOT NULL,
+    `created_at` DATETIME NOT NULL,
+    `updated_at` DATETIME NOT NULL,
+    UNIQUE KEY `uniq_mill_cust` (`restaurant_id`, `phone`),
+    INDEX `idx_mill_cust_phone` (`restaurant_id`, `phone`),
+    CONSTRAINT `fk_mill_cust_rest` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 12. Mill Orders
+CREATE TABLE IF NOT EXISTS `mill_orders` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `restaurant_id` INT NOT NULL,
+    `order_number` INT NOT NULL,
+    `order_date` DATE NOT NULL,
+    `order_time` TIME NOT NULL,
+    `customer_id` INT NULL,
+    `customer_name` VARCHAR(150) NOT NULL,
+    `customer_phone` VARCHAR(20) NOT NULL,
+    `service_id` INT NULL,
+    `service_name` VARCHAR(150) NOT NULL,
+    `weight_kg` DECIMAL(10,3) NOT NULL,
+    `rate_per_kg` DECIMAL(10,2) NOT NULL,
+    `total_amount` DECIMAL(10,2) NOT NULL,
+    `payment_status` ENUM('paid', 'unpaid') NOT NULL DEFAULT 'unpaid',
+    `payment_method` VARCHAR(20) NULL DEFAULT 'Cash',
+    `status` ENUM('received', 'processing', 'ready', 'delivered', 'cancelled') NOT NULL DEFAULT 'received',
+    `notes` TEXT NULL,
+    `created_at` DATETIME NOT NULL,
+    `updated_at` DATETIME NOT NULL,
+    INDEX `idx_mill_orders_rest_date` (`restaurant_id`, `order_date`),
+    INDEX `idx_mill_orders_cust` (`restaurant_id`, `customer_phone`),
+    INDEX `idx_mill_orders_status` (`restaurant_id`, `status`),
+    INDEX `idx_mill_orders_payment` (`restaurant_id`, `payment_status`),
+    CONSTRAINT `fk_mill_orders_rest` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

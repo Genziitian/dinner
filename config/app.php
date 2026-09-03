@@ -87,7 +87,7 @@ if ($appConfig['debug']) {
 
 // Secure session start with security directives
 function startSecureSession(): void {
-    if (session_status() === PHP_SESSION_NONE) {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         $lifetime = (int)env('SESSION_LIFETIME', 28800);
         $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || 
                     ($_SERVER['SERVER_PORT'] ?? '') === '443';
@@ -195,6 +195,8 @@ function auth_check(): bool {
     return !empty($_SESSION['user_id']) && !empty($_SESSION['role']);
 }
 
+require_once __DIR__ . '/translations.php';
+
 /**
  * Get current authenticated user
  */
@@ -210,6 +212,7 @@ function current_user(): ?array {
         'restaurant_id' => !empty($_SESSION['restaurant_id']) ? (int)$_SESSION['restaurant_id'] : null,
         'restaurant_name' => $_SESSION['restaurant_name'] ?? '',
         'restaurant_timezone' => $_SESSION['restaurant_timezone'] ?? 'Asia/Kolkata',
+        'shop_type' => $_SESSION['shop_type'] ?? 'restaurant',
     ];
 }
 

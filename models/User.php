@@ -15,7 +15,7 @@ class User {
 
     public static function findById(int $id): ?array {
         return Database::fetchOne(
-            "SELECT u.*, r.name AS restaurant_name, r.timezone AS restaurant_timezone, r.status AS restaurant_status 
+            "SELECT u.*, r.name AS restaurant_name, r.timezone AS restaurant_timezone, r.status AS restaurant_status, r.shop_type AS shop_type 
              FROM users u 
              LEFT JOIN restaurants r ON u.restaurant_id = r.id 
              WHERE u.id = :id LIMIT 1",
@@ -25,7 +25,7 @@ class User {
 
     public static function findByUsername(string $username): ?array {
         return Database::fetchOne(
-            "SELECT u.*, r.name AS restaurant_name, r.timezone AS restaurant_timezone, r.status AS restaurant_status 
+            "SELECT u.*, r.name AS restaurant_name, r.timezone AS restaurant_timezone, r.status AS restaurant_status, r.shop_type AS shop_type 
              FROM users u 
              LEFT JOIN restaurants r ON u.restaurant_id = r.id 
              WHERE u.username = :username LIMIT 1",

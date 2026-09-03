@@ -51,7 +51,32 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
         <!-- Desktop Navigation Links -->
         <div class="app-nav-links d-flex align-items-center gap-1">
-            <?php if ($currentUser['role'] === User::ROLE_CASHIER): ?>
+            <?php if (($currentUser['shop_type'] ?? '') === 'mill' && $currentUser['role'] !== User::ROLE_SUPERADMIN): ?>
+                <a href="<?= url('mill/dashboard') ?>" class="nav-link-pill <?= (str_contains($currentUri, 'mill/dashboard') || $currentUri === '/') ? 'active' : '' ?>">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span><?= __t('nav_dashboard') ?></span>
+                </a>
+                <a href="<?= url('mill/orders/new') ?>" class="nav-link-pill <?= str_contains($currentUri, 'mill/orders/new') ? 'active' : '' ?>">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <span><?= __t('nav_new_order') ?></span>
+                </a>
+                <a href="<?= url('mill/orders') ?>" class="nav-link-pill <?= (str_contains($currentUri, 'mill/orders') && !str_contains($currentUri, 'mill/orders/new')) ? 'active' : '' ?>">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <span><?= __t('nav_orders') ?></span>
+                </a>
+                <a href="<?= url('mill/customers') ?>" class="nav-link-pill <?= str_contains($currentUri, 'mill/customers') ? 'active' : '' ?>">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span><?= __t('nav_customers') ?></span>
+                </a>
+                <a href="<?= url('mill/services') ?>" class="nav-link-pill <?= str_contains($currentUri, 'mill/services') ? 'active' : '' ?>">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span><?= __t('nav_services') ?></span>
+                </a>
+                <a href="<?= url('mill/backup') ?>" class="nav-link-pill <?= str_contains($currentUri, 'mill/backup') ? 'active' : '' ?>">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                    <span><?= __t('nav_backup') ?></span>
+                </a>
+            <?php elseif ($currentUser['role'] === User::ROLE_CASHIER): ?>
                 <a href="<?= url('cashier/order') ?>" class="nav-link-pill <?= (str_contains($currentUri, 'cashier/order') || $currentUri === '/') ? 'active' : '' ?>">
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     <span>New Order</span>
@@ -105,8 +130,14 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
             <?php endif; ?>
         </div>
 
-        <!-- User Profile Pill & Sign Out -->
+        <!-- Language Toggle & User Profile Pill & Sign Out -->
         <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center bg-white rounded border px-1 py-0.5" style="font-size: 0.76rem; font-weight: 600;">
+                <a href="<?= url('mill/lang?lang=en') ?>" class="text-decoration-none px-1.5 py-0.5 rounded <?= current_lang() === 'en' ? 'bg-primary text-white' : 'text-secondary' ?>">EN</a>
+                <span class="text-muted mx-0.5">|</span>
+                <a href="<?= url('mill/lang?lang=hi') ?>" class="text-decoration-none px-1.5 py-0.5 rounded <?= current_lang() === 'hi' ? 'bg-primary text-white' : 'text-secondary' ?>">हिन्दी</a>
+            </div>
+
             <a href="<?= url('manager/settings') ?>" class="nav-user-pill text-decoration-none <?= str_contains($currentUri, 'manager/settings') ? 'active' : '' ?>">
                 <div class="nav-user-avatar">
                     <?= strtoupper(substr($currentUser['username'], 0, 2)) ?>
@@ -130,13 +161,15 @@ $currentUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
             <div class="brand-icon-box sm">
                 <img src="<?= asset('icons/icon-192.png') ?>" alt="GI ORDER POS" class="brand-logo-img">
             </div>
-            <span class="brand-title sm">GI ORDER POS</span>
-            <span class="badge-role sm"><?= strtoupper(e($currentUser['role'])) ?></span>
+            <span class="brand-title sm"><?= !empty($currentUser['restaurant_name']) ? e($currentUser['restaurant_name']) : 'GI ORDER' ?></span>
+            <span class="badge-role sm"><?= ($currentUser['shop_type'] ?? '') === 'mill' ? 'MILL' : strtoupper(e($currentUser['role'])) ?></span>
         </a>
         <div class="d-flex align-items-center gap-2">
-            <a href="<?= url('manager/settings') ?>" class="nav-user-avatar sm text-decoration-none">
-                <?= strtoupper(substr($currentUser['username'], 0, 2)) ?>
-            </a>
+            <div class="d-flex align-items-center bg-white rounded border px-1 py-0.5" style="font-size: 0.72rem; font-weight: 600;">
+                <a href="<?= url('mill/lang?lang=en') ?>" class="text-decoration-none px-1.5 py-0.5 rounded <?= current_lang() === 'en' ? 'bg-primary text-white' : 'text-secondary' ?>">EN</a>
+                <span class="text-muted mx-0.5">|</span>
+                <a href="<?= url('mill/lang?lang=hi') ?>" class="text-decoration-none px-1.5 py-0.5 rounded <?= current_lang() === 'hi' ? 'bg-primary text-white' : 'text-secondary' ?>">हिन्दी</a>
+            </div>
             <a href="<?= url('logout') ?>" class="top-bar-icon-btn red" title="Logout">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
             </a>

@@ -17,6 +17,7 @@ CREATE TABLE `restaurants` (
     `phone` TEXT NULL,
     `address` TEXT NULL,
     `timezone` TEXT NOT NULL DEFAULT 'Asia/Kolkata',
+    `shop_type` TEXT NOT NULL DEFAULT 'restaurant',
     `status` TEXT NOT NULL DEFAULT 'active',
     `created_at` TEXT NOT NULL,
     `updated_at` TEXT NOT NULL
@@ -145,3 +146,60 @@ CREATE TABLE `login_attempts` (
 );
 CREATE INDEX `idx_login_ip_attempt` ON `login_attempts` (`ip_address`, `attempted_at`);
 CREATE INDEX `idx_login_user_attempt` ON `login_attempts` (`username`, `attempted_at`);
+
+-- 10. Mill Services
+CREATE TABLE IF NOT EXISTS `mill_services` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `restaurant_id` INTEGER NOT NULL,
+    `name` TEXT NOT NULL,
+    `name_hi` TEXT NULL,
+    `rate_per_kg` REAL NOT NULL DEFAULT 0.00,
+    `active` INTEGER NOT NULL DEFAULT 1,
+    `created_at` TEXT NOT NULL,
+    `updated_at` TEXT NOT NULL,
+    FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS `idx_mill_services_rest` ON `mill_services` (`restaurant_id`, `active`);
+
+-- 11. Mill Customers
+CREATE TABLE IF NOT EXISTS `mill_customers` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `restaurant_id` INTEGER NOT NULL,
+    `name` TEXT NOT NULL,
+    `phone` TEXT NOT NULL,
+    `created_at` TEXT NOT NULL,
+    `updated_at` TEXT NOT NULL,
+    UNIQUE(`restaurant_id`, `phone`),
+    FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS `idx_mill_cust_rest` ON `mill_customers` (`restaurant_id`, `phone`);
+
+-- 12. Mill Orders
+CREATE TABLE IF NOT EXISTS `mill_orders` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `restaurant_id` INTEGER NOT NULL,
+    `order_number` INTEGER NOT NULL,
+    `order_date` TEXT NOT NULL,
+    `order_time` TEXT NOT NULL,
+    `customer_id` INTEGER NULL,
+    `customer_name` TEXT NOT NULL,
+    `customer_phone` TEXT NOT NULL,
+    `service_id` INTEGER NULL,
+    `service_name` TEXT NOT NULL,
+    `weight_kg` REAL NOT NULL,
+    `rate_per_kg` REAL NOT NULL,
+    `total_amount` REAL NOT NULL,
+    `payment_status` TEXT NOT NULL DEFAULT 'unpaid',
+    `payment_method` TEXT NULL DEFAULT 'Cash',
+    `status` TEXT NOT NULL DEFAULT 'received',
+    `notes` TEXT NULL,
+    `created_at` TEXT NOT NULL,
+    `updated_at` TEXT NOT NULL,
+    FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`customer_id`) REFERENCES `mill_customers` (`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`service_id`) REFERENCES `mill_services` (`id`) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS `idx_mill_orders_rest_date` ON `mill_orders` (`restaurant_id`, `order_date`);
+CREATE INDEX IF NOT EXISTS `idx_mill_orders_cust` ON `mill_orders` (`restaurant_id`, `customer_phone`);
+CREATE INDEX IF NOT EXISTS `idx_mill_orders_status` ON `mill_orders` (`restaurant_id`, `status`);
+CREATE INDEX IF NOT EXISTS `idx_mill_orders_payment` ON `mill_orders` (`restaurant_id`, `payment_status`);

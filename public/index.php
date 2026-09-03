@@ -29,6 +29,7 @@ require_once ROOT_PATH . '/controllers/ExportController.php';
 require_once ROOT_PATH . '/controllers/ReceiptController.php';
 require_once ROOT_PATH . '/controllers/AdminController.php';
 require_once ROOT_PATH . '/controllers/ApiController.php';
+require_once ROOT_PATH . '/controllers/MillController.php';
 
 // Handle CORS Preflight for Mobile App
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
@@ -112,12 +113,17 @@ try {
         startSecureSession();
         if (auth_check()) {
             $user = current_user();
-            match ($user['role']) {
-                User::ROLE_SUPERADMIN => header('Location: ' . url('admin/dashboard')),
-                User::ROLE_MANAGER => header('Location: ' . url('manager/dashboard')),
-                User::ROLE_CASHIER => header('Location: ' . url('cashier/order')),
-                default => header('Location: ' . url('login')),
-            };
+            if ($user['role'] === User::ROLE_SUPERADMIN) {
+                header('Location: ' . url('admin/dashboard'));
+            } elseif (($user['shop_type'] ?? '') === 'mill') {
+                header('Location: ' . url('mill/dashboard'));
+            } else {
+                match ($user['role']) {
+                    User::ROLE_MANAGER => header('Location: ' . url('manager/dashboard')),
+                    User::ROLE_CASHIER => header('Location: ' . url('cashier/order')),
+                    default => header('Location: ' . url('login')),
+                };
+            }
         } else {
             header('Location: ' . url('login'));
         }
@@ -368,6 +374,87 @@ try {
         } else {
             $c->userEdit();
         }
+        exit;
+    }
+
+    // 6.5 Mill Dedicated Routes
+    if ($path === '/mill/dashboard') {
+        (new MillController())->dashboard();
+        exit;
+    }
+
+    if ($path === '/mill/orders/new') {
+        $c = new MillController();
+        if ($method === 'POST') {
+            $c->storeOrder();
+        } else {
+            $c->newOrder();
+        }
+        exit;
+    }
+
+    if ($path === '/mill/orders') {
+        (new MillController())->orders();
+        exit;
+    }
+
+    if ($path === '/mill/orders/status') {
+        (new MillController())->updateStatus();
+        exit;
+    }
+
+    if ($path === '/mill/orders/payment') {
+        (new MillController())->updatePayment();
+        exit;
+    }
+
+    if ($path === '/mill/customers') {
+        (new MillController())->customers();
+        exit;
+    }
+
+    if ($path === '/mill/customers/view') {
+        (new MillController())->customerView();
+        exit;
+    }
+
+    if ($path === '/mill/api/customers') {
+        (new MillController())->customerSearchAjax();
+        exit;
+    }
+
+    if ($path === '/mill/services') {
+        (new MillController())->services();
+        exit;
+    }
+
+    if ($path === '/mill/services/save') {
+        (new MillController())->serviceSave();
+        exit;
+    }
+
+    if ($path === '/mill/services/toggle') {
+        (new MillController())->serviceToggle();
+        exit;
+    }
+
+    if ($path === '/mill/backup') {
+        (new MillController())->backup();
+        exit;
+    }
+
+    if ($path === '/mill/backup/export') {
+        (new MillController())->exportBackup();
+        exit;
+    }
+
+    if ($path === '/mill/backup/restore') {
+        (new MillController())->restoreBackup();
+        exit;
+    }
+
+    if ($path === '/mill/lang') {
+        (new MillController())->setLanguage();
         exit;
     }
 

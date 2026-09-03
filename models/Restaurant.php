@@ -27,13 +27,14 @@ class Restaurant {
 
     public static function create(array $data): int {
         $now = date('Y-m-d H:i:s');
-        $sql = "INSERT INTO restaurants (name, phone, address, timezone, status, created_at, updated_at) 
-                VALUES (:name, :phone, :address, :timezone, :status, :created_at, :updated_at)";
+        $sql = "INSERT INTO restaurants (name, phone, address, timezone, shop_type, status, created_at, updated_at) 
+                VALUES (:name, :phone, :address, :timezone, :shop_type, :status, :created_at, :updated_at)";
         Database::execute($sql, [
             ':name' => trim($data['name']),
             ':phone' => !empty($data['phone']) ? trim($data['phone']) : null,
             ':address' => !empty($data['address']) ? trim($data['address']) : null,
             ':timezone' => !empty($data['timezone']) ? trim($data['timezone']) : 'Asia/Kolkata',
+            ':shop_type' => !empty($data['shop_type']) ? trim($data['shop_type']) : 'restaurant',
             ':status' => $data['status'] ?? 'active',
             ':created_at' => $now,
             ':updated_at' => $now,
@@ -48,6 +49,7 @@ class Restaurant {
                 phone = :phone, 
                 address = :address, 
                 timezone = :timezone, 
+                shop_type = :shop_type, 
                 status = :status, 
                 updated_at = :updated_at 
                 WHERE id = :id";
@@ -57,6 +59,7 @@ class Restaurant {
             ':phone' => !empty($data['phone']) ? trim($data['phone']) : null,
             ':address' => !empty($data['address']) ? trim($data['address']) : null,
             ':timezone' => !empty($data['timezone']) ? trim($data['timezone']) : 'Asia/Kolkata',
+            ':shop_type' => !empty($data['shop_type']) ? trim($data['shop_type']) : 'restaurant',
             ':status' => $data['status'] ?? 'active',
             ':updated_at' => $now,
         ]);
