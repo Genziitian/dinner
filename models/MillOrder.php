@@ -96,11 +96,16 @@ class MillOrder {
         $sql = "SELECT * FROM mill_orders WHERE restaurant_id = :restaurant_id";
 
         if (!empty($filters['search'])) {
-            $search = '%' . trim((string)$filters['search']) . '%';
-            $sql .= " AND (customer_name LIKE :search_name OR customer_phone LIKE :search_phone OR order_number = :search_num)";
+            $rawSearch = trim((string)$filters['search']);
+            $search = '%' . $rawSearch . '%';
+            $numDigits = preg_replace('/[^0-9]/', '', $rawSearch);
+            $cleanNum = !empty($numDigits) ? (int)$numDigits : -1;
+
+            $sql .= " AND (customer_name LIKE :search_name OR customer_phone LIKE :search_phone OR order_number = :search_num OR id = :search_id)";
             $params[':search_name'] = $search;
             $params[':search_phone'] = $search;
-            $params[':search_num'] = (int)$filters['search'];
+            $params[':search_num'] = $cleanNum;
+            $params[':search_id'] = $cleanNum;
         }
 
         if (!empty($filters['status']) && $filters['status'] !== 'all') {

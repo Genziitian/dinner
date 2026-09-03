@@ -27,6 +27,18 @@ class MillCustomer {
     public static function findOrCreate(int $restaurantId, string $name, string $phone): array {
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
         $cleanName = trim($name);
+        if (empty($cleanName)) {
+            $cleanName = 'Walk-in Customer';
+        }
+
+        if (empty($cleanPhone)) {
+            return [
+                'id'            => null,
+                'restaurant_id' => $restaurantId,
+                'name'          => $cleanName,
+                'phone'         => '',
+            ];
+        }
 
         $existing = self::findByPhone($restaurantId, $cleanPhone);
         if ($existing) {

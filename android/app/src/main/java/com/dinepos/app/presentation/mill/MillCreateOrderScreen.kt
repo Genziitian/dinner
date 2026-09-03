@@ -1,8 +1,9 @@
 package com.dinepos.app.presentation.mill
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,7 +11,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,8 +28,10 @@ import com.dinepos.app.core.theme.*
 import com.dinepos.app.core.utils.CurrencyFormatter
 import com.dinepos.app.core.utils.Resource
 import com.dinepos.app.data.dto.CreateMillOrderRequestDto
+import com.dinepos.app.data.dto.MillOrderDto
 import com.dinepos.app.data.dto.MillServiceDto
 import kotlinx.coroutines.launch
+import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +42,7 @@ fun MillCreateOrderScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val millRepository = DinePosApp.instance.millRepository
+    val restaurantName = DinePosApp.instance.sessionManager.getRestaurantName().ifBlank { "Atta Mill" }
 
     val defaultServices = remember {
         listOf(
@@ -51,14 +56,17 @@ fun MillCreateOrderScreen(
 
     var services by remember { mutableStateOf<List<MillServiceDto>>(defaultServices) }
     var selectedService by remember { mutableStateOf<MillServiceDto?>(defaultServices[0]) }
+    var serviceDropdownExpanded by remember { mutableStateOf(false) }
+
     var customerPhone by remember { mutableStateOf("") }
     var customerName by remember { mutableStateOf("") }
     var weightKgText by remember { mutableStateOf("") }
-    var ratePerKgText by remember { mutableStateOf(defaultServices[0].ratePerKg.toString()) }
     var paymentStatus by remember { mutableStateOf("unpaid") }
     var paymentMethod by remember { mutableStateOf("cash") }
     var notes by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
+
+    var createdOrderSuccess by remember { mutableStateOf<MillOrderDto?>(null) }
 
     LaunchedEffect(Unit) {
         when (val res = millRepository.getServices()) {
@@ -67,7 +75,6 @@ fun MillCreateOrderScreen(
                 if (list.isNotEmpty()) {
                     services = list
                     selectedService = list[0]
-                    ratePerKgText = list[0].ratePerKg.toString()
                 }
             }
             else -> {}
@@ -75,7 +82,7 @@ fun MillCreateOrderScreen(
     }
 
     val weightKg = weightKgText.toDoubleOrNull() ?: 0.0
-    val ratePerKg = ratePerKgText.toDoubleOrNull() ?: 0.0
+    val ratePerKg = selectedService?.ratePerKg ?: 0.0
     val totalAmount = weightKg * ratePerKg
 
     Scaffold(
@@ -111,7 +118,7 @@ fun MillCreateOrderScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Customer Phone
+            // Customer Phone (Optional)
             OutlinedTextField(
                 value = customerPhone,
                 onValueChange = { input ->
@@ -125,24 +132,24 @@ fun MillCreateOrderScreen(
                         }
                     }
                 },
-                label = { Text("Customer Mobile / WhatsApp *") },
+                label = { Text("Customer Mobile / WhatsApp (Optional)") },
                 placeholder = { Text("e.g. 9876543210") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Customer Name
+            // Customer Name (Optional)
             OutlinedTextField(
                 value = customerName,
                 onValueChange = { customerName = it },
-                label = { Text("Customer Name *") },
-                placeholder = { Text("e.g. Ramesh Kumar") },
+                label = { Text("Customer Name (Optional)") },
+                placeholder = { Text("Leave blank for Walk-in") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Service Selection
+            // Service Selection Dropdown
             Text(
                 text = "SELECT SERVICE *",
                 fontSize = 12.sp,
@@ -151,84 +158,82 @@ fun MillCreateOrderScreen(
                 letterSpacing = 0.5.sp
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                services.forEach { s ->
-                    val isSelected = selectedService?.id == s.id
-                    Card(
-                        onClick = {
-                            selectedService = s
-                            ratePerKgText = s.ratePerKg.toString()
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) BrandOrange.copy(alpha = 0.1f) else BrandSurface
-                        ),
-                        border = BorderStroke(
-                            1.dp,
-                            if (isSelected) BrandOrange else BrandBorder
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = s.name,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = BrandDark
-                                )
-                                if (!s.nameHi.isNullOrBlank()) {
+            ExposedDropdownMenuBox(
+                expanded = serviceDropdownExpanded,
+                onExpandedChange = { serviceDropdownExpanded = !serviceDropdownExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = selectedService?.let {
+                        if (!it.nameHi.isNullOrBlank()) "${it.name} (${it.nameHi}) - ${CurrencyFormatter.formatInr(it.ratePerKg)}/KG"
+                        else "${it.name} - ${CurrencyFormatter.formatInr(it.ratePerKg)}/KG"
+                    } ?: "Choose Grinding Service",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Grinding Service *") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = serviceDropdownExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = serviceDropdownExpanded,
+                    onDismissRequest = { serviceDropdownExpanded = false }
+                ) {
+                    services.forEach { s ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = s.name,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 15.sp,
+                                            color = BrandDark
+                                        )
+                                        if (!s.nameHi.isNullOrBlank()) {
+                                            Text(
+                                                text = s.nameHi,
+                                                fontSize = 12.sp,
+                                                color = TextSecondary
+                                            )
+                                        }
+                                    }
                                     Text(
-                                        text = s.nameHi,
-                                        fontSize = 12.sp,
-                                        color = TextSecondary
+                                        text = "${CurrencyFormatter.formatInr(s.ratePerKg)} / KG",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = BrandOrange
                                     )
                                 }
-                            }
-                            Text(
-                                text = "${CurrencyFormatter.formatInr(s.ratePerKg)} / KG",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 15.sp,
-                                color = BrandOrange
-                            )
-                        }
+                            },
+                            onClick = {
+                                selectedService = s
+                                serviceDropdownExpanded = false
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        )
                     }
                 }
             }
 
-            // Weight & Rate Row
-            Row(
+            // Weight in KG (Full Width, Rate is taken automatically from selected service)
+            OutlinedTextField(
+                value = weightKgText,
+                onValueChange = { weightKgText = it },
+                label = { Text("Weight (KG) *") },
+                placeholder = { Text("e.g. 10.0") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedTextField(
-                    value = weightKgText,
-                    onValueChange = { weightKgText = it },
-                    label = { Text("Weight (KG) *") },
-                    placeholder = { Text("10.0") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
+                singleLine = true
+            )
 
-                OutlinedTextField(
-                    value = ratePerKgText,
-                    onValueChange = { ratePerKgText = it },
-                    label = { Text("Rate / KG (Rs.) *") },
-                    placeholder = { Text("5.0") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-            }
-
-            // Total Amount Banner
+            // Dynamic Total Amount Banner
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = BrandDark),
@@ -249,7 +254,7 @@ fun MillCreateOrderScreen(
                             color = TextMuted
                         )
                         Text(
-                            text = "${weightKg} KG x Rs.${ratePerKg}",
+                            text = "${weightKg} KG x Rs.${ratePerKg}/KG (${selectedService?.name ?: ""})",
                             fontSize = 12.sp,
                             color = Color.White.copy(alpha = 0.7f)
                         )
@@ -353,19 +358,18 @@ fun MillCreateOrderScreen(
             // Submit Button
             Button(
                 onClick = {
-                    if (customerPhone.isBlank() || customerName.isBlank()) {
-                        Toast.makeText(context, "Please enter customer details", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
                     if (weightKg <= 0) {
                         Toast.makeText(context, "Please enter valid weight in KG", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
+                    val finalCustomerName = customerName.trim().ifBlank { "Walk-in Customer" }
+                    val finalCustomerPhone = customerPhone.trim()
+
                     isSubmitting = true
                     scope.launch {
                         val req = CreateMillOrderRequestDto(
-                            customerName = customerName.trim(),
-                            customerPhone = customerPhone.trim(),
+                            customerName = finalCustomerName,
+                            customerPhone = finalCustomerPhone,
                             serviceId = selectedService?.id,
                             serviceName = selectedService?.name ?: "Grinding",
                             weightKg = weightKg,
@@ -376,11 +380,11 @@ fun MillCreateOrderScreen(
                         )
                         when (val res = millRepository.createOrder(req)) {
                             is Resource.Success -> {
-                                Toast.makeText(context, "Order created successfully!", Toast.LENGTH_SHORT).show()
-                                onOrderCreated()
+                                isSubmitting = false
+                                createdOrderSuccess = res.data
                             }
                             is Resource.Error -> {
-                                Toast.makeText(context, res.message ?: "Failed to create order", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, res.message, Toast.LENGTH_SHORT).show()
                                 isSubmitting = false
                             }
                             else -> {
@@ -404,6 +408,98 @@ fun MillCreateOrderScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Daily Order Confirmation Dialog
+        createdOrderSuccess?.let { order ->
+            AlertDialog(
+                onDismissRequest = {
+                    createdOrderSuccess = null
+                    onOrderCreated()
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = BrandEmerald,
+                        modifier = Modifier.size(48.dp)
+                    )
+                },
+                title = {
+                    Text(
+                        text = "Order #${order.orderNumber} Confirmed",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 20.sp,
+                        color = BrandDark
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "Daily Order Number: #${order.orderNumber}",
+                            fontWeight = FontWeight.Bold,
+                            color = BrandOrange,
+                            fontSize = 15.sp
+                        )
+                        Text(
+                            text = "Customer: ${order.customerName}",
+                            color = BrandDark,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "Service: ${order.serviceName} • ${order.weightKg} KG",
+                            color = TextSecondary,
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = "Total Amount: ${CurrencyFormatter.formatInr(order.totalAmount)} (${order.paymentStatus.uppercase()})",
+                            fontWeight = FontWeight.Bold,
+                            color = BrandDark,
+                            fontSize = 14.sp
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            createdOrderSuccess = null
+                            onOrderCreated()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                    ) {
+                        Text("Done")
+                    }
+                },
+                dismissButton = {
+                    if (order.customerPhone.isNotBlank()) {
+                        OutlinedButton(
+                            onClick = {
+                                val msg = "Namaste ${order.customerName} ji, your order #${order.orderNumber} (${order.serviceName}, ${order.weightKg} KG) has been placed at $restaurantName. Total: Rs.${order.totalAmount}."
+                                val clean = order.customerPhone.replace(Regex("[^0-9]"), "")
+                                val url = "https://api.whatsapp.com/send?phone=91$clean&text=${URLEncoder.encode(msg, "UTF-8")}"
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "WhatsApp not installed", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Chat,
+                                contentDescription = null,
+                                tint = Color(0xFF25D366),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("WhatsApp", color = Color(0xFF25D366))
+                        }
+                    }
+                }
+            )
         }
     }
 }

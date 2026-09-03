@@ -1075,12 +1075,22 @@ class ApiController {
         $restaurantId = (int)($user['restaurant_id'] ?? 0);
         require_once ROOT_PATH . '/models/MillOrder.php';
 
-        $status = $_GET['status'] ?? 'all';
-        $search = $_GET['search'] ?? null;
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
-        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+        $filters = [];
+        if (!empty($_GET['status'])) {
+            $filters['status'] = $_GET['status'];
+        }
+        if (!empty($_GET['search'])) {
+            $filters['search'] = trim($_GET['search']);
+        }
+        if (!empty($_GET['date'])) {
+            $filters['date'] = trim($_GET['date']);
+        }
+        if (!empty($_GET['payment_status'])) {
+            $filters['payment_status'] = $_GET['payment_status'];
+        }
+        $filters['limit'] = isset($_GET['limit']) ? (int)$_GET['limit'] : 200;
 
-        $orders = MillOrder::allByRestaurant($restaurantId, $status, $search, $limit, $offset);
+        $orders = MillOrder::allByRestaurant($restaurantId, $filters);
         $this->jsonSuccess($orders);
     }
 
@@ -1094,6 +1104,9 @@ class ApiController {
         $input = $this->getJsonInput();
 
         $customerName = trim((string)($input['customer_name'] ?? ''));
+        if (empty($customerName)) {
+            $customerName = 'Walk-in Customer';
+        }
         $customerPhone = trim((string)($input['customer_phone'] ?? ''));
         $serviceId = isset($input['service_id']) ? (int)$input['service_id'] : null;
         $serviceName = trim((string)($input['service_name'] ?? 'Grinding'));
@@ -1103,12 +1116,6 @@ class ApiController {
         $paymentMethod = (string)($input['payment_method'] ?? 'cash');
         $notes = trim((string)($input['notes'] ?? ''));
 
-        if (empty($customerName)) {
-            $this->jsonError('Customer name is required.', 422);
-        }
-        if (empty($customerPhone)) {
-            $this->jsonError('Customer phone is required.', 422);
-        }
         if ($weightKg <= 0) {
             $this->jsonError('Weight in KG must be greater than zero.', 422);
         }

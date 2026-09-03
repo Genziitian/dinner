@@ -50,9 +50,9 @@ class MillRepositoryImpl(private val apiService: DinePosApiService) : MillReposi
         }
     }
 
-    override suspend fun getOrders(status: String?, search: String?): Resource<List<MillOrderDto>> {
+    override suspend fun getOrders(status: String?, search: String?, date: String?): Resource<List<MillOrderDto>> {
         return try {
-            val response = apiService.getMillOrders(status = status, search = search)
+            val response = apiService.getMillOrders(status = status, search = search, date = date)
             if (response.isSuccessful && response.body()?.success == true) {
                 Resource.Success(response.body()?.data ?: emptyList())
             } else {

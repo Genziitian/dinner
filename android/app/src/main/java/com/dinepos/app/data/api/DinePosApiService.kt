@@ -124,7 +124,8 @@ interface DinePosApiService {
     @GET("api/v1/mill/orders")
     suspend fun getMillOrders(
         @Query("status") status: String? = null,
-        @Query("search") search: String? = null
+        @Query("search") search: String? = null,
+        @Query("date") date: String? = null
     ): Response<ApiResponseDto<List<com.dinepos.app.data.dto.MillOrderDto>>>
 
     @POST("api/v1/mill/orders")
