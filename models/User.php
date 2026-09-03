@@ -14,23 +14,37 @@ class User {
     public const ROLE_CASHIER = 'cashier';
 
     public static function findById(int $id): ?array {
-        return Database::fetchOne(
-            "SELECT u.*, r.name AS restaurant_name, r.timezone AS restaurant_timezone, r.status AS restaurant_status, r.shop_type AS shop_type 
+        $sql = "SELECT u.*, r.name AS restaurant_name, r.timezone AS restaurant_timezone, r.status AS restaurant_status, r.shop_type AS shop_type 
              FROM users u 
              LEFT JOIN restaurants r ON u.restaurant_id = r.id 
-             WHERE u.id = :id LIMIT 1",
-            [':id' => $id]
-        );
+             WHERE u.id = :id LIMIT 1";
+        try {
+            return Database::fetchOne($sql, [':id' => $id]);
+        } catch (Throwable $e) {
+            if (str_contains($e->getMessage(), 'shop_type')) {
+                require_once ROOT_PATH . '/database/migrate_mill.php';
+                runMillMigration();
+                return Database::fetchOne($sql, [':id' => $id]);
+            }
+            throw $e;
+        }
     }
 
     public static function findByUsername(string $username): ?array {
-        return Database::fetchOne(
-            "SELECT u.*, r.name AS restaurant_name, r.timezone AS restaurant_timezone, r.status AS restaurant_status, r.shop_type AS shop_type 
+        $sql = "SELECT u.*, r.name AS restaurant_name, r.timezone AS restaurant_timezone, r.status AS restaurant_status, r.shop_type AS shop_type 
              FROM users u 
              LEFT JOIN restaurants r ON u.restaurant_id = r.id 
-             WHERE u.username = :username LIMIT 1",
-            [':username' => $username]
-        );
+             WHERE u.username = :username LIMIT 1";
+        try {
+            return Database::fetchOne($sql, [':username' => $username]);
+        } catch (Throwable $e) {
+            if (str_contains($e->getMessage(), 'shop_type')) {
+                require_once ROOT_PATH . '/database/migrate_mill.php';
+                runMillMigration();
+                return Database::fetchOne($sql, [':username' => $username]);
+            }
+            throw $e;
+        }
     }
 
     public static function allByRestaurant(int $restaurantId): array {

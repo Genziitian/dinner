@@ -48,8 +48,26 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $path = '/' . trim($uri, '/');
 if ($path === '//') $path = '/';
 
+// Auto-migrate schema updates if not yet performed
+$millMigrationFlag = ROOT_PATH . '/storage/logs/.mill_migrated';
+if (!file_exists($millMigrationFlag)) {
+    require_once ROOT_PATH . '/database/migrate_mill.php';
+    if (runMillMigration()) {
+        @file_put_contents($millMigrationFlag, date('Y-m-d H:i:s'));
+    }
+}
+
 // Router Dispatcher
 try {
+    // Web Migration Route (Fallback)
+    if ($path === '/migrate-mill' || $path === '/migrate') {
+        require_once ROOT_PATH . '/database/migrate_mill.php';
+        $res = runMillMigration();
+        header('Content-Type: text/plain');
+        echo $res ? "SUCCESS: Database migrated successfully!" : "ERROR: Migration failed. Check error logs.";
+        exit;
+    }
+
     // 0. REST API v1 Routes (Mobile Client)
     if (str_starts_with($path, '/api/v1/')) {
         $api = new ApiController();
