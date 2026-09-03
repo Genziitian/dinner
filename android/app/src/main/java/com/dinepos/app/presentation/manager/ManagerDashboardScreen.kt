@@ -48,7 +48,7 @@ fun ManagerDashboardScreen(
     val uiState by viewModel.uiState.collectAsState()
     val stats = uiState.stats
     val sessionManager = com.dinepos.app.DinePosApp.instance.sessionManager
-    val isMill = sessionManager.isMill()
+    val isMill = uiState.isMill || sessionManager.isMill()
 
     Scaffold(
         containerColor = BrandBackground,

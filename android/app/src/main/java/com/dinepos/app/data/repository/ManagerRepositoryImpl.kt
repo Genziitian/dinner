@@ -28,6 +28,10 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
                     totalWeightKg = statsDto.totalWeightKg
                 )
                 val orders = data?.recentOrders?.map { mapOrderDto(it) } ?: emptyList()
+                val shopType = data?.restaurant?.shopType
+                if (!shopType.isNullOrBlank()) {
+                    com.dinepos.app.DinePosApp.instance.sessionManager.saveShopType(shopType)
+                }
                 Resource.Success(Pair(stats, orders))
             } else {
                 Resource.Error(response.body()?.message ?: "Failed to load dashboard.")

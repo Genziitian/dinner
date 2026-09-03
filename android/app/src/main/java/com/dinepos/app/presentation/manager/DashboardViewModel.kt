@@ -17,7 +17,8 @@ data class DashboardUiState(
     val stats: DailyStats? = null,
     val recentOrders: List<Order> = emptyList(),
     val errorMessage: String? = null,
-    val restaurantName: String = ""
+    val restaurantName: String = "",
+    val isMill: Boolean = false
 )
 
 class DashboardViewModel(
@@ -27,7 +28,10 @@ class DashboardViewModel(
     private val sessionManager = DinePosApp.instance.sessionManager
 
     private val _uiState = MutableStateFlow(
-        DashboardUiState(restaurantName = sessionManager.getRestaurantName())
+        DashboardUiState(
+            restaurantName = sessionManager.getRestaurantName(),
+            isMill = sessionManager.isMill()
+        )
     )
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
@@ -37,7 +41,11 @@ class DashboardViewModel(
 
     fun loadDashboard() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                isMill = sessionManager.isMill()
+            )
             when (val result = managerRepository.getDashboard()) {
                 is Resource.Success -> {
                     val (stats, orders) = result.data
@@ -45,7 +53,8 @@ class DashboardViewModel(
                         isLoading = false,
                         stats = stats,
                         recentOrders = orders,
-                        restaurantName = sessionManager.getRestaurantName()
+                        restaurantName = sessionManager.getRestaurantName(),
+                        isMill = sessionManager.isMill()
                     )
                 }
                 is Resource.Error -> {

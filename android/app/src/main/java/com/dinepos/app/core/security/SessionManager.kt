@@ -71,7 +71,18 @@ class SessionManager(context: Context) {
         _isLoggedIn.value = false
     }
 
-    fun getShopType(): String = prefs.getString(Constants.KEY_SHOP_TYPE, "restaurant") ?: "restaurant"
+    fun getShopType(): String {
+        val saved = prefs.getString(Constants.KEY_SHOP_TYPE, null)
+        if (!saved.isNullOrBlank()) return saved
+        if (getRestaurantName().contains("mill", ignoreCase = true)) {
+            return "mill"
+        }
+        return "restaurant"
+    }
+
+    fun saveShopType(shopType: String) {
+        prefs.edit().putString(Constants.KEY_SHOP_TYPE, shopType).apply()
+    }
 
     fun isMill(): Boolean = getShopType().equals("mill", ignoreCase = true)
 
