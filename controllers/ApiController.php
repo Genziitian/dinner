@@ -395,10 +395,15 @@ class ApiController {
 
         if (($restaurant['shop_type'] ?? '') === 'mill') {
             require_once ROOT_PATH . '/models/MillOrder.php';
-            $tz = new DateTimeZone($restaurant['timezone'] ?? 'Asia/Kolkata');
+            $tzName = !empty($restaurant['timezone']) ? $restaurant['timezone'] : 'Asia/Kolkata';
+            try {
+                $tz = new DateTimeZone($tzName);
+            } catch (Exception $e) {
+                $tz = new DateTimeZone('Asia/Kolkata');
+            }
             $today = (new DateTime('now', $tz))->format('Y-m-d');
             $millSummary = MillOrder::getDailySummary($restaurantId, $today);
-            $millRecent = MillOrder::allByRestaurant($restaurantId, 'all', null, 10);
+            $millRecent = MillOrder::allByRestaurant($restaurantId, ['limit' => 10]);
             
             $todayStats = [
                 'total_sales' => (float)$millSummary['total_amount'],
