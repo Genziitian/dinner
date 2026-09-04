@@ -108,7 +108,7 @@ fun LoginScreen(
                     )
 
                     Text(
-                        text = "Restaurant Billing & Order Management",
+                        text = "Billing & Order Management",
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary
                     )
