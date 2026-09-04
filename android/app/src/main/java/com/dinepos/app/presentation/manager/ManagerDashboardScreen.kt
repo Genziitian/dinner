@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -112,37 +113,45 @@ fun ManagerDashboardScreen(
                 },
                 title = {
                     Column {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = BrandOrange.copy(alpha = 0.12f),
-                            border = BorderStroke(1.dp, BrandOrange.copy(alpha = 0.35f)),
-                            modifier = Modifier.padding(bottom = 3.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            Text(
+                                text = uiState.restaurantName.ifBlank { if (isMill) "Atta Mill" else "Restaurant" },
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandDark,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = BrandOrange.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, BrandOrange.copy(alpha = 0.35f))
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .background(BrandOrange, CircleShape)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = if (isMill) "MILL" else "GI ORDER POS",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = BrandOrange,
-                                    letterSpacing = 0.6.sp
-                                )
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(BrandOrange, CircleShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (isMill) "MILL" else "GI ORDER POS",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = BrandOrange,
+                                        letterSpacing = 0.6.sp
+                                    )
+                                }
                             }
                         }
-                        Text(
-                            text = uiState.restaurantName.ifBlank { if (isMill) "Atta Mill" else "Restaurant" },
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandDark
-                        )
                         Text(
                             text = if (isMill) "Mill Dashboard" else "Manager Dashboard",
                             style = MaterialTheme.typography.bodySmall,
