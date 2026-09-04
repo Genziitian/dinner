@@ -301,7 +301,6 @@ fun ProfileScreen(
                             ProfileNavOption(
                                 icon = Icons.Outlined.People,
                                 title = "Staff Management (Cashiers)",
-                                subtitle = "Create & reset passwords for cashier staff (double confirmation)",
                                 onClick = { showStaffManagementDialog = true }
                             )
                         } else {
@@ -309,7 +308,6 @@ fun ProfileScreen(
                             ProfileNavOption(
                                 icon = Icons.Outlined.Storefront,
                                 title = if (isHi) "पिसाई दरें" else "Grinding Rates",
-                                subtitle = if (isHi) "अनाज पिसाई दरें प्रबंधित करें" else "Manage grain services and price per KG",
                                 onClick = onNavigateToRates
                             )
                         }
@@ -318,7 +316,6 @@ fun ProfileScreen(
                         ProfileNavOption(
                             icon = Icons.Outlined.FileDownload,
                             title = if (isHi) "बिक्री रिपोर्ट डाउनलोड करें (CSV)" else "Export Sales Reports (CSV)",
-                            subtitle = if (isHi) "आज, मासिक या चुनी गई तारीख की एक्सेल/CSV रिपोर्ट" else "Download Excel/CSV reports for today, monthly or custom range",
                             onClick = { showExportDialog = true }
                         )
                     }
@@ -349,7 +346,6 @@ fun ProfileScreen(
                         ProfileNavOption(
                             icon = Icons.Outlined.Language,
                             title = "Open Web Super Admin Portal",
-                            subtitle = "Manage restaurants, multi-tenancy & database",
                             onClick = {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("${currentBaseUrl}admin/dashboard"))
                                 context.startActivity(intent)
@@ -385,7 +381,7 @@ fun ProfileScreen(
                     ProfileNavOption(
                         icon = Icons.Outlined.Language,
                         title = if (isHi) "ऐप की भाषा" else "App Language",
-                        subtitle = if (currentLanguage == "hi") "हिंदी (Hindi)" else "English",
+                        trailingText = if (currentLanguage == "hi") "हिंदी (Hindi)" else "English",
                         onClick = { showLanguageDialog = true }
                     )
                 }
@@ -405,7 +401,6 @@ fun ProfileScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             LanguageOptionItem(
                                 title = "English",
-                                subtitle = "Default application language",
                                 isSelected = currentLanguage == "en",
                                 onClick = {
                                     sessionManager.setLanguage("en")
@@ -416,7 +411,6 @@ fun ProfileScreen(
                             )
                             LanguageOptionItem(
                                 title = "हिंदी (Hindi)",
-                                subtitle = "हिंदी भाषा में उपयोग करें",
                                 isSelected = currentLanguage == "hi",
                                 onClick = {
                                     sessionManager.setLanguage("hi")
@@ -449,7 +443,7 @@ fun ProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Legal & Application",
+                        text = if (isHi) "कानूनी व नियम" else "Legal & Application",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = BrandDark
@@ -457,14 +451,12 @@ fun ProfileScreen(
 
                     ProfileNavOption(
                         icon = Icons.Outlined.PrivacyTip,
-                        title = "Privacy Policy",
-                        subtitle = "Read data handling & security standards",
+                        title = if (isHi) "गोपनीयता नीति (Privacy Policy)" else "Privacy Policy",
                         onClick = onNavigateToPrivacy
                     )
                     ProfileNavOption(
                         icon = Icons.Outlined.Description,
-                        title = "Terms and Conditions",
-                        subtitle = "Software usage agreement & terms",
+                        title = if (isHi) "नियम और शर्तें (Terms & Conditions)" else "Terms and Conditions",
                         onClick = onNavigateToTerms
                     )
 
@@ -1539,7 +1531,8 @@ private fun InfoRow(icon: ImageVector, label: String, value: String) {
 private fun ProfileNavOption(
     icon: ImageVector,
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
+    trailingText: String? = null,
     onClick: () -> Unit
 ) {
     Surface(
@@ -1551,7 +1544,7 @@ private fun ProfileNavOption(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 4.dp),
+                .padding(vertical = 9.dp, horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -1570,8 +1563,19 @@ private fun ProfileNavOption(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = BrandDark)
-                Text(text = subtitle, fontSize = 11.5.sp, color = TextSecondary)
+                Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = BrandDark)
+                if (!subtitle.isNullOrBlank()) {
+                    Text(text = subtitle, fontSize = 11.5.sp, color = TextSecondary)
+                }
+            }
+            if (!trailingText.isNullOrBlank()) {
+                Text(
+                    text = trailingText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = BrandOrange
+                )
+                Spacer(modifier = Modifier.width(6.dp))
             }
             Icon(
                 imageVector = Icons.Default.ChevronRight,
@@ -1586,7 +1590,7 @@ private fun ProfileNavOption(
 @Composable
 private fun LanguageOptionItem(
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -1600,28 +1604,32 @@ private fun LanguageOptionItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = BrandDark
+                    fontSize = 15.sp,
+                    color = if (isSelected) BrandOrange else BrandDark
                 )
-                Text(
-                    text = subtitle,
-                    fontSize = 11.5.sp,
-                    color = TextSecondary
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        text = subtitle,
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Selected",
+                    tint = BrandOrange,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            RadioButton(
-                selected = isSelected,
-                onClick = onClick,
-                colors = RadioButtonDefaults.colors(selectedColor = BrandOrange)
-            )
         }
     }
 }

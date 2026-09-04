@@ -247,7 +247,6 @@ fun ManagerDashboardScreen(
                                 ) {
                                     ActionCard(
                                         title = "POS Billing",
-                                        subtitle = "Take orders & print",
                                         icon = Icons.Default.ShoppingCart,
                                         iconColor = BrandOrange,
                                         badgeText = "${stats?.totalOrders ?: 0} orders",
@@ -256,7 +255,6 @@ fun ManagerDashboardScreen(
                                     )
                                     ActionCard(
                                         title = "Order History",
-                                        subtitle = "View & search all",
                                         icon = Icons.AutoMirrored.Filled.ReceiptLong,
                                         iconColor = Color(0xFF3B82F6),
                                         onClick = onNavigateToOrders,
@@ -270,7 +268,6 @@ fun ManagerDashboardScreen(
                             ) {
                                 ActionCard(
                                     title = if (isMill) "Grinding Rates" else "Menu Items",
-                                    subtitle = if (isMill) "Rates & price/KG" else "Rates & portions",
                                     icon = if (isMill) Icons.Default.Storefront else Icons.Default.RestaurantMenu,
                                     iconColor = BrandEmerald,
                                     onClick = if (isMill) onNavigateToMillServices else onNavigateToItems,
@@ -278,7 +275,6 @@ fun ManagerDashboardScreen(
                                 )
                                 ActionCard(
                                     title = if (isMill) "Customers" else "Sales Reports",
-                                    subtitle = if (isMill) "Directory & dues" else "Analytics & exports",
                                     icon = if (isMill) Icons.Default.People else Icons.Default.BarChart,
                                     iconColor = Color(0xFF8B5CF6),
                                     onClick = if (isMill) onNavigateToMillCustomers else onNavigateToReports,
@@ -443,7 +439,6 @@ fun ManagerDashboardScreen(
                         ) {
                             ActionCard(
                                 title = "New Order",
-                                subtitle = "POS Billing Screen",
                                 icon = Icons.Default.ShoppingCart,
                                 iconColor = BrandOrange,
                                 onClick = onNavigateToBilling,
@@ -451,7 +446,6 @@ fun ManagerDashboardScreen(
                             )
                             ActionCard(
                                 title = "Orders",
-                                subtitle = "View History",
                                 icon = Icons.AutoMirrored.Filled.ReceiptLong,
                                 iconColor = Color(0xFF3B82F6),
                                 onClick = onNavigateToOrders,
@@ -466,7 +460,6 @@ fun ManagerDashboardScreen(
                     ) {
                         ActionCard(
                             title = if (isMill) com.dinepos.app.core.localization.L10n.grindingRates(isHi) else "Menu Items",
-                            subtitle = if (isMill) com.dinepos.app.core.localization.L10n.grindingRatesSub(isHi) else "Rates & Portions",
                             icon = if (isMill) Icons.Default.Storefront else Icons.Default.RestaurantMenu,
                             iconColor = BrandEmerald,
                             onClick = if (isMill) onNavigateToMillServices else onNavigateToItems,
@@ -474,7 +467,6 @@ fun ManagerDashboardScreen(
                         )
                         ActionCard(
                             title = if (isMill) com.dinepos.app.core.localization.L10n.customers(isHi) else "Reports",
-                            subtitle = if (isMill) com.dinepos.app.core.localization.L10n.customersSub(isHi) else "Sales & Analytics",
                             icon = if (isMill) Icons.Default.People else Icons.Default.BarChart,
                             iconColor = Color(0xFF8B5CF6),
                             onClick = if (isMill) onNavigateToMillCustomers else onNavigateToReports,
@@ -722,7 +714,7 @@ fun ManagerDashboardScreen(
 @Composable
 private fun ActionCard(
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     icon: ImageVector,
     iconColor: Color,
     badgeText: String? = null,
@@ -772,9 +764,11 @@ private fun ActionCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(text = title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = BrandDark)
-            Text(text = subtitle, fontSize = 11.sp, color = TextSecondary)
+            if (!subtitle.isNullOrBlank()) {
+                Text(text = subtitle, fontSize = 11.sp, color = TextSecondary)
+            }
         }
     }
 }
