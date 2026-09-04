@@ -27,4 +27,17 @@ sealed class Screen(val route: String) {
     object MillEarnings : Screen("mill_earnings")
     object PrivacyPolicy : Screen("privacy_policy")
     object TermsAndConditions : Screen("terms_and_conditions")
+    object NoInternet : Screen("no_internet")
+    object NotFound : Screen("not_found") {
+        fun createRoute(resource: String? = null): String =
+            if (!resource.isNullOrBlank()) "not_found?resource=$resource" else "not_found"
+    }
+    object Error : Screen("error") {
+        fun createRoute(code: String? = null, details: String? = null): String {
+            val params = mutableListOf<String>()
+            if (!code.isNullOrBlank()) params.add("code=$code")
+            if (!details.isNullOrBlank()) params.add("details=$details")
+            return if (params.isNotEmpty()) "error?${params.joinToString("&")}" else "error"
+        }
+    }
 }

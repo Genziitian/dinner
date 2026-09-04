@@ -17,8 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.dinepos.app.core.network.NetworkMonitor
 import com.dinepos.app.core.theme.BrandBackground
 import com.dinepos.app.core.theme.DinePosTheme
+import com.dinepos.app.presentation.common.NoInternetBanner
 import com.dinepos.app.presentation.navigation.DinePosBottomBar
 import com.dinepos.app.presentation.navigation.DinePosNavGraph
 import com.dinepos.app.presentation.navigation.Screen
@@ -47,7 +49,10 @@ class MainActivity : ComponentActivity() {
         val cachedToken = sessionManager.getAuthToken()
         val cachedRole = sessionManager.getUserRole()
 
-        val startDestination = if (!cachedToken.isNullOrBlank()) {
+        val explicitRoute = intent?.getStringExtra("route")
+        val startDestination = if (!explicitRoute.isNullOrBlank()) {
+            explicitRoute
+        } else if (!cachedToken.isNullOrBlank()) {
             when (cachedRole.lowercase()) {
                 "superadmin" -> Screen.SuperAdminDashboard.route
                 "cashier" -> Screen.CashierBilling.route
@@ -59,6 +64,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val currentLanguage by sessionManager.language.collectAsState()
+            val networkMonitor = androidx.compose.runtime.remember { NetworkMonitor(this@MainActivity) }
+            val isOnline by networkMonitor.isOnline.collectAsState(initial = networkMonitor.isCurrentlyConnected())
+
             androidx.compose.runtime.CompositionLocalProvider(
                 com.dinepos.app.core.localization.LocalAppLanguage provides currentLanguage
             ) {
@@ -107,6 +115,16 @@ class MainActivity : ComponentActivity() {
                                     navController = navController,
                                     startDestination = startDestination
                                 )
+
+                                if (currentRoute != Screen.NoInternet.route) {
+                                    NoInternetBanner(
+                                        isVisible = !isOnline,
+                                        isHi = currentLanguage == "hi",
+                                        onRetryClick = {
+                                            navController.navigate(Screen.NoInternet.route)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

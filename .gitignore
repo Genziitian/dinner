@@ -24,3 +24,4 @@ android/local.properties
 android/app/keystore/
 *.apk
 *.aab
+*.zip

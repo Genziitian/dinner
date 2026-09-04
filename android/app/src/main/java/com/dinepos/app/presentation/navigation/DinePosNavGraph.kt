@@ -17,6 +17,11 @@ import com.dinepos.app.presentation.orders.OrderDetailScreen
 import com.dinepos.app.presentation.orders.OrderListScreen
 import com.dinepos.app.presentation.profile.ProfileScreen
 import com.dinepos.app.presentation.receipt.ReceiptScreen
+import com.dinepos.app.DinePosApp
+import com.dinepos.app.core.error.AppErrorCode
+import com.dinepos.app.presentation.error.GenericErrorScreen
+import com.dinepos.app.presentation.error.NoInternetScreen
+import com.dinepos.app.presentation.error.NotFoundScreen
 import com.dinepos.app.presentation.reports.ReportsScreen
 import com.dinepos.app.presentation.summary.SummaryScreen
 
@@ -263,6 +268,91 @@ fun DinePosNavGraph(
         composable(Screen.TermsAndConditions.route) {
             TermsAndConditionsScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 15. Offline / No Internet Screen
+        composable(Screen.NoInternet.route) {
+            NoInternetScreen(
+                onRetrySuccess = {
+                    navController.popBackStack()
+                },
+                onNavigateBack = if (navController.previousBackStackEntry != null) {
+                    { navController.popBackStack() }
+                } else null
+            )
+        }
+
+        // 16. 404 Not Found Screen
+        composable(
+            route = "not_found?resource={resource}",
+            arguments = listOf(
+                navArgument("resource") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val resourceName = backStackEntry.arguments?.getString("resource")
+            val role = DinePosApp.instance.sessionManager.getUserRole().lowercase()
+            val destination = when (role) {
+                "superadmin" -> Screen.SuperAdminDashboard.route
+                "cashier" -> Screen.CashierBilling.route
+                else -> Screen.ManagerDashboard.route
+            }
+            NotFoundScreen(
+                resourceName = resourceName,
+                onNavigateHome = {
+                    navController.navigate(destination) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateBack = if (navController.previousBackStackEntry != null) {
+                    { navController.popBackStack() }
+                } else null
+            )
+        }
+
+        // 17. Generic Error Screen with Error Codes
+        composable(
+            route = "error?code={code}&details={details}",
+            arguments = listOf(
+                navArgument("code") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("details") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val codeStr = backStackEntry.arguments?.getString("code")
+            val details = backStackEntry.arguments?.getString("details")
+            val errorCode = AppErrorCode.fromCode(codeStr)
+            val role = DinePosApp.instance.sessionManager.getUserRole().lowercase()
+            val destination = when (role) {
+                "superadmin" -> Screen.SuperAdminDashboard.route
+                "cashier" -> Screen.CashierBilling.route
+                else -> Screen.ManagerDashboard.route
+            }
+            GenericErrorScreen(
+                errorCode = errorCode,
+                technicalDetails = details,
+                onRetry = {
+                    navController.popBackStack()
+                },
+                onNavigateHome = {
+                    navController.navigate(destination) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateBack = if (navController.previousBackStackEntry != null) {
+                    { navController.popBackStack() }
+                } else null
             )
         }
     }
