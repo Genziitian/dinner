@@ -57,7 +57,7 @@ fun DinePosBottomBar(
         Screen.ManagerReports.route,
         Screen.Profile.route,
         Screen.MillOrders.route,
-        Screen.MillServices.route
+        Screen.MillEarnings.route
     )
 
     val isVisible = currentRoute in topLevelRoutes && currentRoute != Screen.Login.route
@@ -70,8 +70,8 @@ fun DinePosBottomBar(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
                 .wrapContentHeight()
+                .padding(top = 14.dp)
         ) {
             // Main Bottom Bar Surface
             Surface(
@@ -82,12 +82,17 @@ fun DinePosBottomBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .height(68.dp)
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
+                        .navigationBarsPadding()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp)
+                            .padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -157,17 +162,18 @@ fun DinePosBottomBar(
                         }
                         else -> {
                             val isMill = sessionManager.isMill()
+                            val isHi = com.dinepos.app.core.localization.LocalAppLanguage.current == "hi"
                             // Manager Navigation (Home | Orders | [Elevated Center + Button] | Menu/Rates | Profile)
                             NavItem(
                                 icon = Icons.Outlined.Home,
-                                label = "Home",
+                                label = com.dinepos.app.core.localization.L10n.navHome(isHi),
                                 isSelected = currentRoute == Screen.ManagerDashboard.route,
                                 onClick = { onNavigateToRoute(Screen.ManagerDashboard.route) },
                                 modifier = Modifier.weight(1f)
                             )
                             NavItem(
                                 icon = Icons.AutoMirrored.Outlined.Assignment,
-                                label = "Orders",
+                                label = com.dinepos.app.core.localization.L10n.navOrders(isHi),
                                 isSelected = currentRoute == (if (isMill) Screen.MillOrders.route else Screen.ManagerOrders.route),
                                 onClick = {
                                     if (isMill) {
@@ -181,7 +187,7 @@ fun DinePosBottomBar(
                             Spacer(modifier = Modifier.weight(1.2f))
                             NavItem(
                                 icon = if (isMill) Icons.Outlined.Assessment else Icons.Outlined.RestaurantMenu,
-                                label = if (isMill) "Earning" else "Menu",
+                                label = if (isMill) com.dinepos.app.core.localization.L10n.navEarning(isHi) else (if (isHi) "मेनू" else "Menu"),
                                 isSelected = currentRoute == (if (isMill) Screen.MillEarnings.route else Screen.ManagerItems.route),
                                 onClick = {
                                     if (isMill) {
@@ -194,7 +200,7 @@ fun DinePosBottomBar(
                             )
                             NavItem(
                                 icon = Icons.Outlined.Person,
-                                label = "Profile",
+                                label = com.dinepos.app.core.localization.L10n.navProfile(isHi),
                                 isSelected = currentRoute == Screen.Profile.route,
                                 onClick = { onNavigateToRoute(Screen.Profile.route) },
                                 modifier = Modifier.weight(1f)
@@ -203,6 +209,7 @@ fun DinePosBottomBar(
                     }
                 }
             }
+        }
 
             // Elevated Center Floating Action Button
             if (role == "cashier") {

@@ -63,10 +63,71 @@ class ExportController extends BaseController {
             $filenameSuffix = "custom_{$startDate}_to_{$endDate}";
         }
 
-        // Fetch aggregate summary
-        $stats = Order::getStats($restaurantId, 'custom', $startDate, $endDate);
-        // Fetch detailed orders
-        $orders = Order::getOrdersForExport($restaurantId, $startDate, $endDate);
+        if (($restaurant['shop_type'] ?? '') === 'mill') {
+            $millOrdersSql = "SELECT mo.*, u.username AS created_by_username
+                              FROM mill_orders mo
+                              LEFT JOIN users u ON mo.created_by = u.id
+                              WHERE mo.restaurant_id = :restaurant_id
+                                AND mo.order_date >= :start_date
+                                AND mo.order_date <= :end_date
+                                AND mo.status != 'cancelled'
+                              ORDER BY mo.order_date ASC, mo.order_number ASC, mo.id ASC";
+            $rawOrders = Database::fetchAll($millOrdersSql, [
+                ':restaurant_id' => $restaurantId,
+                ':start_date' => $startDate,
+                ':end_date' => $endDate,
+            ]);
+
+            $totalOrders = count($rawOrders);
+            $totalSales = 0.0;
+            $cashSales = 0.0;
+            $onlineSales = 0.0;
+            $orders = [];
+            foreach ($rawOrders as $mo) {
+                $amt = (float)$mo['total_amount'];
+                $totalSales += $amt;
+                $pm = strtolower($mo['payment_method'] ?? 'cash');
+                if ($pm === 'cash') {
+                    $cashSales += $amt;
+                } else {
+                    $onlineSales += $amt;
+                }
+
+                $orders[] = [
+                    'order_number' => (int)$mo['order_number'],
+                    'order_date' => $mo['order_date'],
+                    'order_time' => $mo['order_time'],
+                    'customer_name' => $mo['customer_name'] ?: 'Walk-in',
+                    'customer_phone' => $mo['customer_phone'] ?: '',
+                    'subtotal' => $amt,
+                    'total' => $amt,
+                    'payment_method' => ucfirst($mo['payment_method'] ?: 'Cash'),
+                    'status' => $mo['status'],
+                    'created_by_username' => $mo['created_by_username'] ?: 'Manager',
+                    'items' => [
+                        [
+                            'item_name_snapshot' => $mo['service_name'] ?: 'Grinding',
+                            'variant_name_snapshot' => 'Service',
+                            'quantity' => (float)$mo['weight_kg'],
+                            'unit' => 'kg',
+                            'total_price' => $amt,
+                        ]
+                    ]
+                ];
+            }
+
+            $stats = [
+                'total_orders' => $totalOrders,
+                'total_sales' => $totalSales,
+                'cash_sales' => $cashSales,
+                'online_sales' => $onlineSales,
+            ];
+        } else {
+            // Fetch aggregate summary
+            $stats = Order::getStats($restaurantId, 'custom', $startDate, $endDate);
+            // Fetch detailed orders
+            $orders = Order::getOrdersForExport($restaurantId, $startDate, $endDate);
+        }
 
         $sanitizedRestName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $restaurant['name'] ?? 'Restaurant');
         $filename = "{$sanitizedRestName}_orders_{$filenameSuffix}.csv";

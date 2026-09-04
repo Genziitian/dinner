@@ -1,9 +1,16 @@
 package com.dinepos.app.presentation.mill
 
+import android.Manifest
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.ContactsContract
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +20,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,11 +33,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
+import androidx.core.content.ContextCompat
 import com.dinepos.app.DinePosApp
 import com.dinepos.app.core.theme.*
+import com.dinepos.app.core.localization.L10n
 import com.dinepos.app.core.utils.CurrencyFormatter
 import com.dinepos.app.core.utils.Resource
+import com.dinepos.app.core.utils.WhatsAppHelper
 import com.dinepos.app.data.dto.CreateMillOrderRequestDto
+import com.dinepos.app.data.dto.MillCustomerDto
 import com.dinepos.app.data.dto.MillOrderDto
 import com.dinepos.app.data.dto.MillServiceDto
 import kotlinx.coroutines.launch
@@ -54,6 +69,8 @@ fun MillCreateOrderScreen(
         )
     }
 
+    val isHi = com.dinepos.app.core.localization.LocalAppLanguage.current == "hi"
+
     var services by remember { mutableStateOf<List<MillServiceDto>>(defaultServices) }
     var selectedService by remember { mutableStateOf<MillServiceDto?>(defaultServices[0]) }
     var serviceDropdownExpanded by remember { mutableStateOf(false) }
@@ -68,6 +85,104 @@ fun MillCreateOrderScreen(
 
     var createdOrderSuccess by remember { mutableStateOf<MillOrderDto?>(null) }
 
+    // Existing customer suggestions from database
+    var cachedCustomers by remember { mutableStateOf<List<MillCustomerDto>>(emptyList()) }
+    var nameFilteredCustomers by remember { mutableStateOf<List<MillCustomerDto>>(emptyList()) }
+    var nameDropdownExpanded by remember { mutableStateOf(false) }
+    var phoneFilteredCustomers by remember { mutableStateOf<List<MillCustomerDto>>(emptyList()) }
+    var phoneDropdownExpanded by remember { mutableStateOf(false) }
+
+    fun selectCustomer(c: MillCustomerDto) {
+        customerName = c.name
+        val digits = c.phone.filter { it.isDigit() }
+        val cleanDigits = when {
+            digits.length == 10 && digits[0] in '6'..'9' -> digits
+            digits.length > 10 && digits.takeLast(10)[0] in '6'..'9' -> digits.takeLast(10)
+            else -> digits.take(10)
+        }
+        if (cleanDigits.isNotEmpty()) {
+            customerPhone = cleanDigits
+        }
+        nameDropdownExpanded = false
+        phoneDropdownExpanded = false
+    }
+
+    // Contact Picker Launcher
+    val contactPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val contactUri = result.data?.data ?: return@rememberLauncherForActivityResult
+            try {
+                context.contentResolver.query(
+                    contactUri,
+                    arrayOf(
+                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                        ContactsContract.CommonDataKinds.Phone.NUMBER
+                    ),
+                    null,
+                    null,
+                    null
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                        val numIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                        val rawName = if (nameIdx >= 0) cursor.getString(nameIdx) ?: "" else ""
+                        val rawNumber = if (numIdx >= 0) cursor.getString(numIdx) ?: "" else ""
+
+                        val digits = rawNumber.filter { it.isDigit() }
+                        val cleanDigits = when {
+                            digits.length == 10 && digits[0] in '6'..'9' -> digits
+                            digits.length > 10 && digits.takeLast(10)[0] in '6'..'9' -> digits.takeLast(10)
+                            else -> digits.take(10)
+                        }
+
+                        if (cleanDigits.isNotEmpty()) {
+                            customerPhone = cleanDigits
+                        }
+                        if (rawName.isNotBlank()) {
+                            customerName = rawName.trim()
+                        }
+                        nameDropdownExpanded = false
+                        phoneDropdownExpanded = false
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to read contact: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Permission Launcher for READ_CONTACTS
+    val contactPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val intent = Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI)
+            contactPickerLauncher.launch(intent)
+        } else {
+            Toast.makeText(
+                context,
+                if (isHi) "संपर्क चुनने के लिए अनुमति आवश्यक है" else "Permission needed to choose from contacts",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    fun openContactPicker() {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            val intent = Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI)
+            contactPickerLauncher.launch(intent)
+        } else {
+            contactPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+        }
+    }
+
     LaunchedEffect(Unit) {
         when (val res = millRepository.getServices()) {
             is Resource.Success -> {
@@ -76,6 +191,13 @@ fun MillCreateOrderScreen(
                     services = list
                     selectedService = list[0]
                 }
+            }
+            else -> {}
+        }
+        // Cache customers for instant 2-3 character auto-suggestions
+        when (val res = millRepository.getCustomers()) {
+            is Resource.Success -> {
+                cachedCustomers = res.data ?: emptyList()
             }
             else -> {}
         }
@@ -91,7 +213,7 @@ fun MillCreateOrderScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "New Grinding Order",
+                        text = if (isHi) "नया पिसाई ऑर्डर" else "New Grinding Order",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = BrandDark
@@ -118,40 +240,152 @@ fun MillCreateOrderScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Customer Phone (Optional)
-            OutlinedTextField(
-                value = customerPhone,
-                onValueChange = { input ->
-                    customerPhone = input
-                    if (input.length >= 10) {
-                        scope.launch {
-                            val res = millRepository.getCustomers(input)
-                            if (res is Resource.Success && !res.data.isNullOrEmpty()) {
-                                customerName = res.data[0].name
+            // Customer Phone with Contact Picker and Suggestions
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = customerPhone,
+                    onValueChange = { input ->
+                        val digits = input.filter { it.isDigit() }.take(10)
+                        if (digits.isEmpty() || digits[0] in '6'..'9') {
+                            customerPhone = digits
+                            if (digits.length in 2..9) {
+                                val matches = cachedCustomers.filter { it.phone.contains(digits) }
+                                phoneFilteredCustomers = matches
+                                phoneDropdownExpanded = matches.isNotEmpty()
+                            } else {
+                                phoneDropdownExpanded = false
                             }
-                        }
-                    }
-                },
-                label = { Text("Customer Mobile / WhatsApp (Optional)") },
-                placeholder = { Text("e.g. 9876543210") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
-            )
 
-            // Customer Name (Optional)
-            OutlinedTextField(
-                value = customerName,
-                onValueChange = { customerName = it },
-                label = { Text("Customer Name (Optional)") },
-                placeholder = { Text("Leave blank for Walk-in") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+                            if (digits.length == 10) {
+                                scope.launch {
+                                    val res = millRepository.getCustomers(digits)
+                                    if (res is Resource.Success && !res.data.isNullOrEmpty()) {
+                                        customerName = res.data[0].name
+                                    }
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, if (isHi) "नंबर 6, 7, 8 या 9 से शुरू होना चाहिए" else "Number must start with 6, 7, 8, or 9", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    label = { Text(if (isHi) "ग्राहक मोबाइल / WhatsApp (वैकल्पिक)" else "Customer Mobile / WhatsApp (Optional)") },
+                    placeholder = { Text(if (isHi) "उदा. 9876543210 (10 अंक)" else "e.g. 9876543210 (10 digits)") },
+                    trailingIcon = {
+                        IconButton(onClick = { openContactPicker() }) {
+                            Icon(
+                                imageVector = Icons.Default.Contacts,
+                                contentDescription = if (isHi) "संपर्क चुनें" else "Choose from contacts",
+                                tint = BrandOrange
+                            )
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                DropdownMenu(
+                    expanded = phoneDropdownExpanded,
+                    onDismissRequest = { phoneDropdownExpanded = false },
+                    properties = PopupProperties(focusable = false),
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .background(BrandSurface)
+                ) {
+                    phoneFilteredCustomers.take(5).forEach { c ->
+                        DropdownMenuItem(
+                            text = {
+                                Column {
+                                    Text(
+                                        text = c.name,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = BrandDark
+                                    )
+                                    Text(
+                                        text = c.phone,
+                                        fontSize = 12.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                            },
+                            onClick = {
+                                selectCustomer(c)
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Customer Name with Auto-suggestions (2-3 initials / letters)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = customerName,
+                    onValueChange = { input ->
+                        customerName = input
+                        val q = input.trim()
+                        if (q.length >= 2) {
+                            val localMatches = cachedCustomers.filter { c ->
+                                c.name.contains(q, ignoreCase = true) || c.phone.contains(q)
+                            }
+                            nameFilteredCustomers = localMatches
+                            nameDropdownExpanded = localMatches.isNotEmpty()
+
+                            // Also query server in background for freshly registered customers
+                            scope.launch {
+                                val serverRes = millRepository.getCustomers(q)
+                                if (serverRes is Resource.Success && !serverRes.data.isNullOrEmpty()) {
+                                    val merged = (nameFilteredCustomers + serverRes.data).distinctBy { it.id }
+                                    nameFilteredCustomers = merged
+                                    nameDropdownExpanded = merged.isNotEmpty()
+                                }
+                            }
+                        } else {
+                            nameDropdownExpanded = false
+                        }
+                    },
+                    label = { Text(if (isHi) "ग्राहक का नाम (वैकल्पिक)" else "Customer Name (Optional)") },
+                    placeholder = { Text(if (isHi) "उदा. रमेश कुमार (2-3 अक्षर लिखें)" else "e.g. Ramesh Kumar (type 2-3 letters)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                DropdownMenu(
+                    expanded = nameDropdownExpanded,
+                    onDismissRequest = { nameDropdownExpanded = false },
+                    properties = PopupProperties(focusable = false),
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .background(BrandSurface)
+                ) {
+                    nameFilteredCustomers.take(5).forEach { c ->
+                        DropdownMenuItem(
+                            text = {
+                                Column {
+                                    Text(
+                                        text = c.name,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = BrandDark
+                                    )
+                                    Text(
+                                        text = c.phone,
+                                        fontSize = 12.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                            },
+                            onClick = {
+                                selectCustomer(c)
+                            }
+                        )
+                    }
+                }
+            }
 
             // Service Selection Dropdown
             Text(
-                text = "SELECT SERVICE *",
+                text = if (isHi) "पिसाई सेवा चुनें *" else "SELECT SERVICE *",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextSecondary,
@@ -165,12 +399,13 @@ fun MillCreateOrderScreen(
             ) {
                 OutlinedTextField(
                     value = selectedService?.let {
-                        if (!it.nameHi.isNullOrBlank()) "${it.name} (${it.nameHi}) - ${CurrencyFormatter.formatInr(it.ratePerKg)}/KG"
-                        else "${it.name} - ${CurrencyFormatter.formatInr(it.ratePerKg)}/KG"
-                    } ?: "Choose Grinding Service",
+                        val displayName = if (isHi && !it.nameHi.isNullOrBlank()) it.nameHi else it.name
+                        val unit = if (isHi) "किलो" else "KG"
+                        "$displayName - ${CurrencyFormatter.formatInr(it.ratePerKg)}/$unit"
+                    } ?: (if (isHi) "पिसाई सेवा चुनें" else "Choose Grinding Service"),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Grinding Service *") },
+                    label = { Text(if (isHi) "पिसाई सेवा *" else "Grinding Service *") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = serviceDropdownExpanded) },
                     modifier = Modifier
                         .menuAnchor()
@@ -182,6 +417,9 @@ fun MillCreateOrderScreen(
                     onDismissRequest = { serviceDropdownExpanded = false }
                 ) {
                     services.forEach { s ->
+                        val primary = if (isHi && !s.nameHi.isNullOrBlank()) s.nameHi else s.name
+                        val secondary = if (isHi && !s.nameHi.isNullOrBlank()) s.name else s.nameHi
+                        val unit = if (isHi) "किलो" else "KG"
                         DropdownMenuItem(
                             text = {
                                 Row(
@@ -191,21 +429,21 @@ fun MillCreateOrderScreen(
                                 ) {
                                     Column {
                                         Text(
-                                            text = s.name,
+                                            text = primary,
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 15.sp,
                                             color = BrandDark
                                         )
-                                        if (!s.nameHi.isNullOrBlank()) {
+                                        if (!secondary.isNullOrBlank()) {
                                             Text(
-                                                text = s.nameHi,
+                                                text = secondary,
                                                 fontSize = 12.sp,
                                                 color = TextSecondary
                                             )
                                         }
                                     }
                                     Text(
-                                        text = "${CurrencyFormatter.formatInr(s.ratePerKg)} / KG",
+                                        text = "${CurrencyFormatter.formatInr(s.ratePerKg)} / $unit",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp,
                                         color = BrandOrange
@@ -222,12 +460,30 @@ fun MillCreateOrderScreen(
                 }
             }
 
-            // Weight in KG (Full Width, Rate is taken automatically from selected service)
+            // Weight in KG (Only numbers, max 100 KG)
             OutlinedTextField(
                 value = weightKgText,
-                onValueChange = { weightKgText = it },
-                label = { Text("Weight (KG) *") },
-                placeholder = { Text("e.g. 10.0") },
+                onValueChange = { input ->
+                    var dotCount = 0
+                    val filtered = input.filter { char ->
+                        if (char.isDigit()) true
+                        else if (char == '.' && dotCount == 0) {
+                            dotCount++
+                            true
+                        } else false
+                    }
+                    val num = filtered.toDoubleOrNull()
+                    if (filtered.isEmpty()) {
+                        weightKgText = ""
+                    } else if (num != null && num <= 100.0) {
+                        weightKgText = filtered
+                    } else if (num != null && num > 100.0) {
+                        weightKgText = "100"
+                        Toast.makeText(context, if (isHi) "अधिकतम वजन 100 KG तक ही संभव है" else "Maximum weight allowed is 100 KG", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                label = { Text(if (isHi) "वजन (KG, अधिकतम 100) *" else "Weight (KG, Max 100) *") },
+                placeholder = { Text("e.g. 10.0 (Max 100)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -248,13 +504,17 @@ fun MillCreateOrderScreen(
                 ) {
                     Column {
                         Text(
-                            text = "TOTAL AMOUNT",
+                            text = if (isHi) "कुल राशि" else "TOTAL AMOUNT",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextMuted
                         )
+                        val svcName = selectedService?.let { if (isHi && !it.nameHi.isNullOrBlank()) it.nameHi else it.name } ?: ""
+                        val unit = if (isHi) "किलो" else "KG"
+                        val rateUnit = if (isHi) "प्रति किलो" else "KG"
                         Text(
-                            text = "${weightKg} KG x Rs.${ratePerKg}/KG (${selectedService?.name ?: ""})",
+                            text = if (isHi) "$weightKg $unit x ₹$ratePerKg/$rateUnit ($svcName)"
+                            else "$weightKg KG x Rs.$ratePerKg/KG ($svcName)",
                             fontSize = 12.sp,
                             color = Color.White.copy(alpha = 0.7f)
                         )
@@ -270,7 +530,7 @@ fun MillCreateOrderScreen(
 
             // Payment Status Selection
             Text(
-                text = "PAYMENT STATUS *",
+                text = if (isHi) "भुगतान स्थिति *" else "PAYMENT STATUS *",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextSecondary,
@@ -281,7 +541,10 @@ fun MillCreateOrderScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                listOf("unpaid" to "Unpaid (Due)", "paid" to "Paid").forEach { (st, label) ->
+                listOf(
+                    "unpaid" to (if (isHi) "बकाया (Due)" else "Unpaid (Due)"),
+                    "paid" to (if (isHi) "जमा (Paid)" else "Paid")
+                ).forEach { (st, label) ->
                     val isSel = paymentStatus == st
                     val activeColor = if (st == "paid") BrandEmerald else BrandAmber
                     Card(
@@ -316,7 +579,10 @@ fun MillCreateOrderScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    listOf("cash" to "Cash", "online" to "UPI / Online").forEach { (mode, label) ->
+                    listOf(
+                        "cash" to (if (isHi) "नकद (Cash)" else "Cash"),
+                        "online" to (if (isHi) "ऑनलाइन / UPI" else "UPI / Online")
+                    ).forEach { (mode, label) ->
                         val isSel = paymentMethod == mode
                         Card(
                             onClick = { paymentMethod = mode },
@@ -349,8 +615,8 @@ fun MillCreateOrderScreen(
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Notes (Optional)") },
-                placeholder = { Text("e.g. Fine grinding, pack in 5kg bags") },
+                label = { Text(if (isHi) "नोट्स (वैकल्पिक)" else "Notes (Optional)") },
+                placeholder = { Text(if (isHi) "उदा. बारीक पिसाई, 5 किलो के बैग में पैक करें" else "e.g. Fine grinding, pack in 5kg bags") },
                 maxLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -358,12 +624,19 @@ fun MillCreateOrderScreen(
             // Submit Button
             Button(
                 onClick = {
-                    if (weightKg <= 0) {
-                        Toast.makeText(context, "Please enter valid weight in KG", Toast.LENGTH_SHORT).show()
+                    val finalCustomerPhone = customerPhone.trim()
+                    if (finalCustomerPhone.isNotEmpty()) {
+                        if (finalCustomerPhone.length != 10 || finalCustomerPhone[0] !in '6'..'9') {
+                            Toast.makeText(context, if (isHi) "मोबाइल नंबर 10 अंकों का और 6-9 से शुरू होना चाहिए" else "Mobile number must be 10 digits starting with 6-9", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                    }
+
+                    if (weightKg <= 0.0 || weightKg > 100.0) {
+                        Toast.makeText(context, if (isHi) "कृपया 0.1 से 100 KG के बीच वजन दर्ज करें" else "Please enter weight between 0.1 and 100 KG (Max 100 KG)", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-                    val finalCustomerName = customerName.trim().ifBlank { "Walk-in Customer" }
-                    val finalCustomerPhone = customerPhone.trim()
+                    val finalCustomerName = customerName.trim().ifBlank { if (isHi) "काउंटर ग्राहक" else "Walk-in Customer" }
 
                     isSubmitting = true
                     scope.launch {
@@ -403,7 +676,7 @@ fun MillCreateOrderScreen(
                 if (isSubmitting) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Confirm & Save Order", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(if (isHi) "ऑर्डर कन्फर्म करें" else "Confirm & Save Order", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
 
@@ -412,6 +685,14 @@ fun MillCreateOrderScreen(
 
         // Daily Order Confirmation Dialog
         createdOrderSuccess?.let { order ->
+            val locService = L10n.localizeService(order.serviceName, isHi)
+            val weightUnit = if (isHi) "किलो" else "KG"
+            val paymentNote = if (order.paymentStatus.equals("paid", true)) {
+                if (isHi) "भुगतान प्राप्त" else "PAID"
+            } else {
+                if (isHi) "भुगतान बाकी" else "PENDING"
+            }
+
             AlertDialog(
                 onDismissRequest = {
                     createdOrderSuccess = null
@@ -427,7 +708,7 @@ fun MillCreateOrderScreen(
                 },
                 title = {
                     Text(
-                        text = "Order #${order.orderNumber} Confirmed",
+                        text = L10n.orderConfirmedTitle(order.orderNumber, isHi),
                         fontWeight = FontWeight.Black,
                         fontSize = 20.sp,
                         color = BrandDark
@@ -439,23 +720,23 @@ fun MillCreateOrderScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "Daily Order Number: #${order.orderNumber}",
+                            text = L10n.dailyOrderToken(order.orderNumber, isHi),
                             fontWeight = FontWeight.Bold,
                             color = BrandOrange,
                             fontSize = 15.sp
                         )
                         Text(
-                            text = "Customer: ${order.customerName}",
+                            text = L10n.customerLabel(order.customerName, isHi),
                             color = BrandDark,
                             fontSize = 14.sp
                         )
                         Text(
-                            text = "Service: ${order.serviceName} • ${order.weightKg} KG",
+                            text = L10n.serviceSummary(locService, order.weightKg, isHi),
                             color = TextSecondary,
                             fontSize = 13.sp
                         )
                         Text(
-                            text = "Total Amount: ${CurrencyFormatter.formatInr(order.totalAmount)} (${order.paymentStatus.uppercase()})",
+                            text = L10n.totalAmountLabel(CurrencyFormatter.formatInr(order.totalAmount), order.paymentStatus, isHi),
                             fontWeight = FontWeight.Bold,
                             color = BrandDark,
                             fontSize = 14.sp
@@ -470,22 +751,19 @@ fun MillCreateOrderScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
                     ) {
-                        Text("Done")
+                        Text(L10n.done(isHi))
                     }
                 },
                 dismissButton = {
                     if (order.customerPhone.isNotBlank()) {
                         OutlinedButton(
                             onClick = {
-                                val msg = "Namaste ${order.customerName} ji, your order #${order.orderNumber} (${order.serviceName}, ${order.weightKg} KG) has been placed at $restaurantName. Total: Rs.${order.totalAmount}."
-                                val clean = order.customerPhone.replace(Regex("[^0-9]"), "")
-                                val url = "https://api.whatsapp.com/send?phone=91$clean&text=${URLEncoder.encode(msg, "UTF-8")}"
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "WhatsApp not installed", Toast.LENGTH_SHORT).show()
+                                val msg = if (isHi) {
+                                    "नमस्ते ${order.customerName} जी, आपका ऑर्डर #${order.orderNumber} ($locService, ${order.weightKg} $weightUnit) $restaurantName में दर्ज हो चुका है। कुल राशि: ₹${order.totalAmount} ($paymentNote)। धन्यवाद!"
+                                } else {
+                                    "Namaste ${order.customerName} ji, your order #${order.orderNumber} ($locService, ${order.weightKg} KG) has been placed at $restaurantName. Total: ₹${order.totalAmount} ($paymentNote). Thank you!"
                                 }
+                                WhatsAppHelper.openChat(context, order.customerPhone, msg)
                             }
                         ) {
                             Icon(
@@ -495,7 +773,7 @@ fun MillCreateOrderScreen(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("WhatsApp", color = Color(0xFF25D366))
+                            Text(L10n.whatsApp(isHi), color = Color(0xFF25D366))
                         }
                     }
                 }

@@ -16,6 +16,7 @@ import com.dinepos.app.data.dto.SingleOrderResponseDto
 import com.dinepos.app.data.dto.UserDto
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -134,6 +135,9 @@ interface DinePosApiService {
     @POST("api/v1/mill/orders/{id}/status")
     suspend fun updateMillOrderStatus(@Path("id") id: Int, @Body body: Map<String, String>): Response<ApiResponseDto<com.dinepos.app.data.dto.MillOrderDto>>
 
+    @DELETE("api/v1/mill/orders/{id}")
+    suspend fun deleteMillOrder(@Path("id") id: Int): Response<ApiResponseDto<Unit>>
+
     @GET("api/v1/mill/customers")
     suspend fun getMillCustomers(@Query("search") search: String? = null): Response<ApiResponseDto<List<com.dinepos.app.data.dto.MillCustomerDto>>>
 
@@ -144,4 +148,7 @@ interface DinePosApiService {
         @Query("start_date") startDate: String? = null,
         @Query("end_date") endDate: String? = null
     ): Response<ApiResponseDto<com.dinepos.app.data.dto.MillEarningsResponseDto>>
+
+    @GET("api/v1/mill/backup/export")
+    suspend fun getMillBackup(): Response<ApiResponseDto<kotlinx.serialization.json.JsonElement>>
 }

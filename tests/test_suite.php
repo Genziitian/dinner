@@ -379,7 +379,8 @@ class TestRunner {
 
         $termsContent = file_get_contents($termsPath);
         $this->assert(
-            stripos($termsContent, 'WE are a platform only') !== false && stripos($termsContent, 'responsible for your data') !== false,
+            (stripos($termsContent, 'We are a software platform only') !== false || stripos($termsContent, 'WE are a platform only') !== false) &&
+            stripos($termsContent, 'responsible for your data') !== false,
             "Terms & Conditions contains platform data liability disclaimer"
         );
 
@@ -404,7 +405,8 @@ class TestRunner {
             "Android PrivacyPolicyScreen contains overview text"
         );
         $this->assert(
-            stripos($androidLegalContent, "WE are a platform only") !== false && stripos($androidLegalContent, "responsible for your data") !== false,
+            (stripos($androidLegalContent, "We are a software platform only") !== false || stripos($androidLegalContent, "WE are a platform only") !== false) &&
+            stripos($androidLegalContent, "responsible for your data") !== false,
             "Android TermsAndConditionsScreen contains platform disclaimer"
         );
 

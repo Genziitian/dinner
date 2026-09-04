@@ -73,6 +73,10 @@ class MillService {
         return true;
     }
 
+    public static function toggleActive(int $id): bool {
+        return self::toggle($id);
+    }
+
     /**
      * Seeds default mill services if none exist for this mill
      */

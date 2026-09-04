@@ -442,13 +442,13 @@ class ApiController {
             }
             $today = (new DateTime('now', $tz))->format('Y-m-d');
             $millSummary = MillOrder::getDailySummary($restaurantId, $today);
-            $millRecent = MillOrder::allByRestaurant($restaurantId, ['limit' => 10]);
+            $millRecent = MillOrder::allByRestaurant($restaurantId, ['limit' => 10, 'exclude_cancelled' => true]);
 
             $formattedRecent = [];
             foreach ($millRecent as $mo) {
                 $mo['total'] = (float)$mo['total_amount'];
                 $mo['subtotal'] = (float)$mo['total_amount'];
-                $isPaidMo = ($mo['payment_status'] ?? '') === 'paid';
+                $isPaidMo = ($mo['payment_status'] ?? '') === 'paid' || strtolower($mo['status'] ?? '') === 'delivered';
                 $mo['payment_method'] = $isPaidMo ? ('Paid (' . ucfirst($mo['payment_method'] ?? 'Cash') . ')') : 'Unpaid';
                 $mo['items'] = [
                     [
@@ -934,8 +934,82 @@ class ApiController {
             $endDate = $_GET['end_date'] ?? $now->format('Y-m-d');
         }
 
-        $stats = Order::getStats($restaurantId, 'custom', $startDate, $endDate);
-        $orders = Order::getOrdersForExport($restaurantId, $startDate, $endDate);
+        if (($restaurant['shop_type'] ?? '') === 'mill') {
+            $millOrdersSql = "SELECT mo.*, u.username AS created_by_username
+                              FROM mill_orders mo
+                              LEFT JOIN users u ON mo.created_by = u.id
+                              WHERE mo.restaurant_id = :restaurant_id
+                                AND mo.order_date >= :start_date
+                                AND mo.order_date <= :end_date
+                                AND mo.status != 'cancelled'
+                              ORDER BY mo.order_date ASC, mo.order_number ASC, mo.id ASC";
+            $rawOrders = Database::fetchAll($millOrdersSql, [
+                ':restaurant_id' => $restaurantId,
+                ':start_date' => $startDate,
+                ':end_date' => $endDate,
+            ]);
+
+            $totalOrders = count($rawOrders);
+            $totalSales = 0.0;
+            $cashSales = 0.0;
+            $onlineSales = 0.0;
+            $orders = [];
+
+            foreach ($rawOrders as $mo) {
+                $amt = (float)$mo['total_amount'];
+                $totalSales += $amt;
+                $pm = strtolower($mo['payment_method'] ?? 'cash');
+                if ($pm === 'cash') {
+                    $cashSales += $amt;
+                } else {
+                    $onlineSales += $amt;
+                }
+
+                $serviceName = $mo['service_name'] ?: 'Grinding';
+                $weightKg = (float)$mo['weight_kg'];
+                $ratePerKg = (float)$mo['rate_per_kg'];
+                $formattedWeight = ($weightKg == (int)$weightKg) ? (string)(int)$weightKg : (string)$weightKg;
+
+                $orders[] = [
+                    'id' => (int)$mo['id'],
+                    'restaurant_id' => $restaurantId,
+                    'order_number' => (int)$mo['order_number'],
+                    'order_date' => $mo['order_date'],
+                    'order_time' => $mo['order_time'],
+                    'customer_name' => $mo['customer_name'] ?: 'Walk-in Customer',
+                    'customer_phone' => $mo['customer_phone'] ?: '',
+                    'subtotal' => $amt,
+                    'total' => $amt,
+                    'total_amount' => $amt,
+                    'payment_method' => ucfirst($mo['payment_method'] ?: 'Cash'),
+                    'status' => $mo['status'],
+                    'receipt_token_hash' => '',
+                    'created_by_username' => $mo['created_by_username'] ?: 'Manager',
+                    'items' => [
+                        [
+                            'id' => (int)$mo['id'],
+                            'order_id' => (int)$mo['id'],
+                            'item_name_snapshot' => $serviceName,
+                            'variant_name_snapshot' => "{$formattedWeight} kg @ ₹{$ratePerKg}/kg",
+                            'quantity' => $weightKg,
+                            'unit' => 'kg',
+                            'unit_price' => $ratePerKg,
+                            'total_price' => $amt,
+                        ]
+                    ]
+                ];
+            }
+
+            $stats = [
+                'total_orders' => $totalOrders,
+                'total_sales' => $totalSales,
+                'cash_sales' => $cashSales,
+                'online_sales' => $onlineSales,
+            ];
+        } else {
+            $stats = Order::getStats($restaurantId, 'custom', $startDate, $endDate);
+            $orders = Order::getOrdersForExport($restaurantId, $startDate, $endDate);
+        }
 
         $this->jsonSuccess([
             'restaurant_name' => $restaurant['name'] ?? '',
@@ -945,6 +1019,20 @@ class ApiController {
             'orders' => $orders,
             'download_url' => url("exports/download?type={$exportType}&start_date={$startDate}&end_date={$endDate}&date={$startDate}&month=" . substr($startDate, 0, 7)),
         ]);
+    }
+
+    /**
+     * GET /api/v1/mill/backup/export
+     */
+    public function getMillBackup(): void {
+        $user = $this->authenticate();
+        $restaurantId = (int)$user['restaurant_id'];
+        $restaurant = Restaurant::findById($restaurantId);
+        if (($restaurant['shop_type'] ?? '') !== 'mill') {
+            $this->jsonError('Backup is only available for mill shops.', 400);
+        }
+        $data = MillOrder::exportAll($restaurantId);
+        $this->jsonSuccess($data);
     }
 
     /**
@@ -1231,15 +1319,35 @@ class ApiController {
 
         $input = $this->getJsonInput();
         if (isset($input['status'])) {
-            MillOrder::updateStatus($id, (string)$input['status']);
+            $status = (string)$input['status'];
+            MillOrder::updateStatus($id, $status);
+            if (strtolower($status) === 'delivered') {
+                MillOrder::updatePayment($id, 'paid', 'cash');
+            }
         }
         if (isset($input['payment_status'])) {
             $method = (string)($input['payment_method'] ?? 'cash');
-            MillOrder::updatePaymentStatus($id, (string)$input['payment_status'], $method);
+            MillOrder::updatePayment($id, (string)$input['payment_status'], $method);
         }
 
         $updated = MillOrder::findById($id);
         $this->jsonSuccess($updated, 'Order updated successfully.');
+    }
+
+    /**
+     * DELETE /api/v1/mill/orders/{id}
+     */
+    public function deleteMillOrder(int $id): void {
+        $user = $this->authenticate();
+        $restaurantId = (int)($user['restaurant_id'] ?? 0);
+        require_once ROOT_PATH . '/models/MillOrder.php';
+        $order = MillOrder::findById($id);
+        if (!$order || (int)$order['restaurant_id'] !== $restaurantId) {
+            $this->jsonError('Order not found.', 404);
+        }
+
+        MillOrder::delete($id, $restaurantId);
+        $this->jsonSuccess(null, 'Order deleted successfully.');
     }
 
     /**

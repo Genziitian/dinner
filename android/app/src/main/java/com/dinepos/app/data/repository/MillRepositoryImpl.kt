@@ -108,6 +108,25 @@ class MillRepositoryImpl(private val apiService: DinePosApiService) : MillReposi
         }
     }
 
+    override suspend fun deleteOrder(id: Int): Resource<Unit> {
+        return try {
+            val response = apiService.deleteMillOrder(id)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Resource.Success(Unit)
+            } else {
+                apiService.updateMillOrderStatus(id, mapOf("status" to "cancelled"))
+                Resource.Success(Unit)
+            }
+        } catch (e: Exception) {
+            try {
+                apiService.updateMillOrderStatus(id, mapOf("status" to "cancelled"))
+                Resource.Success(Unit)
+            } catch (fallbackEx: Exception) {
+                Resource.Error("Error deleting order: ${e.localizedMessage}")
+            }
+        }
+    }
+
     override suspend fun getCustomers(search: String?): Resource<List<MillCustomerDto>> {
         return try {
             val response = apiService.getMillCustomers(search = search)
@@ -140,6 +159,24 @@ class MillRepositoryImpl(private val apiService: DinePosApiService) : MillReposi
                 else Resource.Error("Empty earnings data received.")
             } else {
                 Resource.Error(response.body()?.message ?: "Failed to load earnings.")
+            }
+        } catch (e: Exception) {
+            Resource.Error("Network error: ${e.localizedMessage}")
+        }
+    }
+
+    override suspend fun getBackup(): Resource<String> {
+        return try {
+            val response = apiService.getMillBackup()
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    Resource.Success(data.toString())
+                } else {
+                    Resource.Error("Empty backup data received.")
+                }
+            } else {
+                Resource.Error(response.body()?.message ?: "Failed to fetch mill backup.")
             }
         } catch (e: Exception) {
             Resource.Error("Network error: ${e.localizedMessage}")

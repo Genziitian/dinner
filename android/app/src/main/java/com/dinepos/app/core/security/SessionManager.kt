@@ -108,4 +108,50 @@ class SessionManager(context: Context) {
         val normalized = if (!url.endsWith("/")) "$url/" else url
         prefs.edit().putString(Constants.KEY_BASE_URL, normalized).apply()
     }
+
+    private val _language = MutableStateFlow(getLanguage())
+    val language: StateFlow<String> = _language.asStateFlow()
+
+    fun getLanguage(): String = prefs.getString("app_language", "en") ?: "en"
+
+    fun setLanguage(lang: String) {
+        prefs.edit().putString("app_language", lang).apply()
+        _language.value = lang
+    }
+
+    private val _hiddenOrderIds = MutableStateFlow(getHiddenOrderIds())
+    val hiddenOrderIds: StateFlow<Set<String>> = _hiddenOrderIds.asStateFlow()
+
+    fun getHiddenOrderIds(): Set<String> = prefs.getStringSet("hidden_order_ids", emptySet()) ?: emptySet()
+
+    fun toggleOrderHidden(orderId: Int): Boolean {
+        val current = getHiddenOrderIds().toMutableSet()
+        val idStr = orderId.toString()
+        val isNowHidden = if (current.contains(idStr)) {
+            current.remove(idStr)
+            false
+        } else {
+            current.add(idStr)
+            true
+        }
+        prefs.edit().putStringSet("hidden_order_ids", current).apply()
+        _hiddenOrderIds.value = current
+        return isNowHidden
+    }
+
+    fun isOrderHidden(orderId: Int): Boolean = getHiddenOrderIds().contains(orderId.toString())
+
+    private val _deletedOrderIds = MutableStateFlow(getDeletedOrderIds())
+    val deletedOrderIds: StateFlow<Set<String>> = _deletedOrderIds.asStateFlow()
+
+    fun getDeletedOrderIds(): Set<String> = prefs.getStringSet("deleted_order_ids", emptySet()) ?: emptySet()
+
+    fun markOrderDeleted(orderId: Int) {
+        val current = getDeletedOrderIds().toMutableSet()
+        current.add(orderId.toString())
+        prefs.edit().putStringSet("deleted_order_ids", current).apply()
+        _deletedOrderIds.value = current
+    }
+
+    fun isOrderDeleted(orderId: Int): Boolean = getDeletedOrderIds().contains(orderId.toString())
 }

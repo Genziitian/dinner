@@ -2,11 +2,13 @@ package com.dinepos.app.presentation.mill
 
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -16,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -36,6 +39,7 @@ fun MillServicesScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val millRepository = DinePosApp.instance.millRepository
+    val isHi = com.dinepos.app.core.localization.LocalAppLanguage.current == "hi"
 
     val defaultServices = remember {
         listOf(
@@ -79,7 +83,7 @@ fun MillServicesScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Grinding Rates",
+                        text = if (isHi) "पिसाई दरें" else "Grinding Rates",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = BrandDark
@@ -152,29 +156,35 @@ fun MillServicesScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
+                                    val primaryName = if (isHi && !s.nameHi.isNullOrBlank()) s.nameHi else s.name
+                                    val secondaryName = if (isHi && !s.nameHi.isNullOrBlank()) s.name else s.nameHi
+                                    val unit = if (isHi) "किलो" else "KG"
                                     Text(
-                                        text = s.name,
+                                        text = primaryName,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 16.sp,
                                         color = BrandDark
                                     )
-                                    if (!s.nameHi.isNullOrBlank()) {
+                                    if (!secondaryName.isNullOrBlank()) {
                                         Text(
-                                            text = s.nameHi,
+                                            text = secondaryName,
                                             fontSize = 13.sp,
                                             color = TextSecondary
                                         )
                                     }
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "${CurrencyFormatter.formatInr(s.ratePerKg)} / KG",
+                                        text = "${CurrencyFormatter.formatInr(s.ratePerKg)} / $unit",
                                         fontWeight = FontWeight.ExtraBold,
                                         fontSize = 15.sp,
                                         color = BrandOrange
                                     )
                                 }
 
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
                                     IconButton(onClick = {
                                         editingService = s
                                         showDialog = true
@@ -186,16 +196,38 @@ fun MillServicesScreen(
                                         )
                                     }
 
-                                    Switch(
-                                        checked = s.active == 1,
-                                        onCheckedChange = {
-                                            scope.launch {
-                                                millRepository.toggleService(s.id)
-                                                loadServices()
-                                            }
-                                        },
-                                        colors = SwitchDefaults.colors(checkedThumbColor = BrandOrange)
-                                    )
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = if (s.active == 1) (if (isHi) "सक्रिय" else "Active") else (if (isHi) "बंद" else "Inactive"),
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (s.active == 1) BrandEmerald else TextMuted
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Switch(
+                                            checked = s.active == 1,
+                                            onCheckedChange = { checked ->
+                                                val newActive = if (checked) 1 else 0
+                                                services = services.map { if (it.id == s.id) it.copy(active = newActive) else it }
+                                                scope.launch {
+                                                    val res = millRepository.toggleService(s.id)
+                                                    if (res is Resource.Error) {
+                                                        Toast.makeText(context, res.message, Toast.LENGTH_SHORT).show()
+                                                        loadServices()
+                                                    }
+                                                }
+                                            },
+                                            colors = SwitchDefaults.colors(
+                                                checkedThumbColor = Color.White,
+                                                checkedTrackColor = BrandEmerald,
+                                                uncheckedThumbColor = Color.White,
+                                                uncheckedTrackColor = Color(0xFFCBD5E1)
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -207,6 +239,7 @@ fun MillServicesScreen(
         if (showDialog) {
             ServiceEditDialog(
                 initial = editingService,
+                isHi = isHi,
                 onDismiss = { showDialog = false },
                 onSave = { name, nameHi, rate ->
                     scope.launch {
@@ -219,7 +252,7 @@ fun MillServicesScreen(
                         )
                         when (val res = millRepository.saveService(req)) {
                             is Resource.Success -> {
-                                Toast.makeText(context, "Service saved!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, if (isHi) "सेवा दर सुरक्षित हो गई!" else "Service saved!", Toast.LENGTH_SHORT).show()
                                 showDialog = false
                                 loadServices()
                             }
@@ -238,6 +271,7 @@ fun MillServicesScreen(
 @Composable
 private fun ServiceEditDialog(
     initial: MillServiceDto?,
+    isHi: Boolean = false,
     onDismiss: () -> Unit,
     onSave: (String, String, Double) -> Unit
 ) {
@@ -249,7 +283,7 @@ private fun ServiceEditDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = if (initial == null) "Add Grinding Service" else "Edit Service",
+                text = if (initial == null) (if (isHi) "नई पिसाई सेवा जोड़ें" else "Add Grinding Service") else (if (isHi) "सेवा दर बदलें" else "Edit Service"),
                 fontWeight = FontWeight.Bold
             )
         },
@@ -258,21 +292,21 @@ private fun ServiceEditDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Service Name (English) *") },
+                    label = { Text(if (isHi) "सेवा नाम (English) *" else "Service Name (English) *") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = nameHi,
                     onValueChange = { nameHi = it },
-                    label = { Text("Service Name (Hindi)") },
+                    label = { Text(if (isHi) "सेवा नाम (हिंदी)" else "Service Name (Hindi)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = rateText,
                     onValueChange = { rateText = it },
-                    label = { Text("Rate per KG (Rs.) *") },
+                    label = { Text(if (isHi) "दर प्रति KG (रु.) *" else "Rate per KG (Rs.) *") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -286,14 +320,17 @@ private fun ServiceEditDialog(
                     if (name.isBlank() || rate <= 0) return@Button
                     onSave(name.trim(), nameHi.trim(), rate)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandOrange,
+                    contentColor = Color.White
+                )
             ) {
-                Text("Save")
+                Text(if (isHi) "सुरक्षित करें" else "Save", color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(if (isHi) "रद्द करें" else "Cancel", color = TextSecondary)
             }
         }
     )

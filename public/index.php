@@ -169,12 +169,16 @@ try {
             $api->createMillOrder();
         } elseif (preg_match('#^/api/v1/mill/orders/(\d+)/status$#', $path, $m) && $method === 'POST') {
             $api->updateMillOrderStatus((int)$m[1]);
+        } elseif (preg_match('#^/api/v1/mill/orders/(\d+)$#', $path, $m) && ($method === 'DELETE' || $method === 'POST')) {
+            $api->deleteMillOrder((int)$m[1]);
         } elseif ($path === '/api/v1/mill/customers' && $method === 'GET') {
             $api->getMillCustomers();
         } elseif ($path === '/api/v1/mill/customers/search' && $method === 'GET') {
             $api->searchMillCustomers();
         } elseif ($path === '/api/v1/mill/earnings' && $method === 'GET') {
             $api->getMillEarnings();
+        } elseif ($path === '/api/v1/mill/backup/export' && $method === 'GET') {
+            $api->getMillBackup();
         } else {
             http_response_code(404);
             header('Content-Type: application/json');

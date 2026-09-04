@@ -48,7 +48,7 @@ class MillController extends BaseController {
         $today = date('Y-m-d');
 
         $summary = MillOrder::getDailySummary($restaurantId, $today);
-        $recentOrders = MillOrder::allByRestaurant($restaurantId, ['limit' => 8]);
+        $recentOrders = MillOrder::allByRestaurant($restaurantId, ['limit' => 8, 'exclude_cancelled' => true]);
         $services = MillService::allByRestaurant($restaurantId, true);
 
         $this->render('mill/dashboard', [

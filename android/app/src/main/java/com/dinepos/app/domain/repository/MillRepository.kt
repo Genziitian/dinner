@@ -11,6 +11,7 @@ interface MillRepository {
     suspend fun createOrder(request: CreateMillOrderRequestDto): Resource<MillOrderDto>
     suspend fun updateOrderStatus(id: Int, status: String): Resource<MillOrderDto>
     suspend fun updateOrderPayment(id: Int, paymentStatus: String, paymentMethod: String): Resource<MillOrderDto>
+    suspend fun deleteOrder(id: Int): Resource<Unit>
     suspend fun getCustomers(search: String? = null): Resource<List<MillCustomerDto>>
     suspend fun getEarnings(
         period: String? = null,
@@ -18,4 +19,5 @@ interface MillRepository {
         startDate: String? = null,
         endDate: String? = null
     ): Resource<MillEarningsResponseDto>
+    suspend fun getBackup(): Resource<String>
 }

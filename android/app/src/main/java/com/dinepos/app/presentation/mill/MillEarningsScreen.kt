@@ -1,6 +1,8 @@
 package com.dinepos.app.presentation.mill
 
 import android.app.DatePickerDialog
+import android.widget.Toast
+import com.dinepos.app.core.utils.ExportDownloadHelper
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +48,8 @@ fun MillEarningsScreen(
 ) {
     val context = LocalContext.current
     val millRepository = DinePosApp.instance.millRepository
+    val sessionManager = DinePosApp.instance.sessionManager
+    val isHi = com.dinepos.app.core.localization.LocalAppLanguage.current == "hi"
     val scope = rememberCoroutineScope()
 
     val isoDateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
@@ -116,13 +120,61 @@ fun MillEarningsScreen(
         selectedPeriod = "custom"
     }
 
+    var isExporting by remember { mutableStateOf(false) }
+
+    fun exportMillEarnings() {
+        scope.launch {
+            isExporting = true
+            val rangeLabel = if (selectedPeriod == "custom") customDate else selectedPeriod
+            val exportType = if (selectedPeriod == "today" || selectedPeriod == "yesterday" || selectedPeriod == "custom") "daily" else "monthly"
+            val targetDate = if (selectedPeriod == "custom") customDate else if (selectedPeriod == "today") isoDateFormat.format(Date()) else null
+
+            when (val res = DinePosApp.instance.managerRepository.getExportData(
+                type = exportType,
+                date = targetDate,
+                month = if (selectedPeriod == "month") SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date()) else null
+            )) {
+                is Resource.Success -> {
+                    isExporting = false
+                    val csv = ExportDownloadHelper.buildSalesCsv(res.data, isMill = true)
+                    val filename = ExportDownloadHelper.generateFilename(
+                        businessName = res.data.restaurantName.ifBlank { "Mill" },
+                        type = "MillEarnings",
+                        rangeLabel = rangeLabel,
+                        extension = "csv"
+                    )
+                    val dlResult = ExportDownloadHelper.saveToDownloads(context, filename, csv, "text/csv")
+                    if (dlResult.success) {
+                        Toast.makeText(
+                            context,
+                            if (isHi) "कमाई रिपोर्ट डाउनलोड हो गई: $filename" else "Earnings report saved to Downloads/DinePOS: $filename",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        if (dlResult.contentUri != null) {
+                            ExportDownloadHelper.shareFile(context, dlResult.contentUri, "Mill Earnings ($rangeLabel)")
+                        }
+                    } else {
+                        Toast.makeText(context, dlResult.message, Toast.LENGTH_LONG).show()
+                    }
+                }
+                is Resource.Error -> {
+                    isExporting = false
+                    Toast.makeText(context, res.message ?: "Failed to export earnings", Toast.LENGTH_LONG).show()
+                }
+                else -> {
+                    isExporting = false
+                }
+            }
+        }
+    }
+
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Mill Earnings",
+                        text = if (isHi) "मिल कमाई" else "Mill Earnings",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = BrandDark
@@ -140,6 +192,13 @@ fun MillEarningsScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { exportMillEarnings() }, enabled = !isExporting) {
+                        if (isExporting) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BrandOrange)
+                        } else {
+                            Icon(Icons.Outlined.FileDownload, contentDescription = "Export CSV", tint = BrandDark)
+                        }
+                    }
                     IconButton(onClick = { loadEarnings() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandDark)
                     }
@@ -162,22 +221,22 @@ fun MillEarningsScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 PeriodFilterChip(
-                    label = "Today",
+                    label = if (isHi) "आज" else "Today",
                     isSelected = selectedPeriod == "today",
                     onClick = { selectedPeriod = "today" }
                 )
                 PeriodFilterChip(
-                    label = "Yesterday",
+                    label = if (isHi) "कल" else "Yesterday",
                     isSelected = selectedPeriod == "yesterday",
                     onClick = { selectedPeriod = "yesterday" }
                 )
                 PeriodFilterChip(
-                    label = "This Month",
+                    label = if (isHi) "इस महीने" else "This Month",
                     isSelected = selectedPeriod == "month",
                     onClick = { selectedPeriod = "month" }
                 )
                 PeriodFilterChip(
-                    label = if (selectedPeriod == "custom") "Date: $customDate" else "Custom Date",
+                    label = if (selectedPeriod == "custom") (if (isHi) "तारीख: $customDate" else "Date: $customDate") else (if (isHi) "तारीख चुनें" else "Custom Date"),
                     isSelected = selectedPeriod == "custom",
                     icon = Icons.Outlined.CalendarToday,
                     onClick = {
@@ -278,9 +337,40 @@ fun MillEarningsScreen(
                 }
             } else {
                 val data = earningsData
-                val summary = data?.summary
-                val services = data?.services ?: emptyList()
-                val orders = data?.orders ?: emptyList()
+
+                // Filter out deleted, hidden, and cancelled orders
+                val visibleOrders = remember(data?.orders, sessionManager.getDeletedOrderIds(), sessionManager.getHiddenOrderIds()) {
+                    val rawOrders = data?.orders ?: emptyList()
+                    rawOrders.filter { order ->
+                        !sessionManager.isOrderDeleted(order.id) &&
+                        !sessionManager.isOrderHidden(order.id) &&
+                        !order.status.equals("cancelled", ignoreCase = true)
+                    }
+                }
+
+                val totalOrders = visibleOrders.size
+                val totalEarnings = visibleOrders.sumOf { it.totalAmount }
+                val paidEarnings = visibleOrders.filter { 
+                    it.paymentStatus.equals("paid", ignoreCase = true) || it.status.equals("delivered", ignoreCase = true)
+                }.sumOf { it.totalAmount }
+                val unpaidEarnings = visibleOrders.filter { 
+                    !it.paymentStatus.equals("paid", ignoreCase = true) && !it.status.equals("delivered", ignoreCase = true)
+                }.sumOf { it.totalAmount }
+                val totalWeightKg = visibleOrders.sumOf { it.weightKg }
+
+                // Visible services breakdown
+                val visibleServices = remember(visibleOrders) {
+                    visibleOrders.groupBy { it.serviceName.ifBlank { if (isHi) "सामान्य पिसाई" else "General Grinding" } }
+                        .map { (name, group) ->
+                            MillServiceBreakdownDto(
+                                serviceName = name,
+                                orderCount = group.size,
+                                totalWeightKg = group.sumOf { it.weightKg },
+                                totalAmount = group.sumOf { it.totalAmount }
+                            )
+                        }
+                        .sortedByDescending { it.totalAmount }
+                }
 
                 LazyColumn(
                     modifier = Modifier
@@ -304,7 +394,7 @@ fun MillEarningsScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "TOTAL EARNING",
+                                        text = if (isHi) "कुल कमाई" else "TOTAL EARNING",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF94A3B8),
@@ -327,7 +417,7 @@ fun MillEarningsScreen(
                                 Spacer(modifier = Modifier.height(10.dp))
 
                                 Text(
-                                    text = String.format(Locale.getDefault(), "Rs. %.2f", summary?.totalEarnings ?: 0.0),
+                                    text = String.format(Locale.getDefault(), "Rs. %.2f", totalEarnings),
                                     fontSize = 34.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White
@@ -342,21 +432,21 @@ fun MillEarningsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Column {
-                                        Text(text = "Collected (Paid)", fontSize = 11.sp, color = Color(0xFF94A3B8))
+                                        Text(text = if (isHi) "प्राप्त (Paid)" else "Collected (Paid)", fontSize = 11.sp, color = Color(0xFF94A3B8))
                                         Text(
-                                            text = String.format(Locale.getDefault(), "Rs. %.2f", summary?.paidEarnings ?: 0.0),
+                                            text = String.format(Locale.getDefault(), "Rs. %.2f", paidEarnings),
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF10B981)
                                         )
                                     }
                                     Column(horizontalAlignment = Alignment.End) {
-                                        Text(text = "Pending Dues", fontSize = 11.sp, color = Color(0xFF94A3B8))
+                                        Text(text = if (isHi) "बकाया (Due)" else "Pending Dues", fontSize = 11.sp, color = Color(0xFF94A3B8))
                                         Text(
-                                            text = String.format(Locale.getDefault(), "Rs. %.2f", summary?.unpaidEarnings ?: 0.0),
+                                            text = String.format(Locale.getDefault(), "Rs. %.2f", unpaidEarnings),
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if ((summary?.unpaidEarnings ?: 0.0) > 0) Color(0xFFF59E0B) else Color(0xFF94A3B8)
+                                            color = if (unpaidEarnings > 0) Color(0xFFF59E0B) else Color(0xFF94A3B8)
                                         )
                                     }
                                 }
@@ -371,15 +461,15 @@ fun MillEarningsScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             MetricSummaryCard(
-                                title = "Total Weight Ground",
-                                value = String.format(Locale.getDefault(), "%.1f KG", summary?.totalWeightKg ?: 0.0),
+                                title = if (isHi) "कुल पिसाई वजन" else "Total Weight Ground",
+                                value = String.format(Locale.getDefault(), "%.1f KG", totalWeightKg),
                                 icon = Icons.Outlined.Scale,
                                 tint = BrandOrange,
                                 modifier = Modifier.weight(1f)
                             )
                             MetricSummaryCard(
-                                title = "Total Orders",
-                                value = "${summary?.totalOrders ?: 0}",
+                                title = if (isHi) "कुल ऑर्डर" else "Total Orders",
+                                value = "$totalOrders",
                                 icon = Icons.AutoMirrored.Outlined.Assignment,
                                 tint = Color(0xFF3B82F6),
                                 modifier = Modifier.weight(1f)
@@ -388,10 +478,10 @@ fun MillEarningsScreen(
                     }
 
                     // 3. Earnings by Grain / Service Breakdown
-                    if (services.isNotEmpty()) {
+                    if (visibleServices.isNotEmpty()) {
                         item {
                             Text(
-                                text = "Earnings by Grain / Service",
+                                text = if (isHi) "अनाज / सेवा अनुसार कमाई" else "Earnings by Grain / Service",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BrandDark,
@@ -399,8 +489,12 @@ fun MillEarningsScreen(
                             )
                         }
 
-                        items(services) { svc ->
-                            ServiceBreakdownRow(service = svc, totalRevenue = summary?.totalEarnings ?: 1.0)
+                        items(visibleServices) { svc ->
+                            ServiceBreakdownRow(
+                                service = svc,
+                                totalRevenue = if (totalEarnings > 0) totalEarnings else 1.0,
+                                isHi = isHi
+                            )
                         }
                     }
 
@@ -414,7 +508,7 @@ fun MillEarningsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Orders List (${orders.size})",
+                                text = if (isHi) "ऑर्डर सूची (${visibleOrders.size})" else "Orders List (${visibleOrders.size})",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BrandDark
@@ -423,7 +517,7 @@ fun MillEarningsScreen(
                     }
 
                     // 5. Orders List
-                    if (orders.isEmpty()) {
+                    if (visibleOrders.isEmpty()) {
                         item {
                             Surface(
                                 color = Color.White,
@@ -438,7 +532,7 @@ fun MillEarningsScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "No orders found for this period.",
+                                        text = if (isHi) "इस अवधि के लिए कोई ऑर्डर नहीं मिला।" else "No orders found for this period.",
                                         fontSize = 13.sp,
                                         color = TextMuted,
                                         textAlign = TextAlign.Center
@@ -447,8 +541,8 @@ fun MillEarningsScreen(
                             }
                         }
                     } else {
-                        items(orders) { order ->
-                            EarningOrderRow(order = order)
+                        items(visibleOrders) { order ->
+                            EarningOrderRow(order = order, isHi = isHi)
                         }
                     }
                 }
@@ -534,7 +628,8 @@ fun MetricSummaryCard(
 @Composable
 fun ServiceBreakdownRow(
     service: MillServiceBreakdownDto,
-    totalRevenue: Double
+    totalRevenue: Double,
+    isHi: Boolean = false
 ) {
     val share = if (totalRevenue > 0) ((service.totalAmount / totalRevenue) * 100).toInt() else 0
 
@@ -552,13 +647,13 @@ fun ServiceBreakdownRow(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = service.serviceName,
+                        text = com.dinepos.app.core.localization.L10n.localizeService(service.serviceName, isHi),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = BrandDark
                     )
                     Text(
-                        text = "${service.orderCount} orders • ${String.format(Locale.getDefault(), "%.1f", service.totalWeightKg)} KG ground",
+                        text = if (isHi) "${service.orderCount} ऑर्डर • ${String.format(Locale.getDefault(), "%.1f", service.totalWeightKg)} KG पिसाई" else "${service.orderCount} orders • ${String.format(Locale.getDefault(), "%.1f", service.totalWeightKg)} KG ground",
                         fontSize = 11.5.sp,
                         color = TextSecondary
                     )
@@ -571,7 +666,7 @@ fun ServiceBreakdownRow(
                         color = BrandDark
                     )
                     Text(
-                        text = "$share% of revenue",
+                        text = if (isHi) "$share% हिस्सा" else "$share% of revenue",
                         fontSize = 11.sp,
                         color = BrandOrange,
                         fontWeight = FontWeight.Medium
@@ -594,8 +689,8 @@ fun ServiceBreakdownRow(
 }
 
 @Composable
-fun EarningOrderRow(order: MillOrderDto) {
-    val isPaid = order.paymentStatus.equals("paid", ignoreCase = true)
+fun EarningOrderRow(order: MillOrderDto, isHi: Boolean = false) {
+    val isPaid = order.paymentStatus.equals("paid", ignoreCase = true) || order.status.equals("delivered", ignoreCase = true)
 
     Surface(
         color = Color.White,
@@ -613,7 +708,7 @@ fun EarningOrderRow(order: MillOrderDto) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Order #${if (order.orderNumber > 0) order.orderNumber else order.id}",
+                        text = if (isHi) "ऑर्डर #${if (order.orderNumber > 0) order.orderNumber else order.id}" else "Order #${if (order.orderNumber > 0) order.orderNumber else order.id}",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = BrandDark
@@ -624,7 +719,7 @@ fun EarningOrderRow(order: MillOrderDto) {
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = if (isPaid) "Paid" else "Unpaid",
+                            text = if (isPaid) (if (isHi) "प्राप्त" else "Paid") else (if (isHi) "बकाया" else "Unpaid"),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isPaid) Color(0xFF065F46) else Color(0xFF92400E),
@@ -633,8 +728,13 @@ fun EarningOrderRow(order: MillOrderDto) {
                     }
                 }
                 Spacer(modifier = Modifier.height(2.dp))
+                val custName = if (order.customerName.isBlank() || order.customerName.equals("Walk-in Customer", ignoreCase = true)) {
+                    if (isHi) "सामान्य ग्राहक" else "Walk-in Customer"
+                } else order.customerName
+                val locSvc = com.dinepos.app.core.localization.L10n.localizeService(order.serviceName, isHi)
+                val weightUnit = if (isHi) "किलो" else "KG"
                 Text(
-                    text = "${order.customerName} • ${order.serviceName} (${order.weightKg} KG)",
+                    text = "$custName • $locSvc (${order.weightKg} $weightUnit)",
                     fontSize = 11.5.sp,
                     color = TextSecondary
                 )

@@ -117,24 +117,44 @@ fun OrderDetailScreen(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = BrandDark
                             )
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = BrandEmeraldLight
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(
-                                    text = ord.status.uppercase(),
-                                    color = BrandEmerald,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
+                                val isDelivered = ord.status.equals("delivered", ignoreCase = true)
+                                val isUnpaid = ord.paymentMethod.contains("unpaid", ignoreCase = true) && !isDelivered
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = if (isUnpaid) BrandAmber.copy(alpha = 0.12f) else BrandEmeraldLight
+                                ) {
+                                    Text(
+                                        text = if (isUnpaid) "UNPAID" else "PAID",
+                                        color = if (isUnpaid) BrandAmber else BrandEmerald,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = BrandOrange.copy(alpha = 0.12f)
+                                ) {
+                                    Text(
+                                        text = ord.status.uppercase(),
+                                        color = BrandOrange,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(text = "Date & Time: ${ord.orderDate} at ${ord.orderTime}", color = TextSecondary, fontSize = 13.sp)
                         if (!ord.customerName.isNullOrBlank()) {
-                            Text(text = "Customer: ${ord.customerName} (${ord.customerPhone ?: "No phone"})", color = TextSecondary, fontSize = 13.sp)
+                            val phoneInfo = if (!ord.customerPhone.isNullOrBlank()) " (${ord.customerPhone})" else ""
+                            Text(text = "Customer: ${ord.customerName}$phoneInfo", color = TextSecondary, fontSize = 13.sp)
                         }
                         if (!ord.createdByUsername.isNullOrBlank()) {
                             Text(text = "Billed by: ${ord.createdByUsername}", color = TextSecondary, fontSize = 13.sp)
@@ -155,9 +175,18 @@ fun OrderDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(text = item.itemName, fontWeight = FontWeight.Bold, color = BrandDark)
                                     Text(
-                                        text = "${item.variantName} × ${CurrencyFormatter.formatQuantity(item.quantity, item.unit)} @ ${CurrencyFormatter.formatInr(item.unitPrice)}",
+                                        text = item.itemName.ifBlank { "Grinding Service" },
+                                        fontWeight = FontWeight.Bold,
+                                        color = BrandDark
+                                    )
+                                    val rateText = if (item.variantName.isNotBlank() && item.variantName.endsWith("KG", ignoreCase = true)) {
+                                        "${item.variantName} @ ${CurrencyFormatter.formatInr(item.unitPrice)}/KG"
+                                    } else {
+                                        "${CurrencyFormatter.formatQuantity(item.quantity, item.unit)} @ ${CurrencyFormatter.formatInr(item.unitPrice)}"
+                                    }
+                                    Text(
+                                        text = rateText,
                                         fontSize = 12.sp,
                                         color = TextSecondary
                                     )
@@ -179,7 +208,11 @@ fun OrderDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "TOTAL (${ord.paymentMethod})", fontWeight = FontWeight.Bold, color = BrandDark)
+                            Text(
+                                text = if (ord.paymentMethod.contains("unpaid", ignoreCase = true)) "TOTAL (Unpaid)" else "TOTAL (${ord.paymentMethod})",
+                                fontWeight = FontWeight.Bold,
+                                color = BrandDark
+                            )
                             Text(
                                 text = CurrencyFormatter.formatInr(ord.total),
                                 style = MaterialTheme.typography.titleLarge,

@@ -1,8 +1,11 @@
 package com.dinepos.app.presentation.profile
 
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import com.dinepos.app.core.utils.ExportDownloadHelper
+import com.dinepos.app.core.utils.ExportDownloadResult
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -74,6 +77,7 @@ fun ProfileScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showStaffManagementDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
+    val isHi = com.dinepos.app.core.localization.LocalAppLanguage.current == "hi"
 
     Scaffold(
         containerColor = BrandBackground,
@@ -82,7 +86,7 @@ fun ProfileScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "My Profile",
+                            text = if (isHi) "मेरी प्रोफ़ाइल" else "My Profile",
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 20.sp,
                             color = BrandDark
@@ -175,7 +179,7 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Username",
+                            text = if (isHi) "यूज़रनेम" else "Username",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = TextSecondary
@@ -209,7 +213,7 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${shopLabel} Outlet Details",
+                            text = if (isHi) "मिल की जानकारी" else "${shopLabel} Outlet Details",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark
@@ -220,7 +224,7 @@ fun ProfileScreen(
                                 shape = RoundedCornerShape(50)
                             ) {
                                 Text(
-                                    text = "Read-Only",
+                                    text = if (isHi) "केवल पढ़ने योग्य" else "Read-Only",
                                     fontSize = 10.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextMuted,
@@ -244,25 +248,25 @@ fun ProfileScreen(
                     } else {
                         InfoRow(
                             icon = Icons.Outlined.Storefront,
-                            label = "${shopLabel} Name",
+                            label = if (isHi) "मिल का नाम" else "${shopLabel} Name",
                             value = restaurantName.ifBlank { "Main ${shopLabel} Branch" }
                         )
                         if (restaurantAddress.isNotBlank()) {
                             InfoRow(
                                 icon = Icons.Outlined.LocationOn,
-                                label = "Outlet Address",
+                                label = if (isHi) "पता" else "Outlet Address",
                                 value = restaurantAddress
                             )
                         }
                         if (restaurantPhone.isNotBlank()) {
                             InfoRow(
                                 icon = Icons.Outlined.Phone,
-                                label = "Contact Phone",
+                                label = if (isHi) "संपर्क नंबर" else "Contact Phone",
                                 value = restaurantPhone
                             )
                         }
                         Text(
-                            text = "Branch details and locations can only be modified by Super Administrator.",
+                            text = if (isHi) "मिल का विवरण केवल मुख्य एडमिनिस्ट्रेटर द्वारा बदला जा सकता है।" else "Branch details and locations can only be modified by Super Administrator.",
                             fontSize = 11.sp,
                             color = TextMuted,
                             modifier = Modifier.padding(top = 2.dp)
@@ -286,7 +290,7 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "${shopLabel} Manager Tools",
+                            text = if (isHi) "मिल प्रबंधक टूल्स" else "${shopLabel} Manager Tools",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = BrandDark
@@ -304,8 +308,8 @@ fun ProfileScreen(
                             // Grinding Rates (Moved to Profile for Mill)
                             ProfileNavOption(
                                 icon = Icons.Outlined.Storefront,
-                                title = "Grinding Rates",
-                                subtitle = "Manage grain services and price per KG",
+                                title = if (isHi) "पिसाई दरें" else "Grinding Rates",
+                                subtitle = if (isHi) "अनाज पिसाई दरें प्रबंधित करें" else "Manage grain services and price per KG",
                                 onClick = onNavigateToRates
                             )
                         }
@@ -313,8 +317,8 @@ fun ProfileScreen(
                         // 2. CSV Exports (Sales data downloads)
                         ProfileNavOption(
                             icon = Icons.Outlined.FileDownload,
-                            title = "Export Sales Reports (CSV)",
-                            subtitle = "Download Excel/CSV reports for today, monthly or custom range",
+                            title = if (isHi) "बिक्री रिपोर्ट डाउनलोड करें (CSV)" else "Export Sales Reports (CSV)",
+                            subtitle = if (isHi) "आज, मासिक या चुनी गई तारीख की एक्सेल/CSV रिपोर्ट" else "Download Excel/CSV reports for today, monthly or custom range",
                             onClick = { showExportDialog = true }
                         )
                     }
@@ -355,7 +359,83 @@ fun ProfileScreen(
                 }
             }
 
-            // 6. Legal & App Information
+            // 6. Language Preference (Hindi or English)
+            var showLanguageDialog by remember { mutableStateOf(false) }
+            var currentLanguage by remember { mutableStateOf(sessionManager.getLanguage()) }
+
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = if (isHi) "भाषा चयन" else "Language / भाषा",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandDark
+                    )
+
+                    ProfileNavOption(
+                        icon = Icons.Outlined.Language,
+                        title = if (isHi) "ऐप की भाषा" else "App Language",
+                        subtitle = if (currentLanguage == "hi") "हिंदी (Hindi)" else "English",
+                        onClick = { showLanguageDialog = true }
+                    )
+                }
+            }
+
+            if (showLanguageDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLanguageDialog = false },
+                    title = {
+                        Text(
+                            text = "Select Language / भाषा चुनें",
+                            fontWeight = FontWeight.Bold,
+                            color = BrandDark
+                        )
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            LanguageOptionItem(
+                                title = "English",
+                                subtitle = "Default application language",
+                                isSelected = currentLanguage == "en",
+                                onClick = {
+                                    sessionManager.setLanguage("en")
+                                    currentLanguage = "en"
+                                    Toast.makeText(context, "Language set to English", Toast.LENGTH_SHORT).show()
+                                    showLanguageDialog = false
+                                }
+                            )
+                            LanguageOptionItem(
+                                title = "हिंदी (Hindi)",
+                                subtitle = "हिंदी भाषा में उपयोग करें",
+                                isSelected = currentLanguage == "hi",
+                                onClick = {
+                                    sessionManager.setLanguage("hi")
+                                    currentLanguage = "hi"
+                                    Toast.makeText(context, "भाषा हिंदी पर सेट की गई", Toast.LENGTH_SHORT).show()
+                                    showLanguageDialog = false
+                                }
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showLanguageDialog = false }) {
+                            Text("Done", color = BrandOrange, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                )
+            }
+
+            // 7. Legal & App Information
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -417,7 +497,7 @@ fun ProfileScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Sign Out Account",
+                    text = if (isHi) "अकाउंट से लॉगआउट करें" else "Sign Out Account",
                     color = StatusError,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
@@ -439,6 +519,8 @@ fun ProfileScreen(
     if (showExportDialog) {
         ManagerExportDialog(
             baseUrl = currentBaseUrl,
+            isMill = isMill,
+            isHi = isHi,
             onDismiss = { showExportDialog = false }
         )
     }
@@ -941,71 +1023,155 @@ private fun ManagerStaffDialog(
 }
 
 /**
- * Manager CSV Export Dialog (Exports daily, monthly, and custom range sales to CSV)
+ * Manager CSV Export Dialog (Exports daily, monthly, and custom range sales to CSV, or mill JSON backup)
  */
 @Composable
 private fun ManagerExportDialog(
     baseUrl: String,
+    isMill: Boolean = false,
+    isHi: Boolean = false,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val managerRepository = DinePosApp.instance.managerRepository
+    val millRepository = DinePosApp.instance.millRepository
     val scope = rememberCoroutineScope()
 
-    val todayDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
-    val currentMonth = remember { SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date()) }
+    val isoDateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val currentMonthFormat = remember { SimpleDateFormat("yyyy-MM", Locale.getDefault()) }
 
-    var exportType by remember { mutableStateOf("daily") } // "daily", "monthly", "custom"
+    val todayDate = remember { isoDateFormat.format(Date()) }
+    val currentMonth = remember { currentMonthFormat.format(Date()) }
+
+    var exportType by remember { mutableStateOf("daily") } // "daily", "monthly", "custom", "mill_backup"
     var selectedDate by remember { mutableStateOf(todayDate) }
     var selectedMonth by remember { mutableStateOf(currentMonth) }
-    var isExporting by remember { mutableStateOf(false) }
+    var startDate by remember { mutableStateOf(todayDate) }
+    var endDate by remember { mutableStateOf(todayDate) }
 
-    fun triggerExport(shareDirectly: Boolean = true) {
+    var isExporting by remember { mutableStateOf(false) }
+    var downloadedResult by remember { mutableStateOf<ExportDownloadResult?>(null) }
+
+    fun showDatePicker(initialDate: String, onDateSelected: (String) -> Unit) {
+        val cal = Calendar.getInstance()
+        try {
+            isoDateFormat.parse(initialDate)?.let { cal.time = it }
+        } catch (_: Exception) {}
+
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                val chosen = Calendar.getInstance().apply {
+                    set(year, month, dayOfMonth)
+                }
+                onDateSelected(isoDateFormat.format(chosen.time))
+            },
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
+    fun triggerExport(shareAfterDownload: Boolean = false) {
         scope.launch {
             isExporting = true
+            if (exportType == "mill_backup") {
+                when (val res = millRepository.getBackup()) {
+                    is Resource.Success -> {
+                        isExporting = false
+                        val filename = "Mill_Data_Backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.json"
+                        val result = ExportDownloadHelper.saveToDownloads(
+                            context = context,
+                            filename = filename,
+                            content = res.data,
+                            mimeType = "application/json"
+                        )
+                        if (result.success) {
+                            Toast.makeText(
+                                context,
+                                if (isHi) "बैकअप डाउनलोड फोल्डर में सुरक्षित हो गया" else "Backup saved to Downloads/DinePOS",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            if (shareAfterDownload && result.contentUri != null) {
+                                ExportDownloadHelper.shareFile(
+                                    context = context,
+                                    contentUri = result.contentUri,
+                                    subject = "Mill Backup Data",
+                                    mimeType = "application/json"
+                                )
+                            } else {
+                                downloadedResult = result
+                            }
+                        } else {
+                            Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                    is Resource.Error -> {
+                        isExporting = false
+                        Toast.makeText(context, res.message ?: "Failed to export backup", Toast.LENGTH_LONG).show()
+                    }
+                    else -> {
+                        isExporting = false
+                    }
+                }
+                return@launch
+            }
+
+            val rangeLabel = when (exportType) {
+                "daily" -> selectedDate
+                "monthly" -> selectedMonth
+                else -> "${startDate}_to_${endDate}"
+            }
+
             when (val res = managerRepository.getExportData(
                 type = exportType,
                 date = if (exportType == "daily") selectedDate else null,
-                month = if (exportType == "monthly") selectedMonth else null
+                month = if (exportType == "monthly") selectedMonth else null,
+                startDate = if (exportType == "custom") startDate else null,
+                endDate = if (exportType == "custom") endDate else null
             )) {
                 is Resource.Success -> {
                     isExporting = false
                     val data = res.data
+                    val csvText = ExportDownloadHelper.buildSalesCsv(data, isMill = isMill)
+                    val filename = ExportDownloadHelper.generateFilename(
+                        businessName = data.restaurantName,
+                        type = if (isMill) "MillSales" else "SalesReport",
+                        rangeLabel = rangeLabel,
+                        extension = "csv"
+                    )
 
-                    if (shareDirectly && data.orders.isNotEmpty()) {
-                        // Generate CSV Content string
-                        val csvBuilder = StringBuilder()
-                        csvBuilder.append("RESTAURANT SALES EXPORT REPORT\n")
-                        csvBuilder.append("Restaurant Name,${data.restaurantName}\n")
-                        csvBuilder.append("Export Range,${data.startDate} to ${data.endDate}\n")
-                        csvBuilder.append("Total Orders,${data.stats?.totalOrders ?: data.orders.size}\n")
-                        csvBuilder.append("Total Revenue (INR),${data.stats?.totalSales ?: 0.0}\n")
-                        csvBuilder.append("Cash Sales (INR),${data.stats?.cashSales ?: 0.0}\n")
-                        csvBuilder.append("Online Sales (INR),${data.stats?.onlineSales ?: 0.0}\n\n")
+                    val result = ExportDownloadHelper.saveToDownloads(
+                        context = context,
+                        filename = filename,
+                        content = csvText,
+                        mimeType = "text/csv"
+                    )
 
-                        csvBuilder.append("Order #,Date,Time,Customer Name,Phone,Subtotal,Total,Payment Method,Status,Billed By\n")
-                        for (order in data.orders) {
-                            csvBuilder.append("${order.orderNumber},${order.orderDate},${order.orderTime},${order.customerName ?: "Walk-in"},${order.customerPhone ?: ""},${order.subtotal},${order.total},${order.paymentMethod},${order.status},${order.createdByUsername}\n")
+                    if (result.success) {
+                        Toast.makeText(
+                            context,
+                            if (isHi) "रिपोर्ट डाउनलोड हो गई: $filename" else "Report saved to Downloads/DinePOS: $filename",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        if (shareAfterDownload && result.contentUri != null) {
+                            ExportDownloadHelper.shareFile(
+                                context = context,
+                                contentUri = result.contentUri,
+                                subject = "${data.restaurantName} Sales Export ($rangeLabel)",
+                                mimeType = "text/csv"
+                            )
+                        } else {
+                            downloadedResult = result
                         }
-
-                        val sendIntent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, csvBuilder.toString())
-                            putExtra(Intent.EXTRA_SUBJECT, "${data.restaurantName} Sales Export (${data.startDate})")
-                            type = "text/plain"
-                        }
-                        val shareIntent = Intent.createChooser(sendIntent, "Export Sales Report")
-                        context.startActivity(shareIntent)
                     } else {
-                        // Open direct web download link in browser
-                        val downloadFullUrl = if (data.downloadUrl.startsWith("http")) data.downloadUrl else "${baseUrl}${data.downloadUrl.removePrefix("/")}"
-                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadFullUrl))
-                        context.startActivity(browserIntent)
+                        Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
                     }
                 }
                 is Resource.Error -> {
                     isExporting = false
-                    Toast.makeText(context, res.message, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, res.message ?: "Failed to generate export", Toast.LENGTH_LONG).show()
                 }
                 else -> {
                     isExporting = false
@@ -1014,12 +1180,131 @@ private fun ManagerExportDialog(
         }
     }
 
+    if (downloadedResult != null) {
+        val res = downloadedResult!!
+        AlertDialog(
+            onDismissRequest = {
+                downloadedResult = null
+                onDismiss()
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.CheckCircle,
+                    contentDescription = null,
+                    tint = BrandEmerald,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = if (isHi) "फ़ाइल डाउनलोड हो गई!" else "Download Complete!",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = if (isHi) "रिपोर्ट आपके डिवाइस के Downloads फ़ोल्डर में सुरक्षित हो गई है:" else "Report spreadsheet saved directly to your device:",
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    )
+                    Surface(
+                        color = BrandSurface,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, BrandBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text(
+                                text = res.filename,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = BrandDark
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Path: ${res.relativePath}",
+                                fontSize = 11.sp,
+                                color = TextMuted
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (res.contentUri != null) {
+                        OutlinedButton(
+                            onClick = {
+                                ExportDownloadHelper.shareFile(
+                                    context = context,
+                                    contentUri = res.contentUri,
+                                    subject = res.filename,
+                                    mimeType = if (res.filename.endsWith(".json")) "application/json" else "text/csv"
+                                )
+                            },
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (isHi) "शेयर करें" else "Share")
+                        }
+
+                        Button(
+                            onClick = {
+                                ExportDownloadHelper.openFile(
+                                    context = context,
+                                    contentUri = res.contentUri,
+                                    mimeType = if (res.filename.endsWith(".json")) "application/json" else "text/csv"
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (isHi) "खोलें (Excel)" else "Open File")
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                downloadedResult = null
+                                onDismiss()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                        ) {
+                            Text(if (isHi) "ठीक है" else "Done")
+                        }
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    downloadedResult = null
+                    onDismiss()
+                }) {
+                    Text(if (isHi) "बंद करें" else "Close")
+                }
+            }
+        )
+        return
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text("Export Sales Data (CSV)", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("Download detailed order spreadsheets for Excel", fontSize = 11.sp, color = TextSecondary)
+                Text(
+                    text = if (isHi) "बिक्री रिपोर्ट डाउनलोड करें (CSV)" else "Export Sales Data (CSV)",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = if (isHi) "एक्सेल के लिए स्प्रेडशीट सीधे डिवाइस में डाउनलोड करें" else "Download Excel-ready spreadsheets directly to device",
+                    fontSize = 11.sp,
+                    color = TextSecondary
+                )
             }
         },
         text = {
@@ -1032,14 +1317,17 @@ private fun ManagerExportDialog(
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
                         Text(
-                            text = "What is CSV Export?",
+                            text = if (isHi) "इन-ऐप डाउनलोड सुविधा" else "Direct In-App Download",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = BrandOrange
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Exports full transaction logs, itemized order rows, revenue sums, and cashier billing logs into an Excel-ready spreadsheet.",
+                            text = if (isHi)
+                                "फ़ाइल सीधे आपके फोन के 'Downloads/DinePOS' फ़ोल्डर में सहेजी जाती है। इसे एक्सेल या गूगल शीट्स में खोला जा सकता है।"
+                            else
+                                "Exports full orders, revenue totals, items, and billing logs directly to Downloads/DinePOS folder for Excel or Google Sheets.",
                             fontSize = 11.sp,
                             color = TextSecondary,
                             lineHeight = 14.sp
@@ -1048,10 +1336,16 @@ private fun ManagerExportDialog(
                 }
 
                 // Range Selector Buttons
-                Text(text = "Choose Export Period:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                Text(
+                    text = if (isHi) "अवधि चुनें:" else "Choose Export Period:",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandDark
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     OutlinedButton(
                         onClick = { exportType = "daily" },
@@ -1060,9 +1354,10 @@ private fun ManagerExportDialog(
                         ),
                         border = BorderStroke(1.dp, if (exportType == "daily") BrandOrange else BrandBorder),
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                     ) {
-                        Text("Today", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                        Text(if (isHi) "आज" else "Today", fontSize = 11.5.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
@@ -1072,9 +1367,38 @@ private fun ManagerExportDialog(
                         ),
                         border = BorderStroke(1.dp, if (exportType == "monthly") BrandOrange else BrandBorder),
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                     ) {
-                        Text("This Month", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                        Text(if (isHi) "इस महीने" else "Month", fontSize = 11.5.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = { exportType = "custom" },
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (exportType == "custom") BrandOrange.copy(alpha = 0.15f) else Color.Transparent
+                        ),
+                        border = BorderStroke(1.dp, if (exportType == "custom") BrandOrange else BrandBorder),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                    ) {
+                        Text(if (isHi) "कस्टम" else "Custom", fontSize = 11.5.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (isMill) {
+                        OutlinedButton(
+                            onClick = { exportType = "mill_backup" },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (exportType == "mill_backup") BrandOrange.copy(alpha = 0.15f) else Color.Transparent
+                            ),
+                            border = BorderStroke(1.dp, if (exportType == "mill_backup") BrandOrange else BrandBorder),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                        ) {
+                            Text(if (isHi) "बैकअप" else "Backup", fontSize = 11.5.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
 
@@ -1082,7 +1406,12 @@ private fun ManagerExportDialog(
                     OutlinedTextField(
                         value = selectedDate,
                         onValueChange = { selectedDate = it },
-                        label = { Text("Date (YYYY-MM-DD)") },
+                        label = { Text(if (isHi) "तारीख (YYYY-MM-DD)" else "Date (YYYY-MM-DD)") },
+                        trailingIcon = {
+                            IconButton(onClick = { showDatePicker(selectedDate) { selectedDate = it } }) {
+                                Icon(Icons.Outlined.CalendarToday, contentDescription = "Pick Date", tint = BrandOrange)
+                            }
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1090,31 +1419,97 @@ private fun ManagerExportDialog(
                     OutlinedTextField(
                         value = selectedMonth,
                         onValueChange = { selectedMonth = it },
-                        label = { Text("Month (YYYY-MM)") },
+                        label = { Text(if (isHi) "महीना (YYYY-MM)" else "Month (YYYY-MM)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                } else if (exportType == "custom") {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = startDate,
+                            onValueChange = { startDate = it },
+                            label = { Text(if (isHi) "शुरुआती तारीख" else "Start Date (YYYY-MM-DD)") },
+                            trailingIcon = {
+                                IconButton(onClick = { showDatePicker(startDate) { startDate = it } }) {
+                                    Icon(Icons.Outlined.CalendarToday, contentDescription = "Pick Date", tint = BrandOrange)
+                                }
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = endDate,
+                            onValueChange = { endDate = it },
+                            label = { Text(if (isHi) "अंतिम तारीख" else "End Date (YYYY-MM-DD)") },
+                            trailingIcon = {
+                                IconButton(onClick = { showDatePicker(endDate) { endDate = it } }) {
+                                    Icon(Icons.Outlined.CalendarToday, contentDescription = "Pick Date", tint = BrandOrange)
+                                }
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                } else if (exportType == "mill_backup") {
+                    Surface(
+                        color = BrandSurface,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, BrandBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Text(
+                                text = if (isHi) "पूरा मिल बैकअप (JSON)" else "Full Mill Backup (JSON)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = BrandDark
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (isHi)
+                                    "सभी ग्राहकों का विवरण, पिसाई सेवाएं और पूरे ऑर्डर का पूरा डेटा JSON फ़ाइल में सुरक्षित करें।"
+                                else
+                                    "Exports all customer records, grinding rates, and complete order history into a JSON backup file.",
+                                fontSize = 11.sp,
+                                color = TextSecondary
+                            )
+                        }
+                    }
                 }
             }
         },
         confirmButton = {
-            Button(
-                onClick = { triggerExport(shareDirectly = true) },
-                enabled = !isExporting,
-                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
-            ) {
-                if (isExporting) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
-                } else {
-                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Export & Share CSV")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { triggerExport(shareAfterDownload = true) },
+                    enabled = !isExporting,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isHi) "शेयर" else "Share")
+                }
+
+                Button(
+                    onClick = { triggerExport(shareAfterDownload = false) },
+                    enabled = !isExporting,
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    if (isExporting) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                    } else {
+                        Icon(Icons.Outlined.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (isHi) "डाउनलोड करें" else "Download")
+                    }
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(if (isHi) "रद्द करें" else "Cancel")
             }
         }
     )
@@ -1187,3 +1582,47 @@ private fun ProfileNavOption(
         }
     }
 }
+
+@Composable
+private fun LanguageOptionItem(
+    title: String,
+    subtitle: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) BrandOrange.copy(alpha = 0.08f) else Color.Transparent,
+        border = BorderStroke(1.dp, if (isSelected) BrandOrange else BrandBorder.copy(alpha = 0.5f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = BrandDark
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.5.sp,
+                    color = TextSecondary
+                )
+            }
+            RadioButton(
+                selected = isSelected,
+                onClick = onClick,
+                colors = RadioButtonDefaults.colors(selectedColor = BrandOrange)
+            )
+        }
+    }
+}
+

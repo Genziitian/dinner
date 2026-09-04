@@ -27,10 +27,14 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
                     unpaidAmount = statsDto.unpaidAmount,
                     totalWeightKg = statsDto.totalWeightKg
                 )
-                val orders = data?.recentOrders?.map { mapOrderDto(it) } ?: emptyList()
+                val sessionMgr = com.dinepos.app.DinePosApp.instance.sessionManager
+                val orders = data?.recentOrders?.map { mapOrderDto(it) }?.filter {
+                    !sessionMgr.isOrderDeleted(it.id) &&
+                    !it.status.equals("cancelled", ignoreCase = true)
+                } ?: emptyList()
                 val shopType = data?.restaurant?.shopType
                 if (!shopType.isNullOrBlank()) {
-                    com.dinepos.app.DinePosApp.instance.sessionManager.saveShopType(shopType)
+                    sessionMgr.saveShopType(shopType)
                 }
                 Resource.Success(Pair(stats, orders))
             } else {
@@ -290,8 +294,8 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
             orderTime = dto.orderTime,
             customerName = dto.customerName,
             customerPhone = dto.customerPhone,
-            subtotal = dto.subtotal,
-            total = dto.total,
+            subtotal = if (dto.subtotal > 0.0) dto.subtotal else (dto.totalAmount ?: 0.0),
+            total = if (dto.total > 0.0) dto.total else (dto.totalAmount ?: 0.0),
             paymentMethod = dto.paymentMethod,
             status = dto.status,
             receiptTokenHash = dto.receiptTokenHash,
@@ -301,8 +305,8 @@ class ManagerRepositoryImpl(private val apiService: DinePosApiService) : Manager
                     id = itemDto.id,
                     orderId = itemDto.orderId,
                     itemId = itemDto.itemId,
-                    itemName = itemDto.itemName,
-                    variantName = itemDto.variantName,
+                    itemName = if (itemDto.itemName.isNotBlank()) itemDto.itemName else (itemDto.itemNameDirect ?: ""),
+                    variantName = if (itemDto.variantName.isNotBlank()) itemDto.variantName else (itemDto.variantNameDirect ?: ""),
                     quantity = itemDto.quantity,
                     unit = itemDto.unit,
                     unitPrice = itemDto.unitPrice,

@@ -111,6 +111,8 @@ class MillOrder {
         if (!empty($filters['status']) && $filters['status'] !== 'all') {
             $sql .= " AND status = :status";
             $params[':status'] = $filters['status'];
+        } elseif (empty($filters['status']) || !empty($filters['exclude_cancelled'])) {
+            $sql .= " AND status != 'cancelled'";
         }
 
         if (!empty($filters['payment_status'])) {
@@ -136,6 +138,14 @@ class MillOrder {
         }
 
         return Database::fetchAll($sql, $params);
+    }
+
+    public static function delete(int $id, int $restaurantId): bool {
+        Database::execute(
+            "DELETE FROM mill_orders WHERE id = :id AND restaurant_id = :restaurant_id",
+            [':id' => $id, ':restaurant_id' => $restaurantId]
+        );
+        return true;
     }
 
     public static function updateStatus(int $id, string $status): bool {
@@ -166,15 +176,15 @@ class MillOrder {
 
     public static function getDailySummary(int $restaurantId, string $date): array {
         $sql = "SELECT 
-                    COUNT(id) AS total_orders,
+                    COUNT(CASE WHEN status != 'cancelled' THEN id END) AS total_orders,
                     SUM(CASE WHEN status IN ('received', 'processing') THEN 1 ELSE 0 END) AS pending_orders,
                     SUM(CASE WHEN status = 'ready' THEN 1 ELSE 0 END) AS ready_orders,
                     SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) AS delivered_orders,
                     SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_orders,
                     COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS total_amount,
-                    COALESCE(SUM(CASE WHEN payment_status = 'paid' AND status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS paid_amount,
-                    COALESCE(SUM(CASE WHEN payment_status = 'unpaid' AND status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS unpaid_amount,
-                    COALESCE(SUM(weight_kg), 0) AS total_weight_kg
+                    COALESCE(SUM(CASE WHEN (payment_status = 'paid' OR status = 'delivered') AND status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS paid_amount,
+                    COALESCE(SUM(CASE WHEN payment_status = 'unpaid' AND status != 'delivered' AND status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS unpaid_amount,
+                    COALESCE(SUM(CASE WHEN status != 'cancelled' THEN weight_kg ELSE 0 END), 0) AS total_weight_kg
                 FROM mill_orders 
                 WHERE restaurant_id = :restaurant_id AND order_date = :date";
 
@@ -196,7 +206,7 @@ class MillOrder {
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
         return Database::fetchAll(
             "SELECT * FROM mill_orders 
-             WHERE restaurant_id = :restaurant_id AND customer_phone = :phone 
+             WHERE restaurant_id = :restaurant_id AND customer_phone = :phone AND status != 'cancelled'
              ORDER BY order_date DESC, order_time DESC",
             [':restaurant_id' => $restaurantId, ':phone' => $cleanPhone]
         );
@@ -205,13 +215,14 @@ class MillOrder {
     public static function getEarningsSummary(int $restaurantId, string $startDate, string $endDate): array {
         $sql = "SELECT 
                     COUNT(id) AS total_orders,
-                    COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS total_earnings,
-                    COALESCE(SUM(CASE WHEN payment_status = 'paid' AND status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS paid_earnings,
-                    COALESCE(SUM(CASE WHEN payment_status = 'unpaid' AND status != 'cancelled' THEN total_amount ELSE 0 END), 0) AS unpaid_earnings,
-                    COALESCE(SUM(CASE WHEN status != 'cancelled' THEN weight_kg ELSE 0 END), 0) AS total_weight_kg
+                    COALESCE(SUM(total_amount), 0) AS total_earnings,
+                    COALESCE(SUM(CASE WHEN payment_status = 'paid' OR status = 'delivered' THEN total_amount ELSE 0 END), 0) AS paid_earnings,
+                    COALESCE(SUM(CASE WHEN payment_status = 'unpaid' AND status != 'delivered' THEN total_amount ELSE 0 END), 0) AS unpaid_earnings,
+                    COALESCE(SUM(weight_kg), 0) AS total_weight_kg
                 FROM mill_orders 
                 WHERE restaurant_id = :restaurant_id 
-                  AND order_date BETWEEN :start_date AND :end_date";
+                  AND order_date BETWEEN :start_date AND :end_date
+                  AND status != 'cancelled'";
 
         $summary = Database::fetchOne($sql, [
             ':restaurant_id' => $restaurantId,
@@ -258,6 +269,7 @@ class MillOrder {
         $ordersSql = "SELECT * FROM mill_orders
                       WHERE restaurant_id = :restaurant_id
                         AND order_date BETWEEN :start_date AND :end_date
+                        AND status != 'cancelled'
                       ORDER BY order_date DESC, order_time DESC, id DESC
                       LIMIT 100";
         $orders = Database::fetchAll($ordersSql, [

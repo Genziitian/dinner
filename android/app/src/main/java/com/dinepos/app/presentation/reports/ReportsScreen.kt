@@ -1,5 +1,6 @@
 package com.dinepos.app.presentation.reports
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,20 +12,27 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dinepos.app.DinePosApp
 import com.dinepos.app.core.theme.*
 import com.dinepos.app.core.utils.CurrencyFormatter
+import com.dinepos.app.core.utils.ExportDownloadHelper
+import com.dinepos.app.core.utils.Resource
 import com.dinepos.app.domain.model.DailyStats
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,8 +40,55 @@ fun ReportsScreen(
     onNavigateBack: () -> Unit,
     viewModel: ReportsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     val report = uiState.report
+
+    var isExporting by remember { mutableStateOf(false) }
+
+    fun exportCurrentReport() {
+        scope.launch {
+            isExporting = true
+            val selectedPeriod = uiState.selectedPeriod
+            val exportType = if (selectedPeriod == "today") "daily" else if (selectedPeriod == "this_month") "monthly" else "custom"
+            val todayDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val currentMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+
+            when (val res = DinePosApp.instance.managerRepository.getExportData(
+                type = exportType,
+                date = if (exportType == "daily") todayDate else null,
+                month = if (exportType == "monthly") currentMonth else null
+            )) {
+                is Resource.Success -> {
+                    isExporting = false
+                    val csv = ExportDownloadHelper.buildSalesCsv(res.data, isMill = false)
+                    val filename = ExportDownloadHelper.generateFilename(
+                        businessName = res.data.restaurantName.ifBlank { "SalesReport" },
+                        type = "FinancialReport",
+                        rangeLabel = selectedPeriod,
+                        extension = "csv"
+                    )
+                    val dlResult = ExportDownloadHelper.saveToDownloads(context, filename, csv, "text/csv")
+                    if (dlResult.success) {
+                        Toast.makeText(context, "Report saved to Downloads/DinePOS: $filename", Toast.LENGTH_SHORT).show()
+                        if (dlResult.contentUri != null) {
+                            ExportDownloadHelper.shareFile(context, dlResult.contentUri, "Sales Report ($selectedPeriod)")
+                        }
+                    } else {
+                        Toast.makeText(context, dlResult.message, Toast.LENGTH_LONG).show()
+                    }
+                }
+                is Resource.Error -> {
+                    isExporting = false
+                    Toast.makeText(context, res.message ?: "Failed to export report", Toast.LENGTH_LONG).show()
+                }
+                else -> {
+                    isExporting = false
+                }
+            }
+        }
+    }
 
     Scaffold(
         containerColor = BrandBackground,
@@ -46,6 +101,13 @@ fun ReportsScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { exportCurrentReport() }, enabled = !isExporting) {
+                        if (isExporting) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = BrandOrange)
+                        } else {
+                            Icon(Icons.Outlined.FileDownload, contentDescription = "Export CSV", tint = BrandDark)
+                        }
+                    }
                     IconButton(onClick = { viewModel.loadReports() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }

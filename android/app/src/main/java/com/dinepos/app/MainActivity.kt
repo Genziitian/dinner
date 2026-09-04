@@ -2,15 +2,19 @@ package com.dinepos.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dinepos.app.core.theme.BrandBackground
@@ -23,7 +27,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false)
         }
@@ -45,46 +58,56 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            DinePosTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = BrandBackground
-                ) {
-                    val navController = rememberNavController()
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentRoute = navBackStackEntry?.destination?.route
+            val currentLanguage by sessionManager.language.collectAsState()
+            androidx.compose.runtime.CompositionLocalProvider(
+                com.dinepos.app.core.localization.LocalAppLanguage provides currentLanguage
+            ) {
+                DinePosTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = BrandBackground
+                    ) {
+                        val navController = rememberNavController()
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentRoute = navBackStackEntry?.destination?.route
 
-                    Scaffold(
-                        bottomBar = {
-                            DinePosBottomBar(
-                                currentRoute = currentRoute,
-                                onNavigateToRoute = { route ->
-                                    navController.navigate(route) {
-                                        popUpTo(navController.graph.startDestinationId) {
-                                            saveState = true
+                        Scaffold(
+                            contentWindowInsets = WindowInsets(0.dp),
+                            bottomBar = {
+                                DinePosBottomBar(
+                                    currentRoute = currentRoute,
+                                    onNavigateToRoute = { route ->
+                                        navController.navigate(route) {
+                                            popUpTo(navController.graph.startDestinationId) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
+                                    },
+                                    onTakeOrderClick = {
+                                        if (sessionManager.isMill()) {
+                                            navController.navigate(Screen.MillCreateOrder.route)
+                                        } else {
+                                            navController.navigate(Screen.CashierBilling.route)
+                                        }
+                                    },
+                                    onScannerClick = {
+                                        navController.navigate(Screen.QrScanner.route)
                                     }
-                                },
-                                onTakeOrderClick = {
-                                    if (sessionManager.isMill()) {
-                                        navController.navigate(Screen.MillCreateOrder.route)
-                                    } else {
-                                        navController.navigate(Screen.CashierBilling.route)
-                                    }
-                                },
-                                onScannerClick = {
-                                    navController.navigate(Screen.QrScanner.route)
-                                }
-                            )
-                        }
-                    ) { innerPadding ->
-                        Box(modifier = Modifier.padding(innerPadding)) {
-                            DinePosNavGraph(
-                                navController = navController,
-                                startDestination = startDestination
-                            )
+                                )
+                            }
+                        ) { innerPadding ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(bottom = innerPadding.calculateBottomPadding())
+                            ) {
+                                DinePosNavGraph(
+                                    navController = navController,
+                                    startDestination = startDestination
+                                )
+                            }
                         }
                     }
                 }
